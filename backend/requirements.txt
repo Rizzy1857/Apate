@@ -1,0 +1,44 @@
+# FastAPI and related dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# AI/ML
+openai==1.3.7
+anthropic==0.8.1
+tiktoken==0.5.2
+
+# Security and cryptography
+cryptography==41.0.8
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
+# HTTP and networking
+httpx==0.25.2
+aiofiles==23.2.1
+
+# Utilities
+python-multipart==0.0.6
+jinja2==3.1.2
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.22.0
+
+# SSH
+asyncio-ssh==2.14.2
+
+# Monitoring and logging
+structlog==23.2.0
+prometheus-client==0.19.0
+
+# Optional: For enhanced threat intelligence
+geoip2==4.7.0
+requests==2.31.0

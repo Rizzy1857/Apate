@@ -1,0 +1,50 @@
+{
+  "_comment": "Example configuration file for Mirage Honeypot - Copy this to config.json and modify as needed",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "mirage_honeypot",
+    "user": "mirage"
+  },
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-3.5-turbo",
+    "max_tokens": 500,
+    "temperature": 0.7,
+    "enable_adaptive_responses": true,
+    "response_cache_ttl": 3600
+  },
+  "honeypot": {
+    "ssh_port": 2222,
+    "http_port": 8080,
+    "tcp_port": 9999,
+    "iot_port": 8081,
+    "ssh_welcome_banner": "Ubuntu 20.04.3 LTS",
+    "ssh_motd": "Welcome to production server",
+    "ssh_fake_users": ["admin", "root", "user", "ubuntu", "postgres", "mysql"],
+    "http_fake_apps": ["wordpress", "phpmyadmin", "jenkins", "grafana"],
+    "http_login_paths": ["/admin", "/login", "/wp-admin", "/dashboard"],
+    "max_attempts_per_ip": 100,
+    "rate_limit_window": 3600
+  },
+  "honeytokens": {
+    "default_expiry_days": 30,
+    "callback_url": "http://localhost:8000/api/v1/honeytokens/callback",
+    "enable_web_beacons": true,
+    "fake_api_providers": ["openai", "stripe", "aws", "github", "slack"]
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file_path": "./logs/mirage.log",
+    "max_file_size": "10MB",
+    "backup_count": 5,
+    "enable_json_logs": false
+  },
+  "security": {
+    "enable_ip_anonymization": true,
+    "enable_data_retention_limits": true,
+    "data_retention_days": 90,
+    "enable_encryption_at_rest": false
+  }
+}

@@ -1,0 +1,142 @@
+# Docker Compose for LLM-Honeypot (Mirage)
+# =========================================
+# Orchestrates Python FastAPI, Rust echo server, and Go IoT stub.
+# Creates a complete adaptive honeypot ecosystem.
+
+version: '3.8'
+
+services:
+  # Python FastAPI Backend - Main honeypot orchestrator
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mirage-backend
+    ports:
+      - "8000:8000"  # Main API
+      - "2222:2222"  # SSH honeypot
+      - "8080:8080"  # HTTP honeypot
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - AI_PROVIDER=stub
+      - HONEYPOT_MODE=adaptive
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - rust-protocol
+      - go-services
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Rust Protocol Server - Low-level network services
+  rust-protocol:
+    build:
+      context: ./rust-protocol
+      dockerfile: Dockerfile
+    container_name: mirage-rust
+    ports:
+      - "7878:7878"  # TCP echo service
+      - "7879:7879"  # Stats/monitoring
+    environment:
+      - RUST_LOG=info
+      - BIND_ADDR=0.0.0.0:7878
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "7878"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Go IoT Services - Fake IoT device endpoints
+  go-services:
+    build:
+      context: ./go-services
+      dockerfile: Dockerfile
+    container_name: mirage-iot
+    ports:
+      - "8081:8081"  # IoT device API
+    environment:
+      - PORT=8081
+      - LOG_LEVEL=info
+      - DEVICE_TYPE=camera_gateway
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Redis for session storage and caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: mirage-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass honeypot_redis_2023
+    volumes:
+      - redis_data:/data
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # ELK Stack for log aggregation (optional - for production)
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+  #   container_name: mirage-elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - elastic_data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - honeypot-net
+
+  # Prometheus for metrics collection (optional)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: mirage-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - honeypot-net
+
+networks:
+  honeypot-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis_data:
+    driver: local
+  elastic_data:
+    driver: local
+
+# Production considerations:
+# - Add resource limits for each service
+# - Configure proper logging drivers
+# - Set up external volume mounts for persistence
+# - Add environment-specific override files
+# - Configure reverse proxy (nginx/traefik) for production

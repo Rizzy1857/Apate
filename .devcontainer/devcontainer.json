@@ -1,0 +1,84 @@
+{
+  "name": "Mirage Honeypot Development",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/app",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.21"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.black-formatter",
+        "rust-lang.rust-analyzer",
+        "golang.go",
+        "ms-vscode.docker",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "rust-analyzer.check.command": "cargo",
+        "go.toolsManagement.checkForUpdates": "local"
+      }
+    }
+  },
+  
+  "forwardPorts": [8000, 2222, 8080, 7878, 7879, 8081, 6379],
+  "portsAttributes": {
+    "8000": {
+      "label": "FastAPI Backend",
+      "onAutoForward": "notify"
+    },
+    "2222": {
+      "label": "SSH Honeypot",
+      "onAutoForward": "ignore"
+    },
+    "8080": {
+      "label": "HTTP Honeypot", 
+      "onAutoForward": "ignore"
+    },
+    "7878": {
+      "label": "Rust TCP Echo",
+      "onAutoForward": "ignore"
+    },
+    "7879": {
+      "label": "Rust Stats",
+      "onAutoForward": "ignore"
+    },
+    "8081": {
+      "label": "Go IoT Gateway",
+      "onAutoForward": "notify"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "ignore"
+    }
+  },
+  
+  "postCreateCommand": "pip install -r requirements.txt && cargo build && go mod tidy",
+  
+  "remoteUser": "root",
+  
+  "mounts": [
+    "source=${localWorkspaceFolder}/data,target=/app/data,type=bind",
+    "source=${localWorkspaceFolder}/logs,target=/app/logs,type=bind"
+  ]
+}
