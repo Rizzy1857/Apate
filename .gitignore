@@ -87,3 +87,30 @@ htmlcov/
 honeytokens/active/
 threat_logs/
 session_recordings/
+
+# Local dev & tooling
+# Python tooling caches and checkers
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Virtual environments (explicit path for backend venv)
+backend/.venv/
+
+# Packaging / wheel metadata
+pip-wheel-metadata/
+
+# Local config overrides
+config.json
+config.local.json
+
+# Editor / workspace files
+*.code-workspace
+.vscode/*
+
+# Windows
+desktop.ini
+
+#ignoring test files as of now
+tests/
+debug/

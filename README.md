@@ -2,19 +2,44 @@
 
 An intelligent, next-generation honeypot system that uses Large Language Models (LLMs) to create adaptive, realistic deception environments. Mirage solves the key problems of traditional honeypots: easy detection and low-value logs.
 
+## 📖 **Documentation**
+
+- **[📊 Progress Tracking](progress.md)** - Current development status and roadmap
+- **[📚 Usage Guide](usage.md)** - Comprehensive setup and operation guide
+- **[🔧 API Reference](usage.md#-api-reference)** - Detailed API documentation
+- **[🚀 Quick Start](#-quick-start)** - Get started in 5 minutes
+
+## 📋 **Table of Contents**
+
+- [What Makes Mirage Different](#-what-makes-mirage-different)
+- [Quick Start](#-quick-start)
+- [Architecture](#️-architecture)
+- [Development Setup](#-development-setup)
+- [Configuration](#️-configuration)
+- [Monitoring & Alerts](#-monitoring--alerts)
+- [Testing](#-testing)
+- [Security Considerations](#-security-considerations)
+- [Customization](#️-customization)
+- [Performance Tuning](#-performance-tuning)
+- [Project Status](#-project-status)
+- [Contributing](#-contributing)
+
 ## 🎯 What Makes Mirage Different
 
 ### Adaptive Engagement
+
 - **AI-Driven Responses**: Uses LLMs to generate contextual, realistic responses that adapt to attacker behavior
 - **Dynamic Environment**: File systems, services, and responses evolve based on attacker actions
 - **Behavioral Learning**: Analyzes attacker patterns to improve deception effectiveness
 
 ### Advanced Deception
+
 - **Fingerprint Morphing**: Actively changes system signatures to avoid detection
 - **Smart Honeytokens**: Context-aware deployment of credentials, API keys, and files
 - **Multi-Protocol Support**: SSH, HTTP, TCP, and IoT device emulation
 
 ### Intelligence-Focused
+
 - **High-Signal Alerts**: Only triggers on meaningful attacker actions
 - **Threat Enrichment**: Automatic correlation with external threat intelligence
 - **Behavioral Profiling**: Builds comprehensive attacker profiles over time
@@ -66,7 +91,7 @@ echo "Hello Mirage" | nc localhost 7878
 
 ## 🏗️ Architecture
 
-```
+```markdown
 Mirage Honeypot Ecosystem
 ├── Backend (Python/FastAPI)
 │   ├── SSH Emulator - Realistic command handling
@@ -92,6 +117,7 @@ Mirage Honeypot Ecosystem
 ## 🔧 Development Setup
 
 ### Prerequisites
+
 - Python 3.11+
 - Rust 1.70+
 - Go 1.21+
@@ -188,16 +214,19 @@ python -m pytest tests/test_tokens.py -v
 ## 🚨 Security Considerations
 
 ### Isolation
+
 - Run in isolated network segments
 - Use containers for service isolation
 - Monitor resource usage
 
 ### Data Protection
+
 - Honeytokens contain fake data only
 - No real credentials or sensitive information
 - Regular security audits recommended
 
 ### Legal Compliance
+
 - Ensure compliance with local laws
 - Document honeypot deployment for legal protection
 - Consider privacy implications
@@ -242,6 +271,24 @@ services:
           cpus: '0.5'
           memory: 512M
 ```
+
+## 📊 **Project Status**
+
+**Current Completion**: 85% ✅
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| 🔧 Core Honeypot Logic | ✅ Complete | SSH/HTTP emulators, honeytokens |
+| 🚀 Backend API | ✅ Complete | FastAPI with all endpoints |
+| 🦀 Rust Protocol Services | ✅ Complete | TCP services, utilities |
+| 🧪 Testing Infrastructure | ✅ Complete | 53 tests, 100% pass rate |
+| 🔄 CI/CD Pipeline | ✅ Complete | GitHub Actions, automated testing |
+| 🐳 Docker Infrastructure | ✅ Complete | Multi-service deployment |
+| 📚 Documentation | 🔄 In Progress | Usage guides, API docs |
+| 🤖 AI Engine Integration | ⏳ Planned | OpenAI/Anthropic integration |
+| 🏭 Go IoT Services | ⏳ Planned | IoT device simulation |
+
+See **[📊 Progress Tracking](progress.md)** for detailed status and roadmap.
 
 ## 🤝 Contributing
 

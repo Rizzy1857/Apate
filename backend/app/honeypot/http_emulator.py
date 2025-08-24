@@ -5,12 +5,10 @@ Simulates realistic HTTP services with adaptive login pages and responses.
 Includes honeytoken deployment and request logging for threat intelligence.
 """
 
-import asyncio
 import logging
 import random
-import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -21,7 +19,7 @@ class HTTPSession:
     def __init__(self, session_id: str, source_ip: str):
         self.session_id = session_id
         self.source_ip = source_ip
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
         self.login_attempts = []
         self.pages_accessed = []
         self.user_agent: Optional[str] = None
@@ -74,7 +72,7 @@ class HTTPEmulator:
         """Process HTTP login attempt with adaptive response"""
         
         if not session_id:
-            session_id = hashlib.md5(f"{source_ip}_{datetime.utcnow()}".encode()).hexdigest()
+            session_id = hashlib.md5(f"{source_ip}_{datetime.now(UTC)}".encode()).hexdigest()
         
         # Get or create session
         if session_id not in self.sessions:
@@ -87,7 +85,7 @@ class HTTPEmulator:
         attempt = {
             "username": username,
             "password": password,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "user_agent": user_agent,
             "success": False
         }
@@ -133,7 +131,7 @@ class HTTPEmulator:
         
         # Rapid successive attempts
         recent_attempts = [a for a in session.login_attempts 
-                          if datetime.fromisoformat(a["timestamp"]) > datetime.utcnow() - timedelta(minutes=5)]
+                          if datetime.fromisoformat(a["timestamp"]) > datetime.now(UTC) - timedelta(minutes=5)]
         if len(recent_attempts) > 10:
             score += 3
         elif len(recent_attempts) > 5:
@@ -177,7 +175,7 @@ class HTTPEmulator:
             "server": random.choice(list(self.service_banners.values())),
             "alert_level": "CRITICAL",
             "honeytoken_triggered": True,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
     
     async def _handle_high_threat_login(self, session: HTTPSession, username: str, password: str) -> Dict[str, Any]:
@@ -185,12 +183,12 @@ class HTTPEmulator:
         session.threat_score += 2.0
         
         # Add failed login to tracking
-        self.failed_login_tracking[session.source_ip].append(datetime.utcnow())
+        self.failed_login_tracking[session.source_ip].append(datetime.now(UTC))
         
         # Simulate account lockout or rate limiting
         recent_failures = [
             t for t in self.failed_login_tracking[session.source_ip]
-            if t > datetime.utcnow() - timedelta(minutes=15)
+            if t > datetime.now(UTC) - timedelta(minutes=15)
         ]
         
         if len(recent_failures) > 5:
@@ -201,7 +199,7 @@ class HTTPEmulator:
                 "retry_after": 900,  # 15 minutes
                 "server": random.choice(list(self.service_banners.values())),
                 "alert_level": "HIGH",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(UTC).isoformat()
             }
         
         # Random realistic error messages
@@ -218,7 +216,7 @@ class HTTPEmulator:
             "server": random.choice(list(self.service_banners.values())),
             "alert_level": "HIGH",
             "attempts_remaining": max(0, 5 - len(recent_failures)),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
     
     async def _handle_medium_threat_login(self, session: HTTPSession, username: str, password: str) -> Dict[str, Any]:
@@ -233,7 +231,7 @@ class HTTPEmulator:
                 "server": random.choice(list(self.service_banners.values())),
                 "alert_level": "MEDIUM",
                 "password_expired": True,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(UTC).isoformat()
             }
         
         return {
@@ -241,7 +239,7 @@ class HTTPEmulator:
             "error": "Invalid credentials",
             "server": random.choice(list(self.service_banners.values())),
             "alert_level": "MEDIUM",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
     
     async def _handle_normal_login(self, session: HTTPSession, username: str, password: str) -> Dict[str, Any]:
@@ -256,7 +254,7 @@ class HTTPEmulator:
                 "user_role": "user",
                 "server": random.choice(list(self.service_banners.values())),
                 "alert_level": "LOW",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(UTC).isoformat()
             }
         
         return {
@@ -264,7 +262,7 @@ class HTTPEmulator:
             "error": "Invalid username or password",
             "server": random.choice(list(self.service_banners.values())),
             "alert_level": "LOW",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
     
     def _get_admin_panel_template(self) -> str:

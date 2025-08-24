@@ -5,12 +5,11 @@ Additional API routes for honeypot management and monitoring.
 Extends the main FastAPI application with specialized endpoints.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from .models import Alert, Log, HoneypotInteraction, AttackerProfile
 from .honeypot.adapter import HoneypotAdapter
 from .honeypot.tokens import HoneytokenGenerator
 

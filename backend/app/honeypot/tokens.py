@@ -5,16 +5,11 @@ Creates and manages honeytokens for detecting attacker activity.
 Generates realistic but fake credentials, API keys, and files.
 """
 
-import asyncio
 import logging
 import random
 import string
-import json
-import base64
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from pathlib import Path
-import hashlib
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +38,15 @@ class HoneytokenGenerator:
                 "password_pattern": "db_{adjective}_{number}!"
             },
             "api": {
-                "usernames": ["api_service", "integration_user", "webhook_handler"],
+                "usernames": ["api_service", "api_user", "api_admin"],
                 "password_pattern": "API_{random}_{year}"
             },
             "backup": {
-                "usernames": ["backup_admin", "sync_service", "archive_user"],
+                "usernames": ["backup_admin", "backup_service", "archive_user"],
                 "password_pattern": "Backup_{month}_{day}!"
             },
             "monitoring": {
-                "usernames": ["nagios", "zabbix", "monitoring", "health_check"],
+                "usernames": ["monitor_admin", "monitor_service", "monitor_user", "health_admin"],
                 "password_pattern": "Monitor_{random}_2023"
             }
         }
@@ -71,7 +66,7 @@ class HoneytokenGenerator:
             "password": password,
             "service_type": service_type,
             "token_id": token_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "accessed": False
         }
         
@@ -100,7 +95,7 @@ class HoneytokenGenerator:
             "api_key": api_key,
             "provider": provider,
             "token_id": token_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "accessed": False,
             "permissions": "read-write" if provider != "generic" else "read-only"
         }
@@ -129,14 +124,14 @@ NhAAAAAwEAAQAAAQEA{self._generate_base64_string(256)}
             "private_key": private_key,
             "public_key": public_key,
             "token_id": token_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "accessed": False,
             "key_type": "rsa",
             "key_size": 2048
         }
         
         self.active_tokens[token_id] = ssh_token
-        logger.info(f"Generated SSH key honeytoken")
+        logger.info("Generated SSH key honeytoken")
         
         return ssh_token
     
@@ -199,7 +194,7 @@ services:
             "content": template["content"],
             "config_type": config_type,
             "token_id": token_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "accessed": False
         }
         
@@ -237,7 +232,7 @@ fetch("{callback_url}/beacon/{beacon_id}/track", {{
             "html_beacon": beacon_html,
             "script_beacon": beacon_script,
             "token_id": token_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "accessed": False
         }
         
@@ -248,7 +243,7 @@ fetch("{callback_url}/beacon/{beacon_id}/track", {{
     
     def _generate_token_id(self) -> str:
         """Generate unique token identifier"""
-        return f"ht_{datetime.utcnow().strftime('%Y%m%d')}_{random.randint(10000, 99999)}"
+        return f"ht_{datetime.now(timezone.utc).strftime('%Y%m%d')}_{random.randint(10000, 99999)}"
     
     def _generate_password_from_pattern(self, pattern: str) -> str:
         """Generate password from pattern template"""
@@ -303,7 +298,7 @@ fetch("{callback_url}/beacon/{beacon_id}/track", {{
         if token_id in self.active_tokens:
             token = self.active_tokens[token_id]
             token["accessed"] = True
-            token["triggered_at"] = datetime.utcnow().isoformat()
+            token["triggered_at"] = datetime.now(timezone.utc).isoformat()
             token["trigger_context"] = trigger_context
             
             self.triggered_tokens.append(token.copy())
@@ -324,7 +319,7 @@ fetch("{callback_url}/beacon/{beacon_id}/track", {{
     
     async def cleanup_expired_tokens(self, max_age_days: int = 30):
         """Remove old honeytokens"""
-        cutoff_date = datetime.utcnow() - timedelta(days=max_age_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=max_age_days)
         
         expired_tokens = []
         for token_id, token in self.active_tokens.items():

@@ -5,7 +5,6 @@ Connects honeypot components with AI engine for adaptive responses.
 Orchestrates the interaction between SSH/HTTP emulators and AI engine.
 """
 
-import asyncio
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any

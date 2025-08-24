@@ -5,15 +5,13 @@ Sets up database connections, session management, and provides utilities
 for database operations in the Mirage honeypot system.
 """
 
-import os
 import logging
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 
 from .database import Base
 from .config import get_config

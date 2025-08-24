@@ -9,12 +9,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
-from datetime import datetime
-from typing import Dict, Any
+from datetime import datetime, UTC
 
 from .honeypot.ssh_emulator import SSHEmulator
 from .honeypot.http_emulator import HTTPEmulator
-from .models import Alert, Log, HoneypotInteraction
 from .routes import router
 
 # Configure logging
@@ -49,7 +47,7 @@ async def root():
     return {
         "status": "running",
         "service": "Mirage Honeypot",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "components": {
             "ssh_emulator": "active",
             "http_emulator": "active",
@@ -81,7 +79,7 @@ async def ssh_interact(command: str, session_id: str = "default"):
             "success": True,
             "output": response,
             "session_id": session_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
     except Exception as e:
         logger.error(f"SSH interaction error: {e}")

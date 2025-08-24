@@ -7,9 +7,8 @@ Supports environment variables, configuration files, and runtime settings.
 
 import os
 import json
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional, List
 from dataclasses import dataclass
-from pathlib import Path
 
 @dataclass
 class DatabaseConfig:

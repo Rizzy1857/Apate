@@ -9,8 +9,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, JSON, F
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional
 
 Base = declarative_base()
 

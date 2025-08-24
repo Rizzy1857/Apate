@@ -6,13 +6,10 @@ Uses AI to generate contextual command outputs and maintain session state.
 Includes honeytoken deployment and advanced fingerprint masking.
 """
 
-import asyncio
 import logging
 import random
-import json
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+from datetime import datetime, UTC
+from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +19,7 @@ class SSHSession:
     def __init__(self, session_id: str, source_ip: str = "unknown"):
         self.session_id = session_id
         self.source_ip = source_ip
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
         self.current_directory = "/home/admin"
         self.command_history = []
         self.environment_vars = {
@@ -106,7 +103,7 @@ class SSHEmulator:
         session = self.sessions[session_id]
         session.command_history.append({
             "command": command,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "directory": session.current_directory
         })
         
