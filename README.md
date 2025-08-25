@@ -4,10 +4,18 @@ An intelligent, next-generation honeypot system that uses Large Language Models 
 
 ## 📖 **Documentation**
 
+### Core Documentation
 - **[📊 Progress Tracking](progress.md)** - Current development status and roadmap
 - **[📚 Usage Guide](usage.md)** - Comprehensive setup and operation guide
-- **[🔧 API Reference](usage.md#-api-reference)** - Detailed API documentation
+- **[🔧 API Reference](API.md)** - Complete API documentation and examples
 - **[🚀 Quick Start](#-quick-start)** - Get started in 5 minutes
+
+### Advanced Documentation
+- **[🔒 Security Policy](SECURITY.md)** - Security guidelines, threat model, and incident response
+- **[🚀 Deployment Guide](DEPLOYMENT.md)** - Production deployment for Docker, Kubernetes, and cloud
+- **[🧪 Test Coverage](COVERAGE.md)** - Testing standards, coverage reports, and quality metrics
+- **[🤝 Contributing](CONTRIBUTING.md)** - Development setup, coding standards, and contribution guidelines
+- **[📋 Changelog](CHANGELOG.md)** - Version history and migration guides
 
 ## 📋 **Table of Contents**
 
