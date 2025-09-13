@@ -1,0 +1,32 @@
+# Apate Honeypot - Full Dependencies (Install PostgreSQL first)
+
+# Database and cache (requires system PostgreSQL libraries)
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+redis==5.0.1
+alembic==1.12.1
+
+# Security and authentication
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
+# Monitoring and logging
+prometheus-client==0.19.0
+structlog==23.2.0
+
+# Protocol and network utilities
+scapy==2.5.0
+paramiko==3.3.1
+
+# Additional development tools
+pytest-cov==4.1.0
+mypy==1.7.1
+
+# Docker and deployment
+gunicorn==21.2.0
+
+# Install Instructions:
+# macOS: brew install postgresql
+# Ubuntu/Debian: sudo apt-get install postgresql-dev libpq-dev
+# RHEL/CentOS: sudo yum install postgresql-devel
+# Then: pip install -r requirements-full.txt

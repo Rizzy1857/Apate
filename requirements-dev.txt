@@ -1,0 +1,33 @@
+# Development dependencies for Apate Honeypot
+
+# Code quality and linting
+black==23.11.0
+ruff==0.1.6
+mypy==1.7.1
+pre-commit==3.6.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.25.2
+faker==20.1.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+mkdocs-swagger-ui-tag==0.6.6
+
+# Development tools
+ipython==8.17.2
+jupyter==1.0.0
+python-dotenv==1.0.0
+
+# Security scanning
+bandit==1.7.5
+safety==2.3.5
+
+# Performance profiling
+py-spy==0.3.14
+memory-profiler==0.61.0
