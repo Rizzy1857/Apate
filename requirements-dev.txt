@@ -26,8 +26,14 @@ python-dotenv==1.0.0
 
 # Security scanning
 bandit==1.7.5
-safety==2.3.5
+safety>=3.2.4
+# Ensure compatibility for black/pytest/mkdocs/safety
+packaging>=23.2
 
 # Performance profiling
 py-spy==0.3.14
 memory-profiler==0.61.0
+
+# Database
+SQLAlchemy>=2.0.36
+aiosqlite>=0.19.0

@@ -11,6 +11,7 @@
 ### Option 1: Automated Setup (Recommended)
 
 #### macOS/Linux:
+
 ```bash
 # Clone the repository
 git clone https://github.com/Rizzy1857/Apate.git
@@ -22,6 +23,7 @@ chmod +x setup_dev.sh
 ```
 
 #### Windows:
+
 ```cmd
 # Clone the repository
 git clone https://github.com/Rizzy1857/Apate.git
@@ -59,6 +61,7 @@ python backend/main.py
 ```
 
 The API will be available at:
+
 - **API Base**: http://localhost:8000
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
@@ -107,7 +110,9 @@ curl http://localhost:8000/health
 ## Troubleshooting
 
 ### Import Errors
+
 If you see FastAPI import errors:
+
 ```bash
 # Ensure virtual environment is activated
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -117,7 +122,9 @@ pip install -r requirements.txt
 ```
 
 ### Port Already in Use
+
 If port 8000 is busy:
+
 ```bash
 # Kill process using port 8000
 lsof -ti:8000 | xargs kill -9

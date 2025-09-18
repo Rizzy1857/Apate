@@ -91,9 +91,12 @@ class HTTPEmulator:
         }
         session.login_attempts.append(attempt)
         
-        # Track failed logins for rate limiting simulation
+        # Track failed logins for rate limiting simulation (per IP)
+        now = datetime.now(UTC)
         if source_ip not in self.failed_login_tracking:
             self.failed_login_tracking[source_ip] = []
+        # Record every attempt (failed by default in this honeypot)
+        self.failed_login_tracking[source_ip].append(now)
         
         # Log the attempt
         logger.info(f"HTTP Login attempt from {source_ip}: {username}:{password}")
@@ -136,6 +139,18 @@ class HTTPEmulator:
             score += 3
         elif len(recent_attempts) > 5:
             score += 2
+
+        # Per-IP brute force across sessions
+        ip_failures = self.failed_login_tracking.get(session.source_ip, [])
+        ip_recent_failures = [t for t in ip_failures if t > datetime.now(UTC) - timedelta(minutes=5)]
+        if len(ip_recent_failures) > 12:
+            score += 5
+        elif len(ip_recent_failures) > 8:
+            score += 4
+        elif len(ip_recent_failures) > 5:
+            score += 3
+        elif len(ip_recent_failures) > 3:
+            score += 2
         
         # Common attack usernames
         attack_usernames = ["admin", "administrator", "root", "user", "guest", "test"]
@@ -145,6 +160,10 @@ class HTTPEmulator:
         # Weak passwords
         weak_passwords = ["password", "123456", "admin", "root", "guest"]
         if password.lower() in weak_passwords:
+            score += 1
+
+        # Combination of common admin username + weak password should be elevated
+        if username.lower() in ["admin", "administrator", "root"] and password.lower() in weak_passwords:
             score += 1
         
         # Suspicious user agents
@@ -181,9 +200,6 @@ class HTTPEmulator:
     async def _handle_high_threat_login(self, session: HTTPSession, username: str, password: str) -> Dict[str, Any]:
         """Handle high-threat login attempts"""
         session.threat_score += 2.0
-        
-        # Add failed login to tracking
-        self.failed_login_tracking[session.source_ip].append(datetime.now(UTC))
         
         # Simulate account lockout or rate limiting
         recent_failures = [

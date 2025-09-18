@@ -29,6 +29,10 @@ python-dotenv==1.0.0
 # psycopg2-binary==2.9.9  # Requires PostgreSQL dev libraries
 # redis==5.0.1
 
+# Database (async) for persistence without external services
+SQLAlchemy>=2.0.36
+aiosqlite>=0.19.0
+
 # Optional: Security (install separately if needed)  
 # passlib[bcrypt]==1.7.4
 # python-jose[cryptography]==3.3.0

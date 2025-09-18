@@ -169,7 +169,9 @@ class SSHEmulator:
                             result.append(f"-rw-r--r-- 1 admin admin 1024 Aug 24 10:30 {item}")
                 return "\n".join(result)
             else:
-                return "  ".join(contents)
+                # Include current directory header to make output more realistic
+                header = f"{target_dir}:\n" if target_dir != "/" else ""
+                return header + "  ".join(contents)
         else:
             return f"ls: cannot access '{target_dir}': No such file or directory"
     

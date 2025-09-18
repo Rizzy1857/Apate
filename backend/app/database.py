@@ -49,7 +49,7 @@ class HoneypotInteractionDB(Base):
     success = Column(Boolean)
     ai_generated_response = Column(Boolean, default=False)
     honeytoken_triggered = Column(String(64))  # ID of triggered honeytoken
-    metadata = Column(JSON)
+    meta = Column(JSON)
     
     # Relationships
     session = relationship("HoneypotSession", back_populates="interactions")
@@ -139,7 +139,7 @@ class ThreatIntelDB(Base):
     last_seen = Column(DateTime, default=func.now(), nullable=False)
     source = Column(String(128))  # Source of intelligence
     description = Column(Text)
-    metadata = Column(JSON)
+    meta = Column(JSON)
     is_active = Column(Boolean, default=True)
 
 class ConfigurationDB(Base):
@@ -183,7 +183,7 @@ def create_interaction_from_pydantic(interaction_data: dict, session_id: int) ->
         success=interaction_data.get("success"),
         ai_generated_response=interaction_data.get("ai_generated_response", False),
         honeytoken_triggered=interaction_data.get("honeytoken_triggered"),
-        metadata=interaction_data.get("metadata")
+    meta=interaction_data.get("metadata")
     )
 
 def create_alert_from_pydantic(alert_data: dict, session_id: Optional[int] = None) -> AlertDB:

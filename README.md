@@ -5,17 +5,19 @@ An intelligent, next-generation honeypot system that uses Large Language Models 
 ## 📖 **Documentation**
 
 ### Core Documentation
-- **[📊 Progress Tracking](progress.md)** - Current development status and roadmap
-- **[📚 Usage Guide](usage.md)** - Comprehensive setup and operation guide
-- **[🔧 API Reference](API.md)** - Complete API documentation and examples
+
+- **[📊 Progress Tracking](docs/progress.md)** - Current development status and roadmap
+- **[📚 Usage Guide](docs/usage.md)** - Comprehensive setup and operation guide
+- **[🔧 API Reference](docs/API.md)** - Complete API documentation and examples
 - **[🚀 Quick Start](#-quick-start)** - Get started in 5 minutes
 
 ### Advanced Documentation
-- **[🔒 Security Policy](SECURITY.md)** - Security guidelines, threat model, and incident response
-- **[🚀 Deployment Guide](DEPLOYMENT.md)** - Production deployment for Docker, Kubernetes, and cloud
-- **[🧪 Test Coverage](COVERAGE.md)** - Testing standards, coverage reports, and quality metrics
-- **[🤝 Contributing](CONTRIBUTING.md)** - Development setup, coding standards, and contribution guidelines
-- **[📋 Changelog](CHANGELOG.md)** - Version history and migration guides
+
+- **[🔒 Security Policy](docs/SECURITY.md)** - Security guidelines, threat model, and incident response
+- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment for Docker, Kubernetes, and cloud
+- **[🧪 Test Coverage](docs/COVERAGE.md)** - Testing standards, coverage reports, and quality metrics
+- **[🤝 Contributing](docs/CONTRIBUTING.md)** - Development setup, coding standards, and contribution guidelines
+- **[📋 Changelog](docs/CHANGELOG.md)** - Version history and migration guides
 
 ## 📋 **Table of Contents**
 
@@ -36,21 +38,21 @@ An intelligent, next-generation honeypot system that uses Large Language Models 
 
 ### Adaptive Engagement
 
-- **AI-Driven Responses**: Uses LLMs to generate contextual, realistic responses that adapt to attacker behavior
-- **Dynamic Environment**: File systems, services, and responses evolve based on attacker actions
-- **Behavioral Learning**: Analyzes attacker patterns to improve deception effectiveness
+- **AI-Driven Responses** (Planned): Will use LLMs to generate contextual, realistic responses that adapt to attacker behavior
+- **Dynamic Environment** (Partial): File systems, services, and responses evolve based on attacker actions within current emulators
+- **Behavioral Learning** (Planned): Persist attacker patterns to improve deception effectiveness
 
 ### Advanced Deception
 
-- **Fingerprint Morphing**: Actively changes system signatures to avoid detection
-- **Smart Honeytokens**: Context-aware deployment of credentials, API keys, and files
-- **Multi-Protocol Support**: SSH, HTTP, TCP, and IoT device emulation
+- **Fingerprint Morphing** (Planned): Actively change system signatures to avoid detection
+- **Smart Honeytokens** (Implemented): Context-aware deployment of credentials, API keys, and files
+- **Multi-Protocol Support** (Partial): SSH, HTTP, TCP implemented; IoT device emulation planned
 
 ### Intelligence-Focused
 
-- **High-Signal Alerts**: Only triggers on meaningful attacker actions
-- **Threat Enrichment**: Automatic correlation with external threat intelligence
-- **Behavioral Profiling**: Builds comprehensive attacker profiles over time
+- **High-Signal Alerts** (Partial): Triggers on meaningful attacker actions; alerting pipeline planned
+- **Threat Enrichment** (Planned): Automatic correlation with external threat intelligence
+- **Behavioral Profiling** (Planned): Build comprehensive attacker profiles over time
 
 ## 🚀 Quick Start
 
