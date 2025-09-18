@@ -37,6 +37,8 @@ _MEM_ALERTS: List[Dict[str, Any]] = []
 _engine = None
 _Session: Optional[async_sessionmaker[AsyncSession]] = None
 _DB_URL = os.getenv("APATE_DB_URL", "sqlite+aiosqlite:///./apate.db")
+# Respect Alembic-managed schema if flag is set
+_USE_ALEMBIC = os.getenv("APATE_USE_ALEMBIC", "0") in {"1", "true", "True"}
 
 if _SA_AVAILABLE:
     class Base(DeclarativeBase):
@@ -67,7 +69,10 @@ async def init_database() -> bool:
         _engine = create_async_engine(_DB_URL, pool_pre_ping=True, pool_recycle=180)
         _Session = async_sessionmaker(bind=_engine, expire_on_commit=False)
         async with _engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            if not _USE_ALEMBIC:
+                await conn.run_sync(Base.metadata.create_all)
+            else:
+                logger.info("Skipping create_all; APATE_USE_ALEMBIC is enabled.")
         logger.info(f"DB init complete (url={_DB_URL})")
         return True
     except Exception as exc:  # pragma: no cover

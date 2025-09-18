@@ -162,3 +162,70 @@ jobs:
         path: |
           bandit-report.json
           safety-report.json
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Type check (mypy)
+        run: mypy backend || true
+
+      - name: Run tests (pytest)
+        env:
+          APATE_DB_URL: sqlite+aiosqlite:///./apate_ci.db
+        run: |
+          pytest -q
+
+  rust:
+    if: ${{ hashFiles('rust-protocol/Cargo.toml') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cargo test
+        working-directory: rust-protocol
+        run: cargo test --all --quiet
+
+  go:
+    if: ${{ hashFiles('go-services/go.mod') != '' || hashFiles('go-services/main.go') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Go build
+        working-directory: go-services
+        run: |
+          if [ -f go.mod ]; then
+            go build ./...
+          elif [ -f main.go ]; then
+            go build main.go
+          fi
