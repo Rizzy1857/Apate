@@ -16,6 +16,7 @@ import asyncio
 import uvicorn
 from datetime import datetime, UTC
 import os
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from .honeypot.ssh_emulator import SSHEmulator
 from .honeypot.http_emulator import HTTPEmulator
@@ -147,16 +148,19 @@ async def http_login(body: HTTPLoginRequest):
         # Best-effort alerting for suspicious attempts
         try:
             from .db_manager import create_alert, log_interaction  # lazy import
+            from .notifier import notify_alert
             await log_interaction(
                 service="http",
                 payload={"username": body.username, "ip": body.ip, "result": result},
             )
             if result.get("threat_level") in {"HIGH", "CRITICAL"}:  # escalate
+                msg = f"Suspicious login for {body.username} from {body.ip}"
                 await create_alert(
                     level=result["threat_level"],
-                    message=f"Suspicious login for {body.username} from {body.ip}",
+                    message=msg,
                     meta=result,
                 )
+                await notify_alert(result["threat_level"], msg, result)
         except Exception:
             pass
         return result
@@ -183,6 +187,37 @@ async def get_logs(limit: int = 50):
         return {"logs": logs, "count": len(logs)}
     except Exception:
         return {"logs": [], "count": 0}
+
+REQUEST_COUNT = Counter(
+    "apate_requests_total",
+    "Total HTTP requests",
+    labelnames=("method", "path", "status"),
+)
+REQUEST_LATENCY = Histogram(
+    "apate_request_latency_seconds",
+    "Request latency",
+    labelnames=("method", "path"),
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5),
+)
+
+@app.middleware("http")
+async def _metrics_middleware(request, call_next):
+    method = request.method
+    path = request.url.path
+    start = datetime.now(UTC)
+    try:
+        response = await call_next(request)
+        status = str(response.status_code)
+        return response
+    finally:
+        duration = (datetime.now(UTC) - start).total_seconds()
+        REQUEST_COUNT.labels(method=method, path=path, status=locals().get("status", "500")).inc()
+        REQUEST_LATENCY.labels(method=method, path=path).observe(duration)
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    data = generate_latest()
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 # Lifespan events
 @app.on_event("startup")

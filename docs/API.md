@@ -61,6 +61,7 @@ Basic health check endpoint.
 Detailed system status information.
 
 **Response:**
+
 ```json
 {
   "system": "healthy",
