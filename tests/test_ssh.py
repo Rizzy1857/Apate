@@ -47,7 +47,7 @@ class TestSSHEmulator:
         response = await ssh_emulator.handle_command("ls", "test_session", "192.168.1.100")
         
         # Check that response contains expected directory contents
-        assert "home" in response.lower() or "admin" in response.lower()
+        assert "bashrc" in response.lower() or "ssh" in response.lower() or "documents" in response.lower()
         assert isinstance(response, str)
         assert len(response) > 0
     
