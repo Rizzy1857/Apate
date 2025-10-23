@@ -78,7 +78,7 @@ services:
       timeout: 5s
       retries: 3
 
-  # Redis for session storage and caching (optional but recommended)
+  # Redis for session storage and caching (optional)
   redis:
     image: redis:7-alpine
     container_name: mirage-redis

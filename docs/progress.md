@@ -2,9 +2,13 @@
 
 ## 📊 **Project Overview**
 
-**Apate** is an advanced, AI-driven honeypot platform designed to create adaptive, realistic deception environments. The project combines multiple technologies to deliver next-generation threat detection and analysis capabilities.
+**Project Mirage** is an adaptive honeypot with a five-layer cognitive deception framework, transforming the existing Apate honeypot into an intelligent deception platform. The system uses a hierarchical architecture with deterministic safety, predictive modeling, behavioral classification, reinforcement learning, and generative content capabilities.
 
-**Current Status**: **Production Ready Core** (87% Complete)
+**Current Status**: **Foundation Complete** (87% Complete)  
+**Target Architecture**: 5-Layer Cognitive Deception System  
+**Primary Metric**: Mean Time To Discovery (MTTD)  
+**Current Baseline MTTD**: 2-5 minutes (static honeypot)  
+**Ultimate Goal MTTD**: 45-60+ minutes (with all five layers)
 
 ---
 
@@ -12,7 +16,7 @@
 
 | Component | Status | Progress | Last Updated |
 |-----------|--------|----------|--------------|
-| **Core Honeypot Logic** | ✅ Complete | 100% | 2025-08-24 |
+| **Apate Foundation (Core Honeypot)** | ✅ Complete | 100% | 2025-08-24 |
 | **Backend API (FastAPI)** | ✅ Complete | 100% | 2025-08-24 |
 | **Rust Protocol Library** | ✅ Complete | 100% | 2025-08-24 |
 | **Testing Infrastructure** | ✅ Complete | 100% | 2025-08-24 |
@@ -21,11 +25,68 @@
 | **Database Integration** | ✅ Complete | 100% | 2025-08-24 |
 | **Code Quality Tools** | ✅ Complete | 100% | 2025-08-24 |
 | **Documentation** | ✅ Complete | 100% | 2024-12-24 |
-| **Go IoT Services** | ⏳ Planned | 0% | - |
-| **AI Engine Integration** | ⏳ Planned | 0% | - |
-| **Production Monitoring** | ⏳ Planned | 0% | - |
+| **Layer 0: Reflex Layer (Rust)** | 🔄 In Progress | 15% | - |
+| **Layer 1: Intuition Layer (HMM)** | ⏳ Planned | 0% | Q1 2026 |
+| **Layer 2: Reasoning Layer (ML)** | ⏳ Planned | 0% | Q2 2026 |
+| **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
+| **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
 
-**Overall Completion**: 87%
+**Overall Foundation**: 87% ✅  
+**Mirage Architecture**: 3% (Layer 0 in progress)
+
+---
+
+## 🏗️ **Mirage Architecture Overview**
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 4: Persona Layer (Generative Content)                 │
+│ Technology: Python + LLM APIs | Status: Planned Q4 2026     │
+│ Function: Context-aware conversational responses            │
+│ MTTD Contribution: +10-15 minutes                          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 3: Strategy Layer (Reinforcement Learning)            │
+│ Technology: Python → Rust + PPO | Status: Planned Q3 2026   │
+│ Function: Long-term engagement optimization                 │
+│ MTTD Contribution: +10-15 minutes                          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 2: Reasoning Layer (Behavioral Classification)        │
+│ Technology: Python + scikit-learn | Status: Planned Q2 2026 │
+│ Function: Attacker profiling and strategy generation        │
+│ MTTD Contribution: +10-15 minutes                          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 1: Intuition Layer (Predictive Modeling)              │
+│ Technology: Python + HMM/Markov | Status: Planned Q1 2026   │
+│ Function: Real-time command sequence prediction             │
+│ MTTD Contribution: +10-15 minutes                          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 0: Reflex Layer (Deterministic Safety)                │
+│ Technology: Rust | Status: In Progress Q4 2025              │
+│ Function: Sub-millisecond threat containment                │
+│ MTTD Contribution: +5-10 minutes                           │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+                    [Apate Foundation - Complete]
+                   SSH, HTTP, Honeytoken System, Database
+```
+
+**MTTD Progression Targets:**
+
+| Phase | Layers Active | Target MTTD | Improvement Factor | Timeline |
+|-------|---------------|-------------|--------------------|----------|
+| **Baseline** | Apate Core (Static) | 2-5 min | 1x | Current |
+| **Phase 1** | Layer 0+1 | 15-20 min | 3-4x | Q1 2026 |
+| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
+| **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
+| **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |
 
 ---
 
@@ -163,27 +224,152 @@
 
 ## ⏳ **Planned Components**
 
-### 1. **Go IoT Services** (Priority: Medium)
+## ⏳ **Planned Components**
 
-**Purpose**: Simulate realistic IoT device endpoints for comprehensive attack surface coverage.
+---
+
+## ⏳ **Mirage Layer Implementation Plan**
+
+### 1. **Layer 0: Reflex Layer (Rust Implementation)** (Priority: Critical - Q4 2025)
+
+**Purpose**: Sub-millisecond deterministic threat detection and response system.
 
 **Planned Features**:
 
-- Camera device simulation (`/camera/*` endpoints)
-- Sensor data APIs with realistic payloads
-- Configuration endpoints with default credentials
-- Firmware update simulation
-- Device discovery protocols
+- High-performance Rust-based rule engine using PyO3 FFI
+- Protocol-aware state machines (SSH, HTTP, TCP/UDP)
+- Lock-free concurrent data structures for session tracking
+- Pre-compiled response templates with latency injection
+- Circuit breaker patterns for graceful degradation
 
 **Implementation Plan**:
 
-- Create Go service with Gin framework
-- Add device-specific API endpoints
-- Implement realistic response patterns
-- Add integration with main honeypot system
-- Create device fingerprinting capabilities
+- Migrate critical path from Python to Rust (Weeks 1-2)
+- Implement deterministic threat detection (Weeks 3-4)  
+- Create Python-Rust integration layer (Weeks 5-6)
+- Performance optimization and load testing
+- Target: <1ms response latency, 99.9% uptime
 
-**Estimated Timeline**: 2-3 weeks
+**Estimated Timeline**: 6 weeks
+
+---
+
+### 2. **Layer 1: Intuition Layer (Predictive Modeling)** (Priority: High - Q1 2026)
+
+**Purpose**: Real-time attacker behavior prediction using Hidden Markov Models.
+
+**Planned Features**:
+
+- Variable-order Markov chains for command sequence analysis
+- Probabilistic Suffix Trees for efficient pattern matching
+- Bayesian inference for attacker intent classification
+- Service-specific prediction models (SSH, HTTP)
+- Cross-protocol correlation and session stitching
+
+**Implementation Plan**:
+
+- Mathematical foundation (HMM, PST, Bayesian) (Weeks 1-2)
+- Service-specific model development (Weeks 3-4)
+- Performance optimization with Cython (Weeks 5-6)
+- Data collection and model training (Weeks 7-8)
+- Target: >70% next-command prediction accuracy, <50ms latency
+
+**Estimated Timeline**: 8 weeks
+
+---
+
+### 3. **Layer 2: Reasoning Layer (Behavioral Classification)** (Priority: High - Q2 2026)
+
+**Purpose**: Attacker profiling and adaptive strategy generation using Machine Learning.
+
+**Planned Features**:
+
+- Multi-dimensional feature extraction (temporal, semantic, behavioral)
+- Random Forest ensemble for attacker classification
+- Strategy vector generation (enticement, complexity, latency, breadcrumbing)
+- Incremental learning with online model updates
+- A/B testing framework for strategy effectiveness
+
+**Implementation Plan**:
+
+- Feature engineering pipeline development (Weeks 1-3)
+- Classification model implementation (Weeks 4-6)
+- Strategy generation framework (Weeks 7-9)
+- Integration and validation testing (Weeks 10-12)
+- Target: >80% classification accuracy, <100ms latency
+
+**Estimated Timeline**: 12 weeks
+
+---
+
+### 4. **Layer 3: Strategy Layer (Reinforcement Learning)** (Priority: Medium - Q3 2026)
+
+**Purpose**: Long-term engagement optimization via self-learning strategies.
+
+**Planned Features**:
+
+- Proximal Policy Optimization (PPO) for strategy learning
+- Multi-dimensional continuous action space
+- Experience replay with prioritized sampling
+- Distributed training infrastructure with Ray/RLlib
+- Rust migration for sub-10ms inference
+
+**Implementation Plan**:
+
+- RL environment design and reward function (Weeks 1-4)
+- PPO algorithm implementation and training (Weeks 5-8)
+- Distributed training infrastructure (Weeks 9-11)
+- Rust migration and production deployment (Weeks 12-14)
+- Target: 20% MTTD improvement, <10ms inference
+
+**Estimated Timeline**: 14 weeks
+
+---
+
+### 5. **Layer 4: Persona Layer (Generative Content)** (Priority: Medium - Q4 2026)
+
+**Purpose**: Natural language interaction using Large Language Models.
+
+**Planned Features**:
+
+- OpenAI/Anthropic API integration with fallbacks
+- Context-aware prompt engineering framework
+- Multi-persona templates (sysadmin, developer, security, novice)
+- Rust caching proxy for sub-50ms responses
+- Cost optimization with strategic LLM invocation
+
+**Implementation Plan**:
+
+- LLM integration and prompt engineering (Weeks 1-3)
+- Response generation and persona management (Weeks 4-6)
+- Caching optimization and local model deployment (Weeks 7-9)
+- Turing test evaluation and cost optimization (Weeks 10-12)
+- Target: >70% human-like rating, 10-15 min MTTD increase
+
+**Estimated Timeline**: 12 weeks
+
+---
+
+### 6. **Production Monitoring & MLOps** (Priority: Medium - Ongoing)
+
+**Purpose**: Comprehensive observability and model lifecycle management.
+
+**Planned Features**:
+
+- Layer-specific performance metrics (Prometheus/Grafana)
+- MTTD tracking and visualization dashboards
+- Automated model retraining and drift detection
+- A/B testing platform for strategy comparison
+- Cost monitoring and resource optimization
+
+**Implementation Plan**:
+
+- Metrics collection and dashboard creation (Q4 2025)
+- MLflow integration for experiment tracking (Q1 2026)
+- Continuous training pipeline automation (Q2 2026)
+- Advanced alerting and capacity planning (Q3 2026)
+
+**Estimated Timeline**: Parallel development track
 
 ### 2. **AI Engine Integration** (Priority: High)
 
@@ -335,35 +521,48 @@
 
 ## 📝 **Next Actions**
 
-### Immediate (This Week)
+### Current Focus: Layer 0 Implementation (Q4 2025)
 
-1. ✅ Complete documentation (progress.md, usage.md)
-2. ✅ Fix remaining linting issues (All Ruff issues resolved)
-3. ✅ Add API documentation with OpenAPI/Swagger
+**Immediate Priority**: Migrate critical path from Python to Rust for sub-millisecond response times.
 
-### Priority Focus
+### Phase 1 Milestones (Q4 2025 - Q1 2026)
 
-**Next Major Component**: Go IoT Services implementation (Medium Priority, 2-3 week timeline)
+1. **Week 1-6**: Layer 0 (Reflex Layer) implementation in Rust
+   - FFI integration with existing Python backend
+   - Deterministic threat detection engine
+   - Performance benchmarking (<1ms response target)
 
-**Alternative High Priority**: AI Engine Integration (3-4 week timeline for adaptive responses)
+2. **Week 7-14**: Layer 1 (Intuition Layer) development  
+   - Hidden Markov Model implementation
+   - Command sequence prediction (>70% accuracy target)
+   - Bayesian inference for attacker intent
 
-### Short Term (Next 2 Weeks)
+3. **Week 15-16**: Phase 1 validation and MTTD measurement
+   - A/B testing against static baseline
+   - Target: 15-20 minutes MTTD (3-4x improvement)
+   - Statistical significance validation
 
-1. Implement Go IoT services
-2. Begin AI engine integration
-3. Add comprehensive logging configuration
+### Phase 2 Planning (Q1-Q2 2026)
 
-### Medium Term (Next Month)
+1. **Layer 2**: Behavioral classification with Random Forest
+2. **Feature Engineering**: Multi-dimensional attacker profiling
+3. **Strategy Generation**: Adaptive response frameworks
 
-1. Complete AI engine with OpenAI/Anthropic integration
-2. Add production monitoring stack
-3. Performance optimization and load testing
+### Long Term Roadmap
 
-### Long Term (Next Quarter)
+- **Q2 2026**: Layer 2 (Reasoning Layer) - Behavioral Classification
+- **Q3 2026**: Layer 3 (Strategy Layer) - Reinforcement Learning  
+- **Q4 2026**: Layer 4 (Persona Layer) - LLM Integration
+- **2027**: Advanced threat intelligence and federated learning
 
-1. Advanced threat intelligence feeds
-2. Machine learning for behavioral analysis
-3. Multi-tenant deployment support
+### Success Metrics
+
+| Metric | Current | Phase 1 Target | Ultimate Goal |
+|--------|---------|----------------|---------------|
+| **MTTD (Mean)** | 3 min | 17 min | 52 min |
+| **Layer 0 Latency** | N/A | <1ms | <1ms |
+| **Layer 1 Accuracy** | N/A | >70% | >80% |
+| **System Uptime** | 99% | >99.9% | >99.99% |
 
 ---
 

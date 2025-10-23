@@ -1,9 +1,19 @@
 """
-AI Engine
----------
-Handles LLM integration for adaptive honeypot responses.
-Generates contextual, realistic responses that adapt to attacker behavior.
-Supports multiple LLM providers and local models.
+AI Engine - Foundation Layer
+----------------------------
+This is the foundation AI engine that will be superseded by the Mirage
+five-layer cognitive architecture. Currently provides basic stubbed responses
+and will serve as the base for Layer 4 (Persona Layer) implementation.
+
+The new architecture will include:
+- Layer 0: Rust reflex layer (sub-millisecond deterministic responses)
+- Layer 1: Intuition layer (HMM command prediction)
+- Layer 2: Reasoning layer (ML behavioral classification)
+- Layer 3: Strategy layer (RL optimization)
+- Layer 4: Persona layer (LLM-based responses) - evolution of this module
+
+This engine provides the foundation and will be integrated into the cognitive
+director when the full Mirage architecture is implemented.
 """
 
 import asyncio

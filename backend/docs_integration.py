@@ -37,6 +37,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
     Returns:
         Enhanced OpenAPI schema dictionary
     """
+    #The below code is yet to be tested and adjusted as per the actual app structure.
     if app.openapi_schema:
         return app.openapi_schema
         
@@ -141,11 +142,13 @@ def setup_swagger_ui_config() -> Dict[str, Any]:
         "defaultModelRendering": "model",
         "displayRequestDuration": True,
         "docExpansion": "list",
-        "filter": True,
-        "showExtensions": True,
-        "showCommonExtensions": True,
-        "tryItOutEnabled": True,
-        "requestSnippetsEnabled": True,
+        "filter": True, # Enable filtering of endpoints
+        "operationsSorter": "alpha", # Sort operations alphabetically
+        "tagsSorter": "alpha", # Sort tags alphabetically
+        "showExtensions": True, # Enable display of vendor extensions
+        "showCommonExtensions": True, # Show common extensions like x-code-samples
+        "tryItOutEnabled": True,    # Enable "Try it out" functionality
+        "requestSnippetsEnabled": True, # Enable request snippets
         "requestSnippets": {
             "generators": {
                 "curl_bash": {

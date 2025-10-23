@@ -1,6 +1,10 @@
-# Mirage - Adaptive LLM-Driven Honeypot
+# Project Mirage - Adaptive Cognitive Deception Framework
 
-An intelligent, next-generation honeypot system that uses Large Language Models (LLMs) to create adaptive, realistic deception environments. Mirage solves the key problems of traditional honeypots: easy detection and low-value logs.
+A next-generation honeypot system that uses a five-layer cognitive architecture to create adaptive, intelligent deception environments. Mirage transforms traditional honeypots from static decoys into dynamic, learning systems that adapt to attacker behavior in real-time.
+
+**Primary Metric**: Mean Time To Discovery (MTTD)  
+**Current Baseline**: 2-5 minutes (static honeypot)  
+**Target Goal**: 45-60+ minutes (9-12x improvement)
 
 ## 📖 **Documentation**
 
@@ -36,23 +40,27 @@ An intelligent, next-generation honeypot system that uses Large Language Models 
 
 ## 🎯 What Makes Mirage Different
 
-### Adaptive Engagement
+### Five-Layer Cognitive Architecture
 
-- **AI-Driven Responses** (Planned): Will use LLMs to generate contextual, realistic responses that adapt to attacker behavior
-- **Dynamic Environment** (Partial): File systems, services, and responses evolve based on attacker actions within current emulators
-- **Behavioral Learning** (Planned): Persist attacker patterns to improve deception effectiveness
+- **Layer 0 - Reflex Layer**: Sub-millisecond deterministic threat detection in Rust
+- **Layer 1 - Intuition Layer**: Real-time command prediction using Hidden Markov Models  
+- **Layer 2 - Reasoning Layer**: Attacker behavioral classification with Machine Learning
+- **Layer 3 - Strategy Layer**: Long-term engagement optimization via Reinforcement Learning
+- **Layer 4 - Persona Layer**: Context-aware conversational responses using LLMs
 
-### Advanced Deception
+### Adaptive Intelligence
 
-- **Fingerprint Morphing** (Planned): Actively change system signatures to avoid detection
-- **Smart Honeytokens** (Implemented): Context-aware deployment of credentials, API keys, and files
-- **Multi-Protocol Support** (Partial): SSH, HTTP, TCP implemented; IoT device emulation planned
+- **Predictive Modeling**: Anticipates attacker actions before they happen
+- **Behavioral Learning**: Builds comprehensive attacker profiles over time
+- **Strategic Optimization**: Learns optimal deception strategies through self-play
+- **Dynamic Personas**: Maintains consistent character across extended interactions
 
-### Intelligence-Focused
+### Measurable Impact
 
-- **High-Signal Alerts** (Partial): Triggers on meaningful attacker actions; alerting pipeline planned
-- **Threat Enrichment** (Planned): Automatic correlation with external threat intelligence
-- **Behavioral Profiling** (Planned): Build comprehensive attacker profiles over time
+- **MTTD Optimization**: Primary focus on maximizing Mean Time To Discovery
+- **Statistical Validation**: A/B testing framework for strategy effectiveness
+- **Performance Monitoring**: Real-time metrics across all cognitive layers
+- **Cost Efficiency**: Intelligent resource allocation and LLM usage optimization
 
 ## 🚀 Quick Start
 
@@ -284,21 +292,43 @@ services:
 
 ## 📊 **Project Status**
 
-**Current Completion**: 85% ✅
+**Foundation Complete**: 87% ✅  
+**Mirage Architecture**: 3% (Layer 0 in progress)
+
+### Current Implementation Status
+
+| Layer | Component | Status | Target Timeline |
+|-------|-----------|--------|-----------------|
+| **Foundation** | Apate Core (SSH/HTTP/DB) | ✅ Complete | - |
+| **Layer 0** | Reflex Layer (Rust) | 🔄 In Progress | Q4 2025 |
+| **Layer 1** | Intuition Layer (HMM) | ⏳ Planned | Q1 2026 |
+| **Layer 2** | Reasoning Layer (ML) | ⏳ Planned | Q2 2026 |
+| **Layer 3** | Strategy Layer (RL) | ⏳ Planned | Q3 2026 |
+| **Layer 4** | Persona Layer (LLM) | ⏳ Planned | Q4 2026 |
+
+### MTTD Progression Targets
+
+| Phase | Layers Active | Target MTTD | Improvement | Timeline |
+|-------|---------------|-------------|-------------|----------|
+| **Baseline** | Static Foundation | 2-5 min | 1x | Current |
+| **Phase 1** | Layer 0+1 | 15-20 min | 3-4x | Q1 2026 |
+| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
+| **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
+| **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |
+
+### Completed Foundation Components
 
 | Component | Status | Notes |
 |-----------|--------|-------|
 | 🔧 Core Honeypot Logic | ✅ Complete | SSH/HTTP emulators, honeytokens |
-| 🚀 Backend API | ✅ Complete | FastAPI with all endpoints |
-| 🦀 Rust Protocol Services | ✅ Complete | TCP services, utilities |
+| 🚀 Backend API | ✅ Complete | FastAPI with comprehensive endpoints |
+| 🦀 Rust Protocol Services | ✅ Complete | TCP services, foundation for Layer 0 |
 | 🧪 Testing Infrastructure | ✅ Complete | 53 tests, 100% pass rate |
 | 🔄 CI/CD Pipeline | ✅ Complete | GitHub Actions, automated testing |
 | 🐳 Docker Infrastructure | ✅ Complete | Multi-service deployment |
-| 📚 Documentation | 🔄 In Progress | Usage guides, API docs |
-| 🤖 AI Engine Integration | ⏳ Planned | OpenAI/Anthropic integration |
-| 🏭 Go IoT Services | ⏳ Planned | IoT device simulation |
+| 📚 Documentation | ✅ Complete | Architecture, API docs, guides |
 
-See **[📊 Progress Tracking](progress.md)** for detailed status and roadmap.
+See **[📊 Progress Tracking](docs/progress.md)** for detailed status and **[🏗️ AI Engine Plan](AI_Engine_Plan.md)** for complete architecture specification.
 
 ## 🤝 Contributing
 

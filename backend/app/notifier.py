@@ -20,21 +20,8 @@ import logging
 from typing import Any, Dict
 
 import httpx
-from prometheus_client import Counter
 
 logger = logging.getLogger(__name__)
-
-# Prometheus counters
-ALERTS_SENT = Counter(
-    "apate_alerts_sent_total",
-    "Alerts sent successfully",
-    labelnames=("level", "type"),
-)
-ALERTS_FAILED = Counter(
-    "apate_alerts_failed_total",
-    "Alert send failures",
-    labelnames=("level", "type", "reason"),
-)
 
 _LEVEL_ORDER = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
 
@@ -75,25 +62,16 @@ async def notify_alert(level: str, message: str, meta: Dict[str, Any] | None = N
     if not _dedup_ok(key):
         return
 
-    lvl = level.upper()
-    typ = _WEBHOOK_TYPE
-
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             if _WEBHOOK_TYPE == "slack":
-                text = f"[{lvl}] {message}"
+                text = f"[{level}] {message}"
                 payload = {"text": text, "blocks": [
                     {"type": "section", "text": {"type": "mrkdwn", "text": f"*{text}*"}},
                     {"type": "section", "text": {"type": "mrkdwn", "text": f"```{json.dumps(meta, indent=2)}```"}},
                 ]}
             else:
-                payload = {"level": lvl, "message": message, "meta": meta}
-
-            resp = await client.post(_WEBHOOK_URL, json=payload)
-            if 200 <= resp.status_code < 300:
-                ALERTS_SENT.labels(level=lvl, type=typ).inc()
-            else:
-                ALERTS_FAILED.labels(level=lvl, type=typ, reason=str(resp.status_code)).inc()
+                payload = {"level": level, "message": message, "meta": meta}
+            await client.post(_WEBHOOK_URL, json=payload)
     except Exception as e:  # pragma: no cover
-        ALERTS_FAILED.labels(level=lvl, type=typ, reason=e.__class__.__name__).inc()
         logger.warning(f"Alert notify failed: {e}")

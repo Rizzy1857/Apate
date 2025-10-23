@@ -1,8 +1,15 @@
 """
 Honeypot Adapter
 ---------------
-Connects honeypot components with AI engine for adaptive responses.
-Orchestrates the interaction between SSH/HTTP emulators and AI engine.
+Connects honeypot components with the Mirage cognitive architecture.
+Currently provides integration placeholder for the five-layer system:
+- Layer 0: Rust reflex layer (in development)
+- Layer 1: Predictive modeling (planned Q1 2026)
+- Layer 2: Behavioral classification (planned Q2 2026)
+- Layer 3: RL strategy optimization (planned Q3 2026)
+- Layer 4: LLM persona generation (planned Q4 2026)
+
+This adapter will evolve to orchestrate interactions between all layers.
 """
 
 import logging
@@ -16,7 +23,17 @@ from .tokens import HoneytokenGenerator
 logger = logging.getLogger(__name__)
 
 class HoneypotAdapter:
-    """Adapter that connects honeypot services with AI engine"""
+    """Adapter that connects honeypot services with the Mirage cognitive architecture
+    
+    This class will evolve to interface with all five layers of the Mirage system:
+    - Layer 0: Rust reflex layer for sub-millisecond responses
+    - Layer 1: HMM-based command prediction
+    - Layer 2: ML behavioral classification
+    - Layer 3: RL strategy optimization  
+    - Layer 4: LLM persona generation
+    
+    Currently provides foundation integration with basic AI engine stub.
+    """
     
     def __init__(self, ai_engine=None):
         # self.ai_engine = ai_engine or AIEngine()

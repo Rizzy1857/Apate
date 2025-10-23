@@ -22,12 +22,13 @@ This document provides comprehensive information about test coverage for the Apa
 
 ### Coverage Trends
 
-```
+```text
 Week 1  (Aug 18): 82%
 Week 2  (Aug 19): 85%
 Week 3  (Aug 20): 87%
 Week 4  (Aug 21): 89%
-Current (Aug 25): 89.5%
+Current (Aug 25): 89.5% 
+(The above details are completely based on avoiding the Ai intergration part for the next sem)
 ```
 
 ## 🧪 **Test Categories**
@@ -105,21 +106,25 @@ pytest tests/e2e/test_honeytoken_lifecycle.py
 ### High Coverage Areas (>90%)
 
 ✅ **SSH Command Handlers**
+
 - All major commands tested
 - Edge cases covered
 - Error conditions validated
 
 ✅ **HTTP Response Generation**
+
 - Login flows tested
 - Template rendering verified
 - Security headers validated
 
 ✅ **API Routes**
+
 - All endpoints tested
 - Request/response validation
 - Error handling verified
 
 ✅ **Honeytoken Management**
+
 - Token generation tested
 - Deployment workflows covered
 - Trigger detection validated
@@ -127,16 +132,19 @@ pytest tests/e2e/test_honeytoken_lifecycle.py
 ### Medium Coverage Areas (80-90%)
 
 ⚠️ **AI Engine Integration**
+
 - Core functionality tested
 - Provider abstraction covered
 - Missing: LLM error handling
 
 ⚠️ **Database Operations**
+
 - CRUD operations tested
 - Migration scripts covered
 - Missing: connection failure scenarios
 
 ⚠️ **Session Management**
+
 - Session creation/cleanup tested
 - State persistence covered
 - Missing: timeout edge cases
@@ -144,16 +152,19 @@ pytest tests/e2e/test_honeytoken_lifecycle.py
 ### Areas Needing Improvement (<80%)
 
 ❌ **Error Recovery**
+
 - Service restart scenarios
 - Database connection failures
 - External API failures
 
 ❌ **Performance Edge Cases**
+
 - High load scenarios
 - Memory pressure
 - Rate limiting extremes
 
 ❌ **Security Edge Cases**
+
 - Container escape attempts
 - Resource exhaustion
 - Malformed input handling
@@ -429,6 +440,6 @@ class TestNewFeature:
 
 ---
 
-*Coverage report generated on: August 25, 2025*  
-*Report version: 1.2*  
-*Next update: September 1, 2025*
+*Coverage report generated on: September 28, 2025*  
+*Report version: 1.3*  
+*Next update: September 30, 2025*

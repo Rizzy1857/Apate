@@ -7,12 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
+### Architecture Transformation - Project Mirage
 
-- Go IoT Services implementation
-- AI Engine integration with OpenAI/Anthropic
-- Production monitoring stack (Prometheus, Grafana)
-- Advanced threat intelligence feeds
+- **Five-Layer Cognitive Architecture**: Complete transformation from basic AI integration to sophisticated cognitive deception framework
+- **Layer 0**: Rust-based reflex layer for sub-millisecond threat detection (in progress Q4 2025)
+- **Layer 1**: Hidden Markov Models for command sequence prediction (planned Q1 2026)
+- **Layer 2**: Machine Learning behavioral classification with Random Forest (planned Q2 2026)
+- **Layer 3**: Reinforcement Learning strategy optimization with PPO (planned Q3 2026)
+- **Layer 4**: LLM-based persona generation with advanced prompt engineering (planned Q4 2026)
+
+### Updated Roadmap
+
+- **MTTD Focus**: Primary success metric changed to Mean Time To Discovery
+- **Target Improvement**: 9-12x increase from current 2-5 minutes to 45-60+ minutes
+- **Phased Implementation**: Four phases over 2026 with measurable MTTD targets
+- **Technology Stack**: Rust + Python + ML/RL + LLMs in hierarchical architecture
 
 ## [1.0.0] - 2024-12-24
 
