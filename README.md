@@ -24,7 +24,7 @@ A next-generation honeypot system that uses a five-layer cognitive architecture 
 ### Security & Quality
 
 - **[🔒 Security Policy](docs/SECURITY.md)** - Security guidelines, threat model, and incident response
-- **[🛡️ Security Implementation](SECURITY_IMPLEMENTATION_SUMMARY.md)** - Enterprise security features and hardening
+- **[🛡️ Security Implementation](docs/SECURITY_IMPLEMENTATION_SUMMARY.md)** - Enterprise security features and hardening
 - **[🧪 Test Coverage](docs/COVERAGE.md)** - Testing standards, coverage reports, and quality metrics
 
 ### Project Information
