@@ -1,3 +1,11 @@
+# =======================================================================
+# Project Mirage / Apate - Comprehensive Security-Focused .gitignore
+# =======================================================================
+# This gitignore is designed for a honeypot/cybersecurity project with
+# emphasis on preventing accidental exposure of sensitive security data,
+# credentials, attack data, and intelligence gathering results.
+# =======================================================================
+
 # Logs directory
 logs/
 *.log
@@ -43,8 +51,94 @@ Cargo.lock
 # Output of the go coverage tool
 *.out
 
-# Docker
+# Docker and containerization
 .dockerignore
+docker-compose.override.yml
+docker-compose.production.yml
+docker-compose.local.yml
+docker-compose.secrets.yml
+.docker/
+Dockerfile.local
+Dockerfile.production
+.env.docker
+docker_secrets/
+container_logs/
+volume_data/
+
+# Kubernetes secrets and configs
+k8s_secrets/
+kubernetes_configs/
+helm_secrets/
+*.kubeconfig
+kube_config/
+*.yaml.secret
+*.yml.secret
+
+# Cloud provider secrets
+.aws/
+.azure/
+.gcp/
+.cloud/
+aws_credentials
+azure_credentials
+gcp_credentials
+cloud_keys/
+service_accounts/
+iam_keys/
+
+# CI/CD secrets
+.github/secrets/
+.gitlab-ci-secrets/
+jenkins_secrets/
+pipeline_secrets/
+deployment_keys/
+build_secrets/
+
+# Development and debugging
+debug/
+debugger/
+profiling/
+memory_profiler/
+cpu_profiler/
+coverage_reports/
+benchmark_results/
+performance_tests/
+load_test_results/
+
+# Editor and IDE specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.metadata
+.settings/
+.classpath
+.factorypath
+.buildpath
+.target
+.sts4-cache/
+
+# OS specific sensitive files
+.Trash/
+.Spotlight-V100/
+.fseventsd/
+.DocumentRevisions-V100/
+.TemporaryItems/
+.AppleDB/
+.AppleDesktop/
+Network Trash Folder/
+Temporary Items/
+.apdisk/
+$RECYCLE.BIN/
+System Volume Information/
+desktop.ini
+thumbs.db
+ehthumbs.db
 
 # IDE
 .vscode/
@@ -66,36 +160,384 @@ Thumbs.db
 data/local/
 data/sessions/
 data/backups/
+data/exports/
+data/imports/
+data/raw/
+data/processed/
+data/archive/
+data/temp/
+data/cache/
+backups/
+exports/
+dumps/
+snapshots/
 *.sqlite
 *.db
+*.sqlite3
+*.db3
+*.s3db
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
-# Secrets
+# Log files
+*.log
+*.log.*
+*.out
+log/
+logs/
+syslog
+audit.log
+access.log
+error.log
+debug.log
+trace.log
+security.log
+honeypot.log
+*.log.gz
+*.log.zip
+*.log.bz2
+
+# Temporary and cache files
+tmp/
+temp/
+cache/
+.cache/
+.tmp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*.swo
+*~
+#*#
+.#*
+
+# Configuration files with secrets
+config.json
+config.local.json
+config.production.json
+config.staging.json
+config.development.json
+local_config.json
+private_config.json
+secret_config.json
+database.json
+redis.json
+elastic.json
+
+# Secrets and Security
 .env.local
 .env.production
+.env.staging
+.env.development
 secrets/
+keys/
+certs/
+certificates/
 api_keys.txt
 *.pem
 *.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.csr
+*.cer
+id_rsa*
+id_ed25519*
+ssh_host_*
+*.secret
+*_secret*
+*secret*
+*password*
+*passwd*
+credentials/
+auth/
+tokens/
+private/
+sensitive/
+classified/
 
-# Testing
+# Security scripts output
+security_scan_*
+vulnerability_*
+audit_*
+*.audit
+pen_test_*
+
+# Encryption keys and data
+*.aes
+*.gpg
+*.enc
+master.key
+encryption_keys/
+vault/
+sealed/
+
+# TLS/SSL certificates and keys
+*.ca-bundle
+*.ca-cert
+*.client-cert
+*.client-key
+*.dhparam
+ssl/
+tls/
+
+# Password/hash files
+shadow
+passwd
+htpasswd
+.htpasswd
+hashes.txt
+rainbow_*
+
+# Honeypot secrets and sensitive data
+honeypot_keys/
+attack_signatures/
+threat_intel/
+malware_samples/
+payload_analysis/
+network_captures/
+pcap_files/
+*.pcap
+*.pcapng
+attacker_ips/
+banned_ips/
+blocklist/
+
+# Authentication tokens
+auth_tokens/
+jwt_secrets/
+oauth_*
+saml_*
+ldap_*
+kerberos_*
+
+# Database credentials
+db_passwords/
+database_keys/
+connection_strings/
+*.connection
+
+# Testing and quality assurance
 .coverage
 .pytest_cache/
 .tox/
 htmlcov/
+coverage.xml
+coverage.json
+.coverage.*
+test_results/
+test_reports/
+test_outputs/
+junit.xml
+nose2-junit.xml
+pytest.xml
+test_*.xml
+*.cover
+.hypothesis/
+.nox/
 
-# Honeypot specific
+# Static analysis and linting
+.mypy_cache/
+.ruff_cache/
+.pylint.d/
+.bandit/
+.safety/
+.flake8_cache/
+.black_cache/
+.isort.cfg
+.pycodestyle
+.pep8
+.pydocstyle
+.pylintrc
+bandit.yaml
+safety.json
+
+# Documentation build artifacts
+docs/_build/
+docs/build/
+site/
+.readthedocs.yml
+mkdocs.yml.local
+sphinx_cache/
+doctrees/
+.doctrees/
+
+# Package management
+*.egg-info/
+.eggs/
+*.wheel
+wheels/
+*.whl
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+.pypirc
+
+# Node.js (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.yarn/
+package-lock.json
+yarn.lock
+
+# Monitoring and observability secrets
+grafana_secrets/
+prometheus_secrets/
+jaeger_secrets/
+zipkin_secrets/
+elastic_secrets/
+kibana_secrets/
+fluentd_secrets/
+logstash_secrets/
+
+# Network security tools
+nmap_results/
+nessus_reports/
+burp_suite/
+zap_reports/
+metasploit/
+nikto_results/
+sqlmap_output/
+dirb_results/
+gobuster_output/
+wfuzz_results/
+
+# Forensics and incident response
+volatility_profiles/
+autopsy_cases/
+sleuthkit_output/
+yara_rules_private/
+sigma_rules_private/
+snort_rules_private/
+
+# Backup and archive files
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+*.bz2
+*.xz
+*.tar.bz2
+*.tar.xz
+backup_*
+archive_*
+*.backup
+*.bak
+*.old
+
+# =======================================================================
+# SECURITY REMINDER: 
+# Always review files before committing to ensure no secrets, credentials,
+# or sensitive honeypot data is accidentally included. Use tools like:
+# - git-secrets
+# - detect-secrets  
+# - truffleHog
+# - GitLeaks
+# 
+# For production deployments, consider additional .gitignore files in 
+# subdirectories with more specific security patterns.
+# =======================================================================
+
+# Honeypot specific data and logs
 honeytokens/active/
+honeytokens/deployed/
+honeytokens/accessed/
 threat_logs/
+attack_logs/
 session_recordings/
+interaction_logs/
+ssh_sessions/
+http_sessions/
+tcp_sessions/
+command_history/
+file_uploads/
+malicious_payloads/
+exploit_attempts/
+brute_force_logs/
+reconnaissance_data/
+fingerprinting_data/
+botnet_communications/
+c2_traffic/
+lateral_movement/
+privilege_escalation/
+data_exfiltration/
+persistence_mechanisms/
 
-# Local dev & tooling
-# Python tooling caches and checkers
+# Runtime honeypot data
+live_sessions/
+active_connections/
+real_time_threats/
+ongoing_attacks/
+current_sessions/
+
+# Analysis and intelligence
+threat_analysis/
+ioc_feeds/
+reputation_data/
+geolocation_data/
+asn_data/
+whois_cache/
+dns_cache/
+reverse_dns/
+
+# Incident response
+incident_reports/
+forensic_images/
+memory_dumps/
+disk_images/
+network_dumps/
+timeline_analysis/
+case_files/
+
+# Machine learning models and training data
+models/
+training_data/
+feature_sets/
+ml_cache/
+ai_models/
+*.model
+*.pkl
+*.h5
+*.onnx
+*.pt
+*.pth
+
+# Performance and monitoring data
+metrics/
+performance_logs/
+monitoring_data/
+alerts/
+dashboards/
+grafana_data/
+prometheus_data/
+elasticsearch_data/
+
+# Local dev & tooling - Python specific caches
 .mypy_cache/
 .ruff_cache/
 .cache/
 
-# Virtual environments (explicit path for backend venv)
+# Virtual environments (explicit paths)
 backend/.venv/
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
 # Packaging / wheel metadata
 pip-wheel-metadata/
@@ -104,13 +546,17 @@ pip-wheel-metadata/
 config.json
 config.local.json
 
-# Editor / workspace files
+# Development workspace and editor files
 *.code-workspace
-.vscode/*
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
 
-# Windows
-desktop.ini
+# SPECIAL PROJECT EXCLUSIONS
+# Remove AI_Engine_Plan.md from ignore (should be tracked)
+# AI_Engine_Plan.md
 
-#ignoring test files as of now
-tests/
-debug/
+# Test files (currently excluded but may be enabled later)
+# tests/
+# debug/
