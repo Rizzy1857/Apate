@@ -1,19 +1,19 @@
 # Apate Honeypot - Core Dependencies (Simplified for Quick Setup)
 
 # FastAPI and web server
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.6
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
 
 # HTTP client and utilities
-httpx==0.25.2
-requests==2.31.0
-aiofiles==23.2.1
+httpx>=0.25.2
+requests>=2.31.0
+aiofiles>=23.2.1
 
-# Data processing
-pydantic==2.5.0
-pydantic-settings==2.1.0
-python-dateutil==2.8.2
+# Data processing (using newer versions for Python 3.13 compatibility)
+pydantic>=2.8.0
+pydantic-settings>=2.1.0
+python-dateutil>=2.8.2
 
 # Development and testing
 pytest==7.4.3
