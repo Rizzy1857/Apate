@@ -8,18 +8,27 @@ A next-generation honeypot system that uses a five-layer cognitive architecture 
 
 ## 📖 **Documentation**
 
-### Core Documentation
+### Getting Started
 
-- **[📊 Progress Tracking](docs/progress.md)** - Current development status and roadmap
-- **[📚 Usage Guide](docs/usage.md)** - Comprehensive setup and operation guide
-- **[🔧 API Reference](docs/API.md)** - Complete API documentation and examples
 - **[🚀 Quick Start](#-quick-start)** - Get started in 5 minutes
+- **[📚 Usage Guide](docs/usage.md)** - Comprehensive setup and operation guide
+- **[📊 Progress Tracking](docs/progress.md)** - Current development status and roadmap
 
-### Advanced Documentation
+### Technical Reference
+
+- **[🏗️ Technical Foundations](docs/FOUNDATIONS.md)** - Current implementation architecture and components
+- **[🧠 AI Engine Plan](docs/AI_Engine_Plan.md)** - Future cognitive deception roadmap
+- **[🔧 API Reference](docs/API.md)** - Complete API documentation and examples
+- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment for Docker, Kubernetes, and cloud
+
+### Security & Quality
 
 - **[🔒 Security Policy](docs/SECURITY.md)** - Security guidelines, threat model, and incident response
-- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment for Docker, Kubernetes, and cloud
+- **[🛡️ Security Implementation](SECURITY_IMPLEMENTATION_SUMMARY.md)** - Enterprise security features and hardening
 - **[🧪 Test Coverage](docs/COVERAGE.md)** - Testing standards, coverage reports, and quality metrics
+
+### Project Information
+
 - **[🤝 Contributing](docs/CONTRIBUTING.md)** - Development setup, coding standards, and contribution guidelines
 - **[📋 Changelog](docs/CHANGELOG.md)** - Version history and migration guides
 
@@ -71,11 +80,26 @@ A next-generation honeypot system that uses a five-layer cognitive architecture 
 git clone https://github.com/Rizzy1857/Apate.git
 cd Apate
 
-# Start all services
+# Start all services (security-hardened by default)
 docker-compose up -d
 
 # Check service status
 docker-compose ps
+```
+
+### Docker Compose Configurations
+
+Project Mirage includes multiple docker-compose files for different deployment scenarios:
+
+- **`docker-compose.yml`** - Production-ready with enterprise security (default)
+- **`docker-compose-legacy.yml`** - Original basic configuration (backup)  
+- **`docker-compose-monitoring.yml`** - Adds Falco, Prometheus, Grafana monitoring
+- **`docker-compose-security.yml`** - Enhanced security features (source for main config)
+- **`docker-compose.docs.yml`** - Documentation and development tools
+
+```bash
+# Use multiple configurations together
+docker-compose -f docker-compose.yml -f docker-compose-monitoring.yml up -d
 ```
 
 ### Services Available

@@ -1,0 +1,211 @@
+# Automated Threat Detection and Response System
+# ==============================================
+# Real-time monitoring, alerting, and automated response for Project Mirage
+
+version: '3.8'
+
+services:
+  # Falco - Runtime Security Monitoring
+  falco:
+    image: falcosecurity/falco:latest
+    container_name: mirage-falco
+    privileged: true
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - /dev:/host/dev
+      - /proc:/host/proc:ro
+      - /boot:/host/boot:ro
+      - /lib/modules:/host/lib/modules:ro
+      - /usr:/host/usr:ro
+      - /etc:/host/etc:ro
+      - ./security/falco-rules:/etc/falco/rules.d:ro
+    networks:
+      - security-net
+    restart: unless-stopped
+    command: ["falco", "--modern-bpf"]
+    environment:
+      - FALCO_BPF_PROBE=""
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Wazuh Agent - HIDS and Log Analysis
+  wazuh-agent:
+    image: wazuh/wazuh-agent:latest
+    container_name: mirage-wazuh
+    hostname: mirage-honeypot
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./security/wazuh-config:/var/ossec/etc:ro
+    networks:
+      - security-net
+    restart: unless-stopped
+    environment:
+      - WAZUH_MANAGER=wazuh-manager.internal  # Replace with your Wazuh manager
+      - WAZUH_AGENT_GROUP=honeypots
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mirage-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./security/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - security-net
+      - honeypot-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # Grafana - Security Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mirage-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./security/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./security/grafana-datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - security-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "472:472"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=mirage_security_2025  # Change in production
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Threat Intelligence Collector
+  threat-intel:
+    build:
+      context: ./security/threat-intel
+      dockerfile: Dockerfile
+    container_name: mirage-threat-intel
+    volumes:
+      - ./data/threat-intel:/app/data
+    networks:
+      - security-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+    environment:
+      - UPDATE_INTERVAL=3600  # Update every hour
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Automated Response Engine
+  response-engine:
+    build:
+      context: ./security/response-engine
+      dockerfile: Dockerfile
+    container_name: mirage-response
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./security/response-config:/app/config:ro
+    networks:
+      - security-net
+      - honeypot-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - REDIS_URL=redis://mirage-redis:6379
+      - ALERT_WEBHOOK_URL=https://hooks.slack.com/your/webhook/url
+      - MAX_RESPONSE_LEVEL=3  # 1=log, 2=isolate, 3=terminate
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Log Aggregator (Fluentd)
+  log-aggregator:
+    image: fluent/fluentd:edge-debian
+    container_name: mirage-logs
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./security/fluentd-config:/fluentd/etc:ro
+      - log-data:/fluentd/log
+    networks:
+      - security-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+networks:
+  security-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+  honeypot-net:
+    external: true
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  log-data:
+    driver: local
