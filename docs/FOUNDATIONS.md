@@ -47,7 +47,7 @@ Project Mirage implements **enterprise-grade security** with military-level isol
 - **Secrets Management**: AES-256 encryption with automated rotation (7-90 day cycles)
 - **Runtime Monitoring**: Falco runtime security, Wazuh HIDS, Prometheus metrics, Grafana dashboards
 
-*For complete security details, see [Security Implementation Summary](../SECURITY_IMPLEMENTATION_SUMMARY.md)*
+*For complete security details, see [Security Implementation Summary](SECURITY_IMPLEMENTATION_SUMMARY.md)*
 
 ## 🏛️ **Core Components**
 
