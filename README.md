@@ -229,6 +229,9 @@ export SESSION_TIMEOUT=3600        # Session timeout in seconds
 ### Log Analysis
 
 ```bash
+# Run local CI checks (cross-platform)
+python scripts/ci_check.py
+
 # View aggregated logs
 docker-compose logs -f backend
 

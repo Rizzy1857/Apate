@@ -1,6 +1,6 @@
 import os
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 @pytest.mark.asyncio
 async def test_db_init_and_persistence(tmp_path):
@@ -15,7 +15,7 @@ async def test_db_init_and_persistence(tmp_path):
     # Force DB init (if SQLAlchemy available)
     await init_database()
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # Create an interaction (SSH) which should be logged
         resp = await ac.post("/honeypot/ssh/interact", json={"command": "whoami", "session_id": "db-test"})
         assert resp.status_code == 200

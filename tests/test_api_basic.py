@@ -1,13 +1,13 @@
 import pytest
 import asyncio
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 
 @pytest.mark.asyncio
 async def test_root_and_status():
     from backend.app.main import app
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get("/")
         assert r.status_code == 200
         data = r.json()
@@ -23,7 +23,7 @@ async def test_root_and_status():
 async def test_icon_endpoints_no_404():
     from backend.app.main import app
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # These should not 404; we return 204
         r1 = await ac.get("/favicon.ico")
         assert r1.status_code in (200, 204)
@@ -39,7 +39,7 @@ async def test_ssh_interact_creates_log_entry():
 
     payload = {"command": "whoami", "session_id": "test-session"}
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         resp = await ac.post("/honeypot/ssh/interact", json=payload)
         assert resp.status_code == 200
         body = resp.json()
@@ -59,7 +59,7 @@ async def test_ssh_interact_creates_log_entry():
 async def test_alerts_endpoint_available():
     from backend.app.main import app
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         alerts = await ac.get("/alerts?limit=3")
         assert alerts.status_code == 200
         adata = alerts.json()

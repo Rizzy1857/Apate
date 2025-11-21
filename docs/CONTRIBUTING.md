@@ -139,7 +139,7 @@ We welcome various types of contributions:
 ### Before Submitting
 
 - [ ] **Code follows** project style guidelines
-- [ ] **Tests pass** locally (`pytest tests/`)
+- [ ] **Tests pass** locally (`python scripts/ci_check.py`)
 - [ ] **Coverage maintained** or improved
 - [ ] **Documentation updated** for new features
 - [ ] **Commit messages** are clear and descriptive
