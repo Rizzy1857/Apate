@@ -237,6 +237,8 @@
 **Planned Features**:
 
 - High-performance Rust-based rule engine using PyO3 FFI
+- **Unified State Architecture**: Rust owns session state, Python accesses via shared memory
+- **Zero-Copy DPI**: Smart transparent proxy for protocol analysis
 - Protocol-aware state machines (SSH, HTTP, TCP/UDP)
 - Lock-free concurrent data structures for session tracking
 - Pre-compiled response templates with latency injection
@@ -285,6 +287,7 @@
 **Planned Features**:
 
 - Multi-dimensional feature extraction (temporal, semantic, behavioral)
+- **Zero-Copy Buffer Sharing**: Apache Arrow for efficient data transfer to Python
 - Random Forest ensemble for attacker classification
 - Strategy vector generation (enticement, complexity, latency, breadcrumbing)
 - Incremental learning with online model updates
@@ -333,6 +336,8 @@
 **Planned Features**:
 
 - OpenAI/Anthropic API integration with fallbacks
+- **Semantic Caching**: Vector Database (Qdrant/Chroma) for <10ms retrieval
+- **Speculative Streaming**: Latency masking with filler token generation
 - Context-aware prompt engineering framework
 - Multi-persona templates (sysadmin, developer, security, novice)
 - Rust caching proxy for sub-50ms responses

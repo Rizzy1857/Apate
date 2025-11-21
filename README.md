@@ -64,6 +64,12 @@ A next-generation honeypot system that uses a five-layer cognitive architecture 
 - **Strategic Optimization**: Learns optimal deception strategies through self-play
 - **Dynamic Personas**: Maintains consistent character across extended interactions
 
+### High-Performance Architecture
+
+- **Unified State Model**: Zero-latency state sharing between Rust and Python via PyO3.
+- **Zero-Copy DPI**: Rust-based deep packet inspection with seamless handover to Python emulators.
+- **Semantic Caching**: Vector-based response retrieval for <10ms AI interactions.
+
 ### Measurable Impact
 
 - **MTTD Optimization**: Primary focus on maximizing Mean Time To Discovery

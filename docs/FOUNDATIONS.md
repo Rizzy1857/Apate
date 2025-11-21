@@ -286,12 +286,20 @@ All containers implement:
 | SSH Honeypot | Python | SSH emulation | ✅ Complete |
 | HTTP Honeypot | Python | Web emulation | ✅ Complete |
 | IoT Services | Go | Device emulation | ✅ Complete |
-| Protocol Layer | Rust | TCP services | ✅ Complete |
+| Protocol Layer | Rust | TCP services | ✅ Foundation Complete (Reflex Layer In Progress) |
 | Database | SQLite + SQLAlchemy | Data persistence | ✅ Complete |
 | Cache | Redis | Session storage | ✅ Complete |
 | Security | iptables + Docker | Network hardening | ✅ Complete |
 | Monitoring | Prometheus + Grafana | Metrics/dashboards | ✅ Complete |
 | Deployment | Docker Compose | Container orchestration | ✅ Complete |
+
+## 🔮 **Future Architecture Preview**
+
+To achieve sub-millisecond latency and high cognitive intelligence, the system is evolving into a **Hybrid Rust-Python Architecture**:
+
+- **Unified State**: Rust will hold the canonical session state in memory.
+- **Zero-Copy Access**: Python components will access this state directly via PyO3 without serialization overhead.
+- **Smart Proxying**: Rust will handle the "Reflex Layer" (DPI & immediate safety checks) and hand off complex interactions to Python only when necessary.
 
 ## 🏁 **Getting Started**
 
