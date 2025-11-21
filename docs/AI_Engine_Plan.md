@@ -107,6 +107,7 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
   - Efficient longest-match algorithm
   - Memory-bounded state storage
   - Incremental tree updates
+  - **Zero Frequency Handling**: Implement Kneser-Ney smoothing to handle unseen commands and avoid zero-probability crashes
 - [ ] Create Bayesian inference engine
   - Prior probability initialization
   - Likelihood calculation
@@ -269,7 +270,11 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
   - Continuous strategy vector (4D: enticement, complexity, latency, breadcrumbing)
   - Discrete actions (honeytoken placement, service enabling)
 - [ ] Design reward function
-  - Primary: MTTD delta (time since last action)
+  - Primary: MTTD delta (time since last action) - *Note: Challenging to measure exact discovery moment*
+  - **Alternative/Proxy Metrics**:
+    - Inverse Reinforcement Learning (IRL) to infer reward from expert traces
+    - Command Entropy (detecting sudden erratic behavior)
+    - Session Length (noisy but available proxy)
   - Secondary: Data collection quality
   - Penalties: Discovery detection, session abandonment
   - Exploration bonuses: Novel attacker behaviors
@@ -349,6 +354,7 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
   - Harmful content filtering
   - Consistency checking (persona adherence)
   - Realistic error injection
+  - **Blue Team Verification**: Secondary "Blue Team" LLM to verify "Red Team" output before sending to attacker (mitigate prompt injection)
 
 #### Week 4-6: Response Generation
 - [ ] Create persona templates

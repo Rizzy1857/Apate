@@ -3,6 +3,11 @@ name = "rust-protocol"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "rust_protocol"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
 # Rust dependencies for networking and async operations
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
@@ -14,10 +19,7 @@ clap = { version = "4.0", features = ["derive"] }
 uuid = { version = "1.0", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 url = "2.4"
-
-[lib]
-name = "rust_protocol"
-path = "src/lib.rs"
+pyo3 = { version = "0.22.0", features = ["extension-module"] }
 
 [[bin]]
 name = "main"
