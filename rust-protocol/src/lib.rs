@@ -40,6 +40,8 @@ pub fn generate_fingerprint(data: &[u8]) -> String {
     format!("{:x}", hasher.finish())
 }
 
+use std::panic;
+
 /// Python module for the Rust protocol library
 #[pymodule]
 fn rust_protocol(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -47,6 +49,7 @@ fn rust_protocol(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(validate_ip_py, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_entropy_py, m)?)?;
     m.add_function(wrap_pyfunction!(generate_fingerprint_py, m)?)?;
+    m.add_function(wrap_pyfunction!(detect_threats_py, m)?)?;
 
     Ok(())
 }
@@ -54,10 +57,17 @@ fn rust_protocol(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 #[pyfunction]
 #[pyo3(name = "validate_ip")]
 fn validate_ip_py(ip: &str) -> PyResult<bool> {
-    if ip.len() > 45 { // Max IPv6 length
-        return Err(pyo3::exceptions::PyValueError::new_err("IP address too long"));
+    let result = panic::catch_unwind(|| {
+        if ip.len() > 45 { // Max IPv6 length
+            return Err(pyo3::exceptions::PyValueError::new_err("IP address too long"));
+        }
+        Ok(utils::is_valid_ip(ip))
+    });
+
+    match result {
+        Ok(val) => val,
+        Err(_) => Err(pyo3::exceptions::PyRuntimeError::new_err("Rust panic in validate_ip")),
     }
-    Ok(utils::is_valid_ip(ip))
 }
 
 #[pyfunction]
@@ -69,15 +79,69 @@ fn calculate_entropy_py(py: Python, data: &str) -> PyResult<f64> {
     
     // Release GIL for potentially expensive calculation
     py.allow_threads(|| {
-        Ok(utils::calculate_entropy(data))
+        let result = panic::catch_unwind(|| {
+            Ok(utils::calculate_entropy(data))
+        });
+        
+        match result {
+            Ok(val) => val,
+            Err(_) => Err(pyo3::exceptions::PyRuntimeError::new_err("Rust panic in calculate_entropy")),
+        }
     })
 }
 
 #[pyfunction]
 #[pyo3(name = "generate_fingerprint")]
 fn generate_fingerprint_py(data: &str) -> PyResult<String> {
-    if data.len() > 1_000_000 { // 1MB limit
-        return Err(pyo3::exceptions::PyValueError::new_err("Input data too large for fingerprinting"));
+    let result = panic::catch_unwind(|| {
+        if data.len() > 1_000_000 { // 1MB limit
+            return Err(pyo3::exceptions::PyValueError::new_err("Input data too large for fingerprinting"));
+        }
+        Ok(generate_fingerprint(data.as_bytes()))
+    });
+
+    match result {
+        Ok(val) => val,
+        Err(_) => Err(pyo3::exceptions::PyRuntimeError::new_err("Rust panic in generate_fingerprint")),
     }
-    Ok(generate_fingerprint(data.as_bytes()))
+}
+
+#[pyfunction]
+#[pyo3(name = "detect_threats")]
+fn detect_threats_py(py: Python, payload: &str, source_ip: &str) -> PyResult<Option<String>> {
+    if payload.len() > 1_000_000 {
+        return Err(pyo3::exceptions::PyValueError::new_err("Payload too large for threat detection"));
+    }
+
+    let payload = payload.to_string();
+    let source_ip = source_ip.to_string();
+
+    py.allow_threads(move || {
+        let result = panic::catch_unwind(|| {
+            // Create a dummy message for analysis
+            // In a real scenario, we might want to pass more context
+            let source_addr = format!("{}:0", source_ip).parse().unwrap_or_else(|_| "0.0.0.0:0".parse().unwrap());
+            
+            let message = ProtocolMessage {
+                id: "temp".to_string(),
+                timestamp: Utc::now(),
+                source: source_addr,
+                message_type: "unknown".to_string(),
+                payload,
+                fingerprint: None,
+            };
+
+            if let Some(threat) = protocol::analyze_for_threats(&message) {
+                // Return JSON representation of the threat
+                Ok(Some(serde_json::to_string(&threat).unwrap_or_default()))
+            } else {
+                Ok(None)
+            }
+        });
+
+        match result {
+            Ok(val) => val,
+            Err(_) => Err(pyo3::exceptions::PyRuntimeError::new_err("Rust panic in detect_threats")),
+        }
+    })
 }

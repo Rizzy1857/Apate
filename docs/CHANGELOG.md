@@ -23,7 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phased Implementation**: Four phases over 2026 with measurable MTTD targets
 - **Technology Stack**: Rust + Python + ML/RL + LLMs in hierarchical architecture
 
-## [1.0.0] - 2024-12-24
+## [1.1.0] - 2025-11-25
+
+### Added
+
+- **Threat Detection Engine**: Implemented in Rust Reflex Layer (Layer 0).
+- **ReDoS Protection**: Integrated `regex` crate with linear-time pattern matching.
+- **Static Threat Patterns**: Added detection for SQL Injection, XSS, Directory Traversal, and Command Injection.
+- **FFI Safety**: Hardened Rust-Python boundary with `panic::catch_unwind` and GIL release.
+- **Unit Tests**: Added comprehensive tests for threat detection logic.
+
+## [1.0.0] - 2025-08-25
 
 ### Added
 
@@ -203,23 +213,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git repository initialization
 - Basic CI/CD pipeline setup
 - Development workflow establishment
-
----
-
-## Version History Summary
-
-| Version | Release Date | Major Features | Completion |
-|---------|--------------|----------------|------------|
-| 1.0.0 | 2024-12-24 | API Documentation, Setup Scripts | 87% |
-| 0.9.0 | 2025-08-24 | Testing & CI/CD Infrastructure | 85% |
-| 0.8.0 | 2025-08-24 | Database & Redis Integration | 80% |
-| 0.7.0 | 2025-08-24 | FastAPI Backend & APIs | 75% |
-| 0.6.0 | 2025-08-15 | Rust Protocol Library | 70% |
-| 0.5.0 | 2025-08-10 | Advanced Honeytoken System | 65% |
-| 0.4.0 | 2025-08-08 | HTTP Emulator & Web Services | 55% |
-| 0.3.0 | 2025-08-05 | SSH Emulator & Shell Simulation | 45% |
-| 0.2.0 | 2025-08-01 | Core Architecture & Framework | 25% |
-| 0.1.0 | 2025-07-28 | Project Initialization | 10% |
 
 ---
 
