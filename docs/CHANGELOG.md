@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Threat Detection Engine**: Implemented in Rust Reflex Layer (Layer 0).
+- **Latency Circuit Breaker**: Added fail-open protection mechanism.
+    - **Atomic State Machine**: Lock-free `Closed` -> `Open` -> `HalfOpen` transitions.
+    - **Performance Thresholds**: Trips after 10 requests > 5ms.
+    - **Self-Healing**: Auto-recovery attempts after 30 seconds.
 - **ReDoS Protection**: Integrated `regex` crate with linear-time pattern matching.
 - **Static Threat Patterns**: Added detection for SQL Injection, XSS, Directory Traversal, and Command Injection.
 - **FFI Safety**: Hardened Rust-Python boundary with `panic::catch_unwind` and GIL release.

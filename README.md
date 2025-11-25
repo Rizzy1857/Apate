@@ -20,6 +20,7 @@ For a deep dive into the system architecture and implementation details, please 
 ### Five-Layer Cognitive Architecture
 
 - **Layer 0 - Reflex Layer**: Sub-millisecond deterministic threat detection in Rust
+- **Cognitive Pipeline**: Cascading short-circuit logic to route traffic efficiently
 - **Layer 1 - Intuition Layer**: Real-time command prediction using Hidden Markov Models  
 - **Layer 2 - Reasoning Layer**: Attacker behavioral classification with Machine Learning
 - **Layer 3 - Strategy Layer**: Long-term engagement optimization via Reinforcement Learning

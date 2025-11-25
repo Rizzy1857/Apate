@@ -5,12 +5,13 @@ This is the foundation AI engine that will be superseded by the Mirage
 five-layer cognitive architecture. Currently provides basic stubbed responses
 and will serve as the base for Layer 4 (Persona Layer) implementation.
 
-The new architecture will include:
+The new architecture uses a **Cascading Short-Circuit** model:
 - Layer 0: Rust reflex layer (sub-millisecond deterministic responses)
-- Layer 1: Intuition layer (HMM command prediction)
-- Layer 2: Reasoning layer (ML behavioral classification)
-- Layer 3: Strategy layer (RL optimization)
-- Layer 4: Persona layer (LLM-based responses) - evolution of this module
+- Pipeline: Complexity Router checks for exit ramps at each stage
+- Layer 1: Intuition layer (HMM command prediction) -> Exit if predicted
+- Layer 2: Reasoning layer (ML behavioral classification) -> Exit if known profile
+- Layer 3: Strategy layer (RL optimization) -> Exit if standard strategy
+- Layer 4: Persona layer (LLM-based responses) -> Only for novel interactions
 
 This engine provides the foundation and will be integrated into the cognitive
 director when the full Mirage architecture is implemented.
@@ -98,9 +99,45 @@ class AttackerContext:
             if "privilege_escalation" not in self.behavior_patterns:
                 self.behavior_patterns.append("privilege_escalation")
         
-        if password in ["password", "123456", "admin", "root"]:
             if "weak_password_attack" not in self.behavior_patterns:
                 self.behavior_patterns.append("weak_password_attack")
+
+class ComplexityRouter:
+    """
+    Implements the Cascading Short-Circuit logic.
+    Evaluates complexity at each layer to determine if we can exit early.
+    """
+    
+    @staticmethod
+    def check_l1_exit(command: str) -> bool:
+        """
+        Layer 1 Exit Check: Is this a standard, predictable command?
+        If True -> Route to Static Emulator
+        If False -> Proceed to Layer 2
+        """
+        # Placeholder: In the future, this will query the HMM
+        standard_commands = ["ls", "whoami", "pwd", "id", "echo"]
+        cmd_base = command.split()[0].lower()
+        return cmd_base in standard_commands
+
+    @staticmethod
+    def check_l2_exit(attacker_profile: AttackerContext) -> bool:
+        """
+        Layer 2 Exit Check: Is this a known attacker profile with a cached strategy?
+        If True -> Route to Static Emulator (with cached strategy)
+        If False -> Proceed to Layer 3
+        """
+        # Placeholder: Check if we have a confident classification
+        return attacker_profile.threat_level != "unknown"
+
+    @staticmethod
+    def check_l3_exit(strategy_needed: bool) -> bool:
+        """
+        Layer 3 Exit Check: Do we need to generate a new strategy?
+        If False -> Use standard strategy (Static/Template)
+        If True -> Proceed to Layer 4 (Persona/LLM)
+        """
+        return not strategy_needed
 
 class AIEngine:
     """Main AI engine for generating adaptive honeypot responses"""
@@ -197,6 +234,12 @@ class AIEngine:
         # Update context with new activity
         if response_type == ResponseType.SSH_COMMAND:
             attacker_context.update_activity("ssh_command", context)
+            
+            # [FUTURE] Cascading Short-Circuit Logic
+            # 1. Check L1 Exit (Standard Command?)
+            # if ComplexityRouter.check_l1_exit(context.get("command", "")):
+            #     return await self._generate_stub_response(...)
+            
         elif response_type == ResponseType.HTTP_LOGIN:
             attacker_context.update_activity("login_attempt", context)
         

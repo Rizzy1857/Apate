@@ -281,6 +281,77 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 #### Week 5-8: Algorithm Implementation
 - [ ] Implement Proximal Policy Optimization (PPO)
+### 1. Total Project Architecture
+```mermaid
+graph TD
+    User[Attacker] -->|TCP/IP| LB[Load Balancer]
+    LB -->|SSH/HTTP| Rust[Layer 0: Rust Reflex]
+    
+    Rust -->|Safe Traffic| Pipeline{Cognitive Pipeline}
+    
+    subgraph "Core Honeypot"
+        Pipeline -->|Short Circuit| PyCore[Python Core]
+        PyCore -->|SSH| SSH_Emu[SSH Emulator]
+        PyCore -->|HTTP| HTTP_Emu[HTTP Emulator]
+        PyCore -->|Data| DB[(PostgreSQL)]
+        PyCore -->|Cache| Redis[(Redis)]
+    end
+    
+    subgraph "Cognitive Engine"
+        Pipeline -->|Novel Threat| L1[Layer 1: Intuition]
+        L1 -->|Complex| L2[Layer 2: Reasoning]
+        L2 -->|Strategic| L3[Layer 3: Strategy]
+        L3 -->|Generative| L4[Layer 4: Persona]
+        L4 -.->|Directives| PyCore
+    end
+    
+    subgraph "Monitoring"
+        Prometheus --> Grafana
+        ELK[ELK Stack]
+    end
+```
+
+### 2. Cognitive Deception Layers (Cascading Short-Circuit)
+```mermaid
+graph TD
+    subgraph "Layer 4: Persona (Generative)"
+        L4[LLM Response Generation]
+    end
+    
+    subgraph "Layer 3: Strategy (RL)"
+        L3[Reinforcement Learning Agent]
+    end
+    
+    subgraph "Layer 2: Reasoning (ML)"
+        L2[Behavioral Classifier]
+    end
+    
+    subgraph "Layer 1: Intuition (Probabilistic)"
+        L1[Markov Chain Predictor]
+    end
+    
+    subgraph "Layer 0: Reflex (Deterministic)"
+        L0[Rust Threat Engine]
+    end
+
+    Input[Attacker Input] --> L0
+    
+    L0 -->|Known Exploit| Block[Block/Fake Response]
+    L0 -->|Safe| L1
+    
+    L1 -->|Predicted Sequence| Static[Static Emulation]
+    L1 -->|Novel Sequence| L2
+    
+    L2 -->|Known Profile| Static
+    L2 -->|Unknown Profile| L3
+    
+    L3 -->|Standard Strategy| Static
+    L3 -->|New Strategy| L4
+    
+    L4 -->|Generative Response| Output[Response]
+    Static -->|Standard Response| Output
+    Block -->|Fake Error| Output
+```
   - Actor-critic architecture
   - Clipped surrogate objective
   - Advantage estimation (GAE)
