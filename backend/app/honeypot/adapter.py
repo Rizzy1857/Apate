@@ -15,10 +15,15 @@ This adapter will evolve to orchestrate interactions between all layers.
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
+import sys
+import os
 
-# Note: Import paths will be resolved when AI engine is properly integrated
-# from ...ai.engine import AIEngine, ResponseType
+# Add the ai module to path for import
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
+
+from ai.engine import AIEngine, ResponseType, AIProvider
 from .tokens import HoneytokenGenerator
+from ..monitoring import mttd_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +41,7 @@ class HoneypotAdapter:
     """
     
     def __init__(self, ai_engine=None):
-        # self.ai_engine = ai_engine or AIEngine()
-        self.ai_engine = ai_engine  # Placeholder until AI engine integration
+        self.ai_engine = ai_engine or AIEngine(AIProvider.STUB)
         self.honeytoken_generator = HoneytokenGenerator()
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
         
@@ -59,6 +63,8 @@ class HoneypotAdapter:
                 "commands": [],
                 "ai_enhanced": True
             }
+            # Start MTTD tracking for this session
+            await mttd_tracker.start_session(session_id, source_ip, "ssh")
         
         session = self.active_sessions[session_key]
         session["commands"].append({
@@ -66,6 +72,9 @@ class HoneypotAdapter:
             "timestamp": datetime.utcnow().isoformat(),
             "raw_response": raw_response
         })
+        
+        # Record interaction for MTTD tracking
+        await mttd_tracker.record_interaction(session_id, "ssh_command", command, True)
         
         # Prepare context for AI engine
         context = {
@@ -75,16 +84,16 @@ class HoneypotAdapter:
             "command_count": len(session["commands"])
         }
         
-        # Get AI-enhanced response (placeholder for now)
+        # Get AI-enhanced response
+        ai_guidance = None
         try:
             if self.ai_engine:
-                # ai_guidance = await self.ai_engine.generate_response(
-                #     ResponseType.SSH_COMMAND,
-                #     context,
-                #     source_ip,
-                #     session_id
-                # )
-                ai_guidance = f"[AI-Placeholder] Enhanced response for {command}"
+                ai_guidance = await self.ai_engine.generate_response(
+                    ResponseType.SSH_COMMAND,
+                    context,
+                    source_ip,
+                    session_id
+                )
             else:
                 ai_guidance = "[AI-Stub] AI engine not available"
             
@@ -121,6 +130,8 @@ class HoneypotAdapter:
                 "login_attempts": [],
                 "ai_enhanced": True
             }
+            # Start MTTD tracking for HTTP session
+            await mttd_tracker.start_session(session_id, source_ip, "http")
         
         session = self.active_sessions[session_key]
         session["login_attempts"].append({
@@ -129,6 +140,9 @@ class HoneypotAdapter:
             "timestamp": datetime.utcnow().isoformat(),
             "user_agent": user_agent
         })
+        
+        # Record interaction for MTTD tracking
+        await mttd_tracker.record_interaction(session_id, "login_attempt", username, True)
         
         # Prepare context for AI engine
         context = {
@@ -140,16 +154,16 @@ class HoneypotAdapter:
             "attempt_count": len(session["login_attempts"])
         }
         
-        # Get AI-enhanced response (placeholder for now)
+        # Get AI-enhanced response
+        ai_guidance = None
         try:
             if self.ai_engine:
-                # ai_guidance = await self.ai_engine.generate_response(
-                #     ResponseType.HTTP_LOGIN,
-                #     context,
-                #     source_ip,
-                #     session_id
-                # )
-                ai_guidance = f"[AI-Placeholder] Enhanced HTTP response for {username}"
+                ai_guidance = await self.ai_engine.generate_response(
+                    ResponseType.HTTP_LOGIN,
+                    context,
+                    source_ip,
+                    session_id
+                )
             else:
                 ai_guidance = "[AI-Stub] AI engine not available"
             
@@ -323,17 +337,13 @@ class HoneypotAdapter:
         if not session:
             return None
         
-        # Get AI behavior analysis (placeholder for now)
+        # Get AI behavior analysis
+        ai_analysis = None
         if self.ai_engine:
-            # ai_analysis = await self.ai_engine.analyze_attacker_behavior(
-            #     session["source_ip"], 
-            #     session_id
-            # )
-            ai_analysis = {
-                "behavior_patterns": ["reconnaissance", "brute_force"],
-                "threat_level": "medium",
-                "assessment": "Active probing detected"
-            }
+            ai_analysis = await self.ai_engine.analyze_attacker_behavior(
+                session["source_ip"], 
+                session_id
+            )
         else:
             ai_analysis = {"status": "AI engine not available"}
         

@@ -25,6 +25,14 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 
+# Import Rust protocol for Layer 0 threat detection
+try:
+    import rust_protocol
+    RUST_AVAILABLE = True
+except ImportError:
+    RUST_AVAILABLE = False
+    logging.warning("Rust protocol library not available - Layer 0 disabled")
+
 logger = logging.getLogger(__name__)
 
 class ResponseType(str, Enum):
@@ -109,35 +117,112 @@ class ComplexityRouter:
     """
     
     @staticmethod
-    def check_l1_exit(command: str) -> bool:
+    async def layer_0_filter(command: str, source_ip: str) -> Optional[str]:
         """
-        Layer 1 Exit Check: Is this a standard, predictable command?
+        Layer 0: Rust Reflex Layer - Sub-millisecond threat detection
+        Returns threat info if detected, None if safe to proceed
+        """
+        if not RUST_AVAILABLE:
+            return None
+        
+        try:
+            threat_json = rust_protocol.detect_threats(command, source_ip)
+            if threat_json:
+                # Parse threat and decide if we should block or engage
+                threat_data = json.loads(threat_json)
+                severity = threat_data.get("severity", "low")
+                
+                # Block critical threats immediately
+                if severity == "critical":
+                    return f"[BLOCKED] Critical threat detected: {threat_data.get('event_type', 'unknown')}"
+                
+                # For other threats, let them through for honeypot engagement
+                logger.info(f"Layer 0 threat detected but allowing for engagement: {threat_data.get('event_type', 'unknown')}")
+            
+            return None  # Safe to proceed to Layer 1
+            
+        except Exception as e:
+            logger.error(f"Layer 0 threat detection failed: {e}")
+            return None  # Fail open
+    
+    @staticmethod
+    def check_l1_exit(command: str, session_history: List[str]) -> bool:
+        """
+        Layer 1 Exit Check: Is this a standard, predictable command sequence?
+        Enhanced with session history analysis.
         If True -> Route to Static Emulator
         If False -> Proceed to Layer 2
         """
-        # Placeholder: In the future, this will query the HMM
-        standard_commands = ["ls", "whoami", "pwd", "id", "echo"]
         cmd_base = command.split()[0].lower()
-        return cmd_base in standard_commands
+        
+        # Standard reconnaissance commands that we can handle statically
+        standard_recon = ["ls", "whoami", "pwd", "id", "echo", "cat", "ps", "uname"]
+        
+        if cmd_base in standard_recon:
+            # Check if this is part of a predictable sequence
+            if len(session_history) <= 3:  # Early interaction, handle statically
+                return True
+            
+            # Look for predictable patterns in history
+            recent_commands = [cmd.split()[0].lower() for cmd in session_history[-3:]]
+            
+            # Common reconnaissance sequences
+            recon_sequences = [
+                ["whoami", "id", "pwd"],
+                ["ls", "cat", "pwd"],
+                ["uname", "ps", "netstat"]
+            ]
+            
+            for sequence in recon_sequences:
+                if recent_commands == sequence[:-1] and cmd_base == sequence[-1]:
+                    logger.info(f"Predictable reconnaissance sequence detected: {' -> '.join(recent_commands + [cmd_base])}")
+                    return True
+        
+        return False
 
     @staticmethod
-    def check_l2_exit(attacker_profile: AttackerContext) -> bool:
+    def check_l2_exit(attacker_profile: AttackerContext, confidence_threshold: float = 0.8) -> bool:
         """
         Layer 2 Exit Check: Is this a known attacker profile with a cached strategy?
+        Enhanced with confidence scoring.
         If True -> Route to Static Emulator (with cached strategy)
         If False -> Proceed to Layer 3
         """
-        # Placeholder: Check if we have a confident classification
-        return attacker_profile.threat_level != "unknown"
+        # Calculate confidence based on behavior consistency
+        if len(attacker_profile.behavior_patterns) == 0:
+            return False
+        
+        # Simple confidence calculation based on pattern consistency
+        pattern_confidence = min(len(attacker_profile.behavior_patterns) / 3.0, 1.0)
+        
+        # Check if we have a strong classification
+        known_profiles = ["script_kiddie", "automated_scanner", "persistence_seeker", "data_harvester"]
+        
+        if (attacker_profile.threat_level in known_profiles and 
+            pattern_confidence >= confidence_threshold):
+            logger.info(f"High-confidence profile match: {attacker_profile.threat_level} ({pattern_confidence:.2f})")
+            return True
+        
+        return False
 
     @staticmethod
-    def check_l3_exit(strategy_needed: bool) -> bool:
+    def check_l3_exit(strategy_complexity: Dict[str, Any]) -> bool:
         """
         Layer 3 Exit Check: Do we need to generate a new strategy?
         If False -> Use standard strategy (Static/Template)
         If True -> Proceed to Layer 4 (Persona/LLM)
         """
-        return not strategy_needed
+        # Check if current strategy parameters are sufficient
+        novelty_score = strategy_complexity.get("novelty_score", 0.0)
+        engagement_quality = strategy_complexity.get("engagement_quality", 0.5)
+        
+        # Use LLM only for highly novel or low-engagement scenarios
+        needs_generative = novelty_score > 0.7 or engagement_quality < 0.3
+        
+        logger.info(f"Strategy complexity check: novelty={novelty_score:.2f}, "
+                   f"engagement={engagement_quality:.2f}, needs_llm={needs_generative}")
+        
+        return not needs_generative
 
 class AIEngine:
     """Main AI engine for generating adaptive honeypot responses"""
@@ -234,14 +319,45 @@ class AIEngine:
         # Update context with new activity
         if response_type == ResponseType.SSH_COMMAND:
             attacker_context.update_activity("ssh_command", context)
+            command = context.get("command", "")
+            session_history = context.get("session_history", [])
             
-            # [FUTURE] Cascading Short-Circuit Logic
-            # 1. Check L1 Exit (Standard Command?)
-            # if ComplexityRouter.check_l1_exit(context.get("command", "")):
-            #     return await self._generate_stub_response(...)
+            # MIRAGE CASCADING SHORT-CIRCUIT ARCHITECTURE
+            
+            # Layer 0: Rust Reflex - Threat filtering
+            layer0_result = await ComplexityRouter.layer_0_filter(command, attacker_ip)
+            if layer0_result:
+                logger.info(f"Layer 0 exit: {layer0_result}")
+                return layer0_result
+            
+            # Layer 1: Intuition - Predictable command sequences
+            if ComplexityRouter.check_l1_exit(command, session_history):
+                logger.info(f"Layer 1 exit: Standard command sequence for '{command}'")
+                return await self._generate_stub_response(response_type, context, attacker_context)
+            
+            # Layer 2: Reasoning - Known attacker profiles
+            if ComplexityRouter.check_l2_exit(attacker_context):
+                logger.info(f"Layer 2 exit: Known profile {attacker_context.threat_level}")
+                return await self._generate_stub_response(response_type, context, attacker_context)
+            
+            # Layer 3: Strategy - Standard vs novel strategies
+            strategy_complexity = {
+                "novelty_score": self._calculate_novelty_score(attacker_context, command),
+                "engagement_quality": self._calculate_engagement_quality(attacker_context)
+            }
+            
+            if ComplexityRouter.check_l3_exit(strategy_complexity):
+                logger.info(f"Layer 3 exit: Standard strategy sufficient")
+                return await self._generate_stub_response(response_type, context, attacker_context)
+            
+            # Layer 4: Persona - LLM-based generative response
+            logger.info(f"Layer 4: Generative LLM response needed for novel interaction")
+            return await self._generate_llm_response(response_type, context, attacker_context)
             
         elif response_type == ResponseType.HTTP_LOGIN:
             attacker_context.update_activity("login_attempt", context)
+            # Apply similar cascading logic for HTTP
+            return await self._generate_stub_response(response_type, context, attacker_context)
         
         # Generate response based on provider
         if self.provider == AIProvider.STUB:
@@ -374,3 +490,50 @@ class AIEngine:
             return "iot_device"
         else:
             return "development_server"
+    
+    def _calculate_novelty_score(self, attacker_context: AttackerContext, command: str) -> float:
+        """Calculate how novel/unusual this command is for this attacker"""
+        cmd_base = command.split()[0].lower()
+        
+        # Check if this is a new command for this attacker
+        previous_commands = [cmd.split()[0].lower() for cmd in attacker_context.command_history[:-1]]
+        
+        if cmd_base not in previous_commands:
+            novelty_base = 0.6  # New command gets base novelty
+        else:
+            novelty_base = 0.2  # Repeated command
+        
+        # Increase novelty for complex commands
+        complex_commands = ["find", "grep", "awk", "sed", "python", "perl", "wget", "curl", "nc"]
+        if cmd_base in complex_commands:
+            novelty_base += 0.3
+        
+        # Increase novelty for commands with many arguments
+        arg_count = len(command.split()) - 1
+        if arg_count > 3:
+            novelty_base += 0.2
+        
+        return min(novelty_base, 1.0)
+    
+    def _calculate_engagement_quality(self, attacker_context: AttackerContext) -> float:
+        """Calculate how well we're engaging with this attacker"""
+        if len(attacker_context.command_history) == 0:
+            return 0.5  # Neutral for new sessions
+        
+        # Base engagement on session duration and activity
+        session_duration_minutes = (attacker_context.last_seen - attacker_context.first_seen).total_seconds() / 60
+        command_rate = len(attacker_context.command_history) / max(session_duration_minutes, 1)
+        
+        # Good engagement: 1-5 commands per minute
+        if 1 <= command_rate <= 5:
+            engagement_base = 0.7
+        elif command_rate > 5:
+            engagement_base = 0.4  # Too fast, might be automated
+        else:
+            engagement_base = 0.3  # Too slow, might be losing interest
+        
+        # Bonus for diverse behavior patterns
+        pattern_diversity = len(set(attacker_context.behavior_patterns))
+        engagement_base += pattern_diversity * 0.1
+        
+        return min(engagement_base, 1.0)

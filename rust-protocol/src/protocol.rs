@@ -65,6 +65,31 @@ fn command_injection_regex() -> &'static Regex {
     CELL.get_or_init(|| Regex::new(r"(?i)(;|\||&|\$\(|\`|/bin/sh|/bin/bash)").unwrap())
 }
 
+fn reconnaissance_regex() -> &'static Regex {
+    static CELL: OnceLock<Regex> = OnceLock::new();
+    CELL.get_or_init(|| Regex::new(r"(?i)(whoami|uname|ps\s+(aux|ef)|netstat|ifconfig|id\s|groups|env|printenv|lsb_release)").unwrap())
+}
+
+fn privilege_escalation_regex() -> &'static Regex {
+    static CELL: OnceLock<Regex> = OnceLock::new();
+    CELL.get_or_init(|| Regex::new(r"(?i)(sudo|su\s|passwd|chmod\s+777|chown|crontab|service|systemctl)").unwrap())
+}
+
+fn lateral_movement_regex() -> &'static Regex {
+    static CELL: OnceLock<Regex> = OnceLock::new();
+    CELL.get_or_init(|| Regex::new(r"(?i)(ssh|scp|rsync|nc\s|ncat|socat|wget|curl.*http|ping\s|nmap|telnet)").unwrap())
+}
+
+fn persistence_regex() -> &'static Regex {
+    static CELL: OnceLock<Regex> = OnceLock::new();
+    CELL.get_or_init(|| Regex::new(r"(?i)(crontab|\.bashrc|\.profile|\.ssh/authorized|systemctl.*enable|chkconfig)").unwrap())
+}
+
+fn data_exfiltration_regex() -> &'static Regex {
+    static CELL: OnceLock<Regex> = OnceLock::new();
+    CELL.get_or_init(|| Regex::new(r"(?i)(tar\s|zip\s|gzip|base64|xxd|hexdump|cat.*passwd|cat.*shadow)").unwrap())
+}
+
 /// Convert a ProtocolMessage to a ThreatEvent if it contains suspicious patterns
 pub fn analyze_for_threats(message: &ProtocolMessage) -> Option<ThreatEvent> {
     // We don't need to lowercase manually as regexes are case-insensitive (?i)
@@ -75,40 +100,85 @@ pub fn analyze_for_threats(message: &ProtocolMessage) -> Option<ThreatEvent> {
     // Check for common attack patterns using Regex
     // The regex crate guarantees linear time execution (O(m * n)), preventing ReDoS
     
-    let mut threat_type = None;
-    let mut description = None;
-    let mut severity = "low";
+    let mut threat_types = Vec::new();
+    let mut descriptions = Vec::new();
+    let mut max_severity = "low";
 
-    if directory_traversal_regex().is_match(payload) {
-        threat_type = Some("directory_traversal");
-        description = Some("Potential directory traversal attack detected");
-        severity = "high";
-    } else if sql_injection_regex().is_match(payload) {
-        threat_type = Some("sql_injection");
-        description = Some("Potential SQL injection attempt detected");
-        severity = "high";
-    } else if xss_regex().is_match(payload) {
-        threat_type = Some("xss_attempt");
-        description = Some("Potential XSS attack detected");
-        severity = "medium";
-    } else if command_injection_regex().is_match(payload) {
-        threat_type = Some("command_injection");
-        description = Some("Potential command injection attempt detected");
-        severity = "critical";
+    // Critical severity threats
+    if command_injection_regex().is_match(payload) {
+        threat_types.push("command_injection");
+        descriptions.push("Potential command injection attempt detected");
+        max_severity = "critical";
     }
     
-    if let (Some(t_type), Some(desc)) = (threat_type, description) {
+    // High severity threats
+    if directory_traversal_regex().is_match(payload) {
+        threat_types.push("directory_traversal");
+        descriptions.push("Directory traversal attack pattern");
+        if max_severity != "critical" { max_severity = "high"; }
+    }
+    
+    if sql_injection_regex().is_match(payload) {
+        threat_types.push("sql_injection");
+        descriptions.push("SQL injection attempt detected");
+        if max_severity != "critical" { max_severity = "high"; }
+    }
+    
+    if privilege_escalation_regex().is_match(payload) {
+        threat_types.push("privilege_escalation");
+        descriptions.push("Privilege escalation attempt");
+        if max_severity != "critical" { max_severity = "high"; }
+    }
+    
+    // Medium severity threats
+    if xss_regex().is_match(payload) {
+        threat_types.push("xss_attempt");
+        descriptions.push("XSS attack pattern detected");
+        if max_severity == "low" { max_severity = "medium"; }
+    }
+    
+    if lateral_movement_regex().is_match(payload) {
+        threat_types.push("lateral_movement");
+        descriptions.push("Lateral movement technique detected");
+        if max_severity == "low" { max_severity = "medium"; }
+    }
+    
+    if persistence_regex().is_match(payload) {
+        threat_types.push("persistence");
+        descriptions.push("Persistence mechanism detected");
+        if max_severity == "low" { max_severity = "medium"; }
+    }
+    
+    if data_exfiltration_regex().is_match(payload) {
+        threat_types.push("data_exfiltration");
+        descriptions.push("Data exfiltration attempt");
+        if max_severity == "low" { max_severity = "medium"; }
+    }
+    
+    // Low severity - reconnaissance 
+    if reconnaissance_regex().is_match(payload) {
+        threat_types.push("reconnaissance");
+        descriptions.push("Reconnaissance activity detected");
+        // Keep as low severity unless higher severity already detected
+    }
+    
+    if !threat_types.is_empty() {
+        let combined_description = descriptions.join(", ");
+        let primary_threat = threat_types[0]; // Use first detected threat as primary
+        
         return Some(ThreatEvent {
             event_id: Uuid::new_v4().to_string(),
             timestamp: Utc::now(),
             source_ip: message.source.ip().to_string(),
-            event_type: t_type.to_string(),
-            description: desc.to_string(),
-            severity: severity.to_string(),
+            event_type: primary_threat.to_string(),
+            description: combined_description,
+            severity: max_severity.to_string(),
             metadata: serde_json::json!({
                 "message_id": message.id,
                 "message_type": message.message_type,
-                "fingerprint": message.fingerprint
+                "fingerprint": message.fingerprint,
+                "all_threats": threat_types,
+                "threat_count": threat_types.len()
             }),
         });
     }

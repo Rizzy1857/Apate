@@ -21,6 +21,7 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 from .honeypot.ssh_emulator import SSHEmulator
 from .honeypot.http_emulator import HTTPEmulator
 from .routes import router
+from .monitoring import mttd_tracker
 # DB init is imported lazily in startup to avoid hard dependency at import time
 
 # Configure logging
@@ -115,6 +116,11 @@ async def get_status():
         "ai_engine": {"status": "ready", "model": "adaptive"},
         "logging": {"status": "active", "level": "INFO"}
     }
+
+@app.get("/mttd")
+async def get_mttd_metrics():
+    """Get Mean Time To Discovery metrics and honeypot effectiveness data"""
+    return mttd_tracker.get_metrics_summary()
 
 @app.post("/honeypot/ssh/interact")
 async def ssh_interact(body: SSHInteractionRequest):
@@ -216,8 +222,11 @@ async def _metrics_middleware(request, call_next):
 
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
-    data = generate_latest()
-    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+    # Combine built-in metrics with MTTD metrics
+    builtin_data = generate_latest()
+    mttd_data = mttd_tracker.export_prometheus_metrics()
+    combined_metrics = builtin_data.decode('utf-8') + "\n" + mttd_data
+    return Response(content=combined_metrics, media_type=CONTENT_TYPE_LATEST)
 
 # Lifespan events
 @app.on_event("startup")
