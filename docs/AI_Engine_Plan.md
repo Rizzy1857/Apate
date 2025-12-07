@@ -93,6 +93,11 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 **Goal**: Achieve 15-20 minute MTTD (3-4x improvement)  
 **Budget**: <150ms total added latency
 
+**Threat Mitigations (Fingerprinting & Timing)**:
+- **TCP Stack Emulation**: Rust layer must mimic Linux kernel TCP behavior (TTL=64, specific Window Size, Option order) to defeat `nmap -O`.
+- **Latency Normalization**: Enforce consistent processing time (e.g., randomized jitter within kernel-like bounds) to defeat timing analysis.
+- **Fail-Open Safety**: Circuit breaker must ensure fallback to static emulation doesn't drop connections abruptly.
+
 
 **Objective**: Real-time attacker behavior prediction using Markov chains
 
