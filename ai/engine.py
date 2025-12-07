@@ -21,8 +21,9 @@ import asyncio
 import logging
 import random
 import json
+from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 from enum import Enum
 
 # Import Rust protocol for Layer 0 threat detection
@@ -110,6 +111,64 @@ class AttackerContext:
             if "weak_password_attack" not in self.behavior_patterns:
                 self.behavior_patterns.append("weak_password_attack")
 
+
+class PredictionResult:
+    """Lightweight container for Markov predictions"""
+
+    def __init__(self, predicted: Optional[str], confidence: float, order_used: int, distribution: Dict[str, float]):
+        self.predicted = predicted
+        self.confidence = confidence
+        self.order_used = order_used
+        self.distribution = distribution
+
+
+class MarkovPredictor:
+    """Variable-order Markov chain with simple additive smoothing"""
+
+    def __init__(self, max_order: int = 3, smoothing: float = 0.5):
+        self.max_order = max_order
+        self.smoothing = smoothing
+        # counts[order][context_tuple][next_token] = count
+        self.counts: Dict[int, Dict[Tuple[str, ...], Dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+
+    def learn_sequence(self, sequence: List[str]) -> None:
+        """Ingest a sequence of commands to update counts"""
+        if not sequence:
+            return
+        n = len(sequence)
+        for idx in range(n):
+            next_token = sequence[idx]
+            # Build contexts up to max_order
+            for order in range(1, self.max_order + 1):
+                if idx - order < 0:
+                    continue
+                context = tuple(sequence[idx - order: idx])
+                self.counts[order][context][next_token] += 1
+
+    def predict_next(self, history: List[str]) -> PredictionResult:
+        """Predict next command given a history. Falls back from max_order to 1."""
+        if not history:
+            return PredictionResult(None, 0.0, 0, {})
+
+        for order in range(min(self.max_order, len(history)), 0, -1):
+            context = tuple(history[-order:])
+            next_counts = self.counts[order].get(context)
+            if not next_counts:
+                continue
+            total = sum(next_counts.values())
+            if total == 0:
+                continue
+
+            # Apply simple additive smoothing
+            vocab_size = len(next_counts)
+            smoothed = {token: (count + self.smoothing) / (total + self.smoothing * vocab_size) for token, count in next_counts.items()}
+            predicted = max(smoothed.items(), key=lambda kv: kv[1])
+            confidence = predicted[1]
+            distribution = dict(sorted(smoothed.items(), key=lambda kv: kv[1], reverse=True))
+            return PredictionResult(predicted[0], confidence, order, distribution)
+
+        return PredictionResult(None, 0.0, 0, {})
+
 class ComplexityRouter:
     """
     Implements the Cascading Short-Circuit logic.
@@ -146,7 +205,7 @@ class ComplexityRouter:
             return None  # Fail open
     
     @staticmethod
-    def check_l1_exit(command: str, session_history: List[str]) -> bool:
+    def check_l1_exit(command: str, session_history: List[str], prediction: Optional[PredictionResult] = None, confidence_threshold: float = 0.6) -> bool:
         """
         Layer 1 Exit Check: Is this a standard, predictable command sequence?
         Enhanced with session history analysis.
@@ -177,6 +236,17 @@ class ComplexityRouter:
                 if recent_commands == sequence[:-1] and cmd_base == sequence[-1]:
                     logger.info(f"Predictable reconnaissance sequence detected: {' -> '.join(recent_commands + [cmd_base])}")
                     return True
+
+        # Use Markov/HMM prediction when available
+        if prediction and prediction.predicted:
+            if prediction.predicted == cmd_base and prediction.confidence >= confidence_threshold:
+                logger.info(
+                    "Layer 1 Markov exit: predicted=%s confidence=%.2f order=%d",
+                    prediction.predicted,
+                    prediction.confidence,
+                    prediction.order_used,
+                )
+                return True
         
         return False
 
@@ -232,6 +302,7 @@ class AIEngine:
         self.attacker_contexts: Dict[str, AttackerContext] = {}
         self.response_templates = self._load_response_templates()
         self.personality_profiles = self._load_personality_profiles()
+        self.markov_predictor = MarkovPredictor(max_order=3, smoothing=0.5)
         
         # Configuration for different providers
         self.provider_configs = {
@@ -321,6 +392,14 @@ class AIEngine:
             attacker_context.update_activity("ssh_command", context)
             command = context.get("command", "")
             session_history = context.get("session_history", [])
+
+            # Train predictor with recent history (excluding current command if provided separately)
+            history_for_training = attacker_context.command_history[-(self.markov_predictor.max_order + 1):]
+            self.markov_predictor.learn_sequence(history_for_training)
+
+            # Predict next command using history without the current command to gauge predictability
+            history_for_prediction = attacker_context.command_history[:-1] if attacker_context.command_history else []
+            markov_prediction = self.markov_predictor.predict_next(history_for_prediction)
             
             # MIRAGE CASCADING SHORT-CIRCUIT ARCHITECTURE
             
@@ -331,7 +410,7 @@ class AIEngine:
                 return layer0_result
             
             # Layer 1: Intuition - Predictable command sequences
-            if ComplexityRouter.check_l1_exit(command, session_history):
+            if ComplexityRouter.check_l1_exit(command, session_history, markov_prediction):
                 logger.info(f"Layer 1 exit: Standard command sequence for '{command}'")
                 return await self._generate_stub_response(response_type, context, attacker_context)
             

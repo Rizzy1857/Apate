@@ -1,10 +1,21 @@
-use std::sync::atomic::{AtomicUsize, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // Constants
+#[cfg(not(test))]
 const FAILURE_THRESHOLD: usize = 10;
+#[cfg(test)]
+const FAILURE_THRESHOLD: usize = 3; // Faster trip for tests
+
+#[cfg(not(test))]
 const RESET_TIMEOUT_MS: u64 = 30_000; // 30 seconds
+#[cfg(test)]
+const RESET_TIMEOUT_MS: u64 = 500; // Faster recovery for tests
+
+#[cfg(not(test))]
 const LATENCY_THRESHOLD_MS: u64 = 5;
+#[cfg(test)]
+const LATENCY_THRESHOLD_MS: u64 = 1; // Allow quick pass/fail in tests
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CircuitState {
@@ -129,6 +140,16 @@ impl CircuitBreaker {
         self.state.store(CircuitState::Closed as usize, Ordering::SeqCst);
         self.failure_count.store(0, Ordering::SeqCst);
     }
+
+    #[cfg(test)]
+    fn set_state_for_test(&self, state: CircuitState) {
+        self.state.store(state as usize, Ordering::SeqCst);
+    }
+
+    #[cfg(test)]
+    fn set_last_failure_for_test(&self, millis: u64) {
+        self.last_failure_time.store(millis, Ordering::SeqCst);
+    }
     
     pub fn get_state_name(&self) -> &'static str {
         match CircuitState::from(self.state.load(Ordering::Relaxed)) {
@@ -151,26 +172,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_circuit_breaker_flow() {
+    fn trip_and_recover_flow() {
         let cb = CircuitBreaker::new();
 
-        // 1. Initially Closed
-        assert!(cb.check_allow());
+        // Start Closed
         assert_eq!(cb.get_state_name(), "Closed");
 
-        // 2. Record failures up to threshold
+        // Trip to Open
         for _ in 0..FAILURE_THRESHOLD {
             cb.record_result(LATENCY_THRESHOLD_MS + 10);
         }
-
-        // 3. Should be Open now
         assert_eq!(cb.get_state_name(), "Open");
-        assert!(!cb.check_allow()); // Should block
 
-        // 4. Wait (mocking time would be better, but for simple test we can't easily mock SystemTime without a trait)
-        // Since we can't wait 30s in a unit test, we'll manually hack the last_failure_time for testing purposes
-        // or just rely on the logic correctness. 
-        // Let's use a smaller timeout for testing if we could, but constants are const.
-        // We will trust the logic for now and verify state transitions.
+        // Force timeout to elapse
+        let past = current_time_ms().saturating_sub(RESET_TIMEOUT_MS + 1);
+        cb.set_last_failure_for_test(past);
+
+        // Next allow should transition to HalfOpen
+        assert!(cb.check_allow());
+        assert_eq!(cb.get_state_name(), "HalfOpen");
+
+        // Success in HalfOpen should reset to Closed
+        cb.record_result(LATENCY_THRESHOLD_MS - 1);
+        assert_eq!(cb.get_state_name(), "Closed");
+    }
+
+    #[test]
+    fn half_open_failure_reopens() {
+        let cb = CircuitBreaker::new();
+
+        cb.set_state_for_test(CircuitState::HalfOpen);
+        cb.record_result(LATENCY_THRESHOLD_MS + 10);
+
+        assert_eq!(cb.get_state_name(), "Open");
     }
 }
