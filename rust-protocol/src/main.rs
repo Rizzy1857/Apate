@@ -259,6 +259,7 @@ async fn main() -> io::Result<()> {
     let socket = Socket::new(Domain::IPV4, Type::STREAM, Some(Protocol::TCP))?;
     socket.set_ttl(64)?; // Linux default TTL
     socket.set_reuse_address(true)?;
+    socket.set_nonblocking(true)?;
     
     let address: SocketAddr = bind_addr.parse().unwrap();
     socket.bind(&address.into())?;
