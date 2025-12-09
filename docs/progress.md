@@ -27,8 +27,8 @@
 | **Documentation** | ✅ Complete | 100% | 2024-12-24 |
 | **AI Engine Integration** | ✅ Complete | 100% | 2025-11-25 |
 | **MTTD Monitoring Infrastructure** | ✅ Complete | 100% | 2025-11-25 |
-| **Layer 0: Reflex Layer (Rust)** | 🔄 In Progress | 65% | 2025-11-25 |
-| **Layer 1: Intuition Layer (HMM)** | ⏳ Planned | 0% | Q1 2026 |
+| **Layer 0: Reflex Layer (Rust)** | ✅ Complete | 100% | 2025-12-09 |
+| **Layer 1: Intuition Layer (HMM)** | 🔄 In Progress | 10% | 2025-12-09 |
 | **Layer 2: Reasoning Layer (ML)** | ⏳ Planned | 0% | Q2 2026 |
 | **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
 | **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
@@ -84,8 +84,8 @@
 
 | Phase | Layers Active | Target MTTD | Improvement Factor | Timeline |
 |-------|---------------|-------------|--------------------|----------|
-| **Baseline** | Apate Core (Static) | 2-5 min | 1x | Current |
-| **Phase 1** | Layer 0+1 | 15-20 min | 3-4x | Q1 2026 |
+| **Q4 2025** | Layer 0 (Rust Reflex) | 5-8 min | ✅ Complete | |
+| **Q1 2026** | Layer 1 (Markov Intuition) | 15-20 min | 🔄 In Progress | Q1 2026 |
 | **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
 | **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
 | **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |

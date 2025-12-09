@@ -149,7 +149,7 @@ stateDiagram-v2
 
 ### **Phase 2: Intuition & Reasoning (Q1-Q2 2026)**
 *   **Goal**: Implement predictive modeling and attacker classification.
-*   **Status**: ⏳ **Planned**
+*   **Status**: 🔄 **In Progress**
 *   **Key Deliverables**:
     *   Hidden Markov Models (Layer 1)
     *   Probabilistic Suffix Trees

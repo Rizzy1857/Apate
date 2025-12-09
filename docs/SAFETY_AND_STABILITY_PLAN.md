@@ -20,15 +20,15 @@
 
 #### Week 3-4: Threat Detection Engine
 - **Safety Net**: **Regex Denial of Service (ReDoS) Prevention**
-    - [ ] Use `regex` crate (linear time) instead of backtracking engines.
+    - [x] Use `regex` crate (linear time) instead of backtracking engines.
     - [ ] Hard timeout (e.g., 10ms) on all pattern matching operations.
 - **Reinforcement**: **Zero-Copy Parsing**
     - [ ] Use `Cow<str>` to avoid unnecessary allocations during packet inspection.
 
 #### Week 5-6: Integration & Performance
 - **Safety Net**: **Latency Circuit Breaker**
-    - [ ] If Rust processing takes >5ms for 10 consecutive requests, bypass Layer 0 and fallback to static Python logic.
-    - [ ] **Fail-Open Design**: If Layer 0 crashes, traffic must pass through to the honeypot (logging the failure) rather than dropping connections.
+    - [x] If Rust processing takes >5ms for 10 consecutive requests, bypass Layer 0 and fallback to static Python logic.
+    - [x] **Fail-Open Design**: If Layer 0 crashes, traffic must pass through to the honeypot (logging the failure) rather than dropping connections.
 - **Fail-Check**: **Memory Leak Detection**
     - [ ] Run Valgrind/ASan on Rust extension during CI.
 
