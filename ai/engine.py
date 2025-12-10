@@ -36,6 +36,14 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Import Layer 2 Models
+try:
+    from .models import BehavioralClassifier, FeatureExtractor
+    ML_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"ML dependencies missing, Layer 2 will use heuristics: {e}")
+    ML_AVAILABLE = False
+
 class ResponseType(str, Enum):
     """Types of responses the AI can generate"""
     SSH_COMMAND = "ssh_command"
@@ -122,52 +130,182 @@ class PredictionResult:
         self.distribution = distribution
 
 
-class MarkovPredictor:
-    """Variable-order Markov chain with simple additive smoothing"""
+class SymbolTable:
+    """Bi-directional mapping between strings and integers for memory efficiency"""
+    def __init__(self):
+        self.str_to_int: Dict[str, int] = {}
+        self.int_to_str: Dict[int, str] = {}
+        self.next_id = 0
 
-    def __init__(self, max_order: int = 3, smoothing: float = 0.5):
+    def get_id(self, symbol: str) -> int:
+        if symbol not in self.str_to_int:
+            self.str_to_int[symbol] = self.next_id
+            self.int_to_str[self.next_id] = symbol
+            self.next_id += 1
+        return self.str_to_int[symbol]
+
+    def get_symbol(self, idx: int) -> Optional[str]:
+        return self.int_to_str.get(idx)
+    
+    def __len__(self):
+        return self.next_id
+
+
+class PSTNode:
+    """Node in the Probabilistic Suffix Tree"""
+    def __init__(self):
+        self.counts: Dict[int, int] = defaultdict(int)  # Next symbol counts
+        self.total_count: int = 0
+        self.children: Dict[int, PSTNode] = {}  # Suffix links (reverse direction)
+
+
+class MarkovPredictor:
+    """
+    Variable-order Markov chain implemented via Probabilistic Suffix Tree 
+    with Kneser-Ney smoothing (Absolute Discounting) and integer mapping.
+    """
+
+    def __init__(self, max_order: int = 3, smoothing: float = 0.75):
         self.max_order = max_order
-        self.smoothing = smoothing
-        # counts[order][context_tuple][next_token] = count
-        self.counts: Dict[int, Dict[Tuple[str, ...], Dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        self.discount = smoothing  # 'd' parameter for absolute discounting
+        self.root = PSTNode()
+        self.symbol_table = SymbolTable()
 
     def learn_sequence(self, sequence: List[str]) -> None:
         """Ingest a sequence of commands to update counts"""
         if not sequence:
             return
-        n = len(sequence)
-        for idx in range(n):
-            next_token = sequence[idx]
-            # Build contexts up to max_order
-            for order in range(1, self.max_order + 1):
-                if idx - order < 0:
-                    continue
-                context = tuple(sequence[idx - order: idx])
-                self.counts[order][context][next_token] += 1
+            
+        # Convert to integers
+        int_seq = [self.symbol_table.get_id(s) for s in sequence]
+        n = len(int_seq)
+        
+        for i in range(n):
+            target = int_seq[i]
+            # Learn empty context (order 0) - Root updates
+            self._update_node(self.root, target)
+            
+            # Learn higher orders
+            curr_node = self.root
+            # We look back up to max_order for context: sequence[i-1], sequence[i-2]...
+            for j in range(1, self.max_order + 1):
+                if i - j < 0:
+                    break
+                
+                ctx_symbol = int_seq[i - j]
+                if ctx_symbol not in curr_node.children:
+                    curr_node.children[ctx_symbol] = PSTNode()
+                curr_node = curr_node.children[ctx_symbol]
+                
+                self._update_node(curr_node, target)
+
+    def _update_node(self, node: PSTNode, target_symbol: int):
+        node.counts[target_symbol] += 1
+        node.total_count += 1
 
     def predict_next(self, history: List[str]) -> PredictionResult:
-        """Predict next command given a history. Falls back from max_order to 1."""
+        """Predict next command using Kneser-Ney recursiveness"""
         if not history:
-            return PredictionResult(None, 0.0, 0, {})
+             return PredictionResult(None, 0.0, 0, {})
+        
+        # Convert history to integers, skipping unknown symbols cautiously?
+        # If the immediate context is unknown, we have no context match.
+        int_history = []
+        for s in history:
+            if s in self.symbol_table.str_to_int:
+                int_history.append(self.symbol_table.str_to_int[s])
+            else:
+                # If we encounter an unknown symbol, effective context breaks here?
+                # For PST, treating unknown as a gap is reasonable or we treat as OOV.
+                # Here we simply stop collecting context if we hit OOV.
+                # Actually, better to just consider OOV as a symbol that has no children.
+                # But since it's not in the table, we can't represent it yet.
+                pass
+        
+        # 1. Identify context path in the PST
+        # Traverse backwards from end of history: s_last, s_last-1 ...
+        path_nodes = [self.root]
+        curr = self.root
+        order_used = 0
+        
+        rev_history = list(reversed(int_history))
+        for k in range(min(len(rev_history), self.max_order)):
+            sym = rev_history[k]
+            if sym in curr.children:
+                curr = curr.children[sym]
+                path_nodes.append(curr)
+                order_used = k + 1
+            else:
+                break
+        
+        # 2. Collect candidates (Union of all symbols seen in these contexts)
+        candidates = set()
+        for node in path_nodes:
+            candidates.update(node.counts.keys())
+            
+        if not candidates:
+             return PredictionResult(None, 0.0, 0, {})
+        
+        # If we have no context match at all (e.g. unknown symbol), 
+        # we should probably fall back to unigram or return None if really strict.
+        # The test expects None for unknown context.
+        # Check if we were able to map ANY history.
+        if not int_history and history:
+             # All history symbols were unknown
+             return PredictionResult(None, 0.0, 0, {})
 
-        for order in range(min(self.max_order, len(history)), 0, -1):
-            context = tuple(history[-order:])
-            next_counts = self.counts[order].get(context)
-            if not next_counts:
-                continue
-            total = sum(next_counts.values())
+        # 3. Compute probabilities for candidates using Recursive Interpolation
+        scores = {}
+        for cand in candidates:
+            # We iterate from Root (Order 0) up to Deepest Node (Order K)
+            # P_new = (max(c - d, 0) / T) + (d * distinct / T) * P_old
+            
+            # Base Case: Root (Order 0)
+            # Unsmoothed MLE for root or Uniform? 
+            # Classic KN usually has base distribution. Let's start with Root MLE.
+            root_node = path_nodes[0]
+            cnt = root_node.counts.get(cand, 0)
+            total = root_node.total_count
+            
             if total == 0:
-                continue
-
-            # Apply simple additive smoothing
-            vocab_size = len(next_counts)
-            smoothed = {token: (count + self.smoothing) / (total + self.smoothing * vocab_size) for token, count in next_counts.items()}
-            predicted = max(smoothed.items(), key=lambda kv: kv[1])
-            confidence = predicted[1]
-            distribution = dict(sorted(smoothed.items(), key=lambda kv: kv[1], reverse=True))
-            return PredictionResult(predicted[0], confidence, order, distribution)
-
-        return PredictionResult(None, 0.0, 0, {})
+                current_prob = 0.0
+            else:
+                current_prob = cnt / total
+            
+            # Recursive steps
+            for i in range(1, len(path_nodes)):
+                node = path_nodes[i]
+                cnt = node.counts.get(cand, 0)
+                tot = node.total_count
+                
+                if tot == 0: continue
+                    
+                distinct_succ = len(node.counts) # Number of distinct symbols following this context
+                
+                # alpha = max(c(w) - d, 0) / tot
+                term1 = max(cnt - self.discount, 0) / tot
+                
+                # gamma = (d * distinct_succ) / tot
+                gamma = (self.discount * distinct_succ) / tot
+                
+                current_prob = term1 + gamma * current_prob
+                
+            scores[cand] = current_prob
+            
+        # 4. Select best candidate
+        if not scores:
+            return PredictionResult(None, 0.0, 0, {})
+            
+        best_cand_id = max(scores.items(), key=lambda x: x[1])[0]
+        best_cand_str = self.symbol_table.get_symbol(best_cand_id)
+        confidence = scores[best_cand_id]
+        
+        distribution = {
+            self.symbol_table.get_symbol(k): v 
+            for k,v in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:10]
+        }
+        
+        return PredictionResult(best_cand_str, confidence, order_used, distribution)
 
 class ComplexityRouter:
     """
@@ -251,14 +389,46 @@ class ComplexityRouter:
         return False
 
     @staticmethod
-    def check_l2_exit(attacker_profile: AttackerContext, confidence_threshold: float = 0.8) -> bool:
+    def check_l2_exit(attacker_profile: AttackerContext, classifier: Any = None, confidence_threshold: float = 0.8) -> bool:
         """
         Layer 2 Exit Check: Is this a known attacker profile with a cached strategy?
-        Enhanced with confidence scoring.
+        Uses RandomForest Signal if available, fallback to heuristics.
         If True -> Route to Static Emulator (with cached strategy)
         If False -> Proceed to Layer 3
         """
-        # Calculate confidence based on behavior consistency
+        classification = None
+        
+        if ML_AVAILABLE and classifier and classifier.is_trained:
+            # Generate features
+            # We need to construct a dict-like object or use the raw context if compatible
+            # FeatureExtractor expects a dict with keys matching AttackerContext fields + analysis
+            # We'll approximate this transformation here or ensure FeatureExtractor handles Context objects
+            
+            # Quick adapter
+            context_dict = {
+                "session_duration": (attacker_profile.last_seen - attacker_profile.first_seen).total_seconds(),
+                "command_count": len(attacker_profile.command_history),
+                "behavior_patterns": attacker_profile.behavior_patterns,
+                "threat_level": attacker_profile.threat_level
+            }
+            
+            features = FeatureExtractor.vectorize(context_dict)
+            predictions = classifier.predict(features)
+            
+            # Find best class
+            if predictions:
+                best_class = max(predictions.items(), key=lambda x: x[1])
+                classification = best_class[0]
+                confidence = best_class[1]
+                
+                logger.info(f"Layer 2 ML Classification: {classification} ({confidence:.2f})")
+                
+                if confidence >= confidence_threshold:
+                    # Update profile with detected type
+                    attacker_profile.threat_level = classification
+                    return True
+        
+        # Fallback Heuristics
         if len(attacker_profile.behavior_patterns) == 0:
             return False
         
@@ -270,7 +440,7 @@ class ComplexityRouter:
         
         if (attacker_profile.threat_level in known_profiles and 
             pattern_confidence >= confidence_threshold):
-            logger.info(f"High-confidence profile match: {attacker_profile.threat_level} ({pattern_confidence:.2f})")
+            logger.info(f"High-confidence heuristic profile match: {attacker_profile.threat_level} ({pattern_confidence:.2f})")
             return True
         
         return False
@@ -302,7 +472,18 @@ class AIEngine:
         self.attacker_contexts: Dict[str, AttackerContext] = {}
         self.response_templates = self._load_response_templates()
         self.personality_profiles = self._load_personality_profiles()
+        self.response_templates = self._load_response_templates()
+        self.personality_profiles = self._load_personality_profiles()
         self.markov_predictor = MarkovPredictor(max_order=3, smoothing=0.5)
+        
+        # Layer 2: Behavioral Classifier
+        self.behavioral_classifier = None
+        if ML_AVAILABLE:
+            self.behavioral_classifier = BehavioralClassifier()
+            # Ensure it has at least some training data
+            if not self.behavioral_classifier.is_trained:
+                logger.info("Initializing Layer 2 model with mock training data...")
+                self.behavioral_classifier.mock_train()
         
         # Configuration for different providers
         self.provider_configs = {
@@ -415,7 +596,7 @@ class AIEngine:
                 return await self._generate_stub_response(response_type, context, attacker_context)
             
             # Layer 2: Reasoning - Known attacker profiles
-            if ComplexityRouter.check_l2_exit(attacker_context):
+            if ComplexityRouter.check_l2_exit(attacker_context, self.behavioral_classifier):
                 logger.info(f"Layer 2 exit: Known profile {attacker_context.threat_level}")
                 return await self._generate_stub_response(response_type, context, attacker_context)
             
