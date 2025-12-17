@@ -171,11 +171,30 @@ class MarkovPredictor:
         self.root = PSTNode()
         self.symbol_table = SymbolTable()
 
+    def _sanitize_input(self, sequence: List[str]) -> List[str]:
+        """Sanitize input sequence: strip non-printables and limit length"""
+        sanitized = []
+        for token in sequence:
+            # Limit token length to prevent memory DoS
+            if len(token) > 256:
+                token = token[:256]
+            # Remove non-printable characters (keep basic ASCII + common SAFE chars)
+            # This is a basic filter; for production, use a strict whitelist or regex
+            clean_token = "".join(c for c in token if c.isprintable())
+            if clean_token:
+                sanitized.append(clean_token)
+        return sanitized
+
     def learn_sequence(self, sequence: List[str]) -> None:
         """Ingest a sequence of commands to update counts"""
         if not sequence:
             return
             
+        # SANITIZATION (Safety Net)
+        sequence = self._sanitize_input(sequence)
+        if not sequence:
+            return
+
         # Convert to integers
         int_seq = [self.symbol_table.get_id(s) for s in sequence]
         n = len(int_seq)
@@ -205,6 +224,9 @@ class MarkovPredictor:
 
     def predict_next(self, history: List[str]) -> PredictionResult:
         """Predict next command using Kneser-Ney recursiveness"""
+        # SANITIZATION (Safety Net)
+        history = self._sanitize_input(history)
+        
         if not history:
              return PredictionResult(None, 0.0, 0, {})
         

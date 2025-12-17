@@ -98,12 +98,20 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 - **Latency Normalization**: Enforce consistent processing time (e.g., randomized jitter within kernel-like bounds) to defeat timing analysis.
 - **Fail-Open Safety**: Circuit breaker must ensure fallback to static emulation doesn't drop connections abruptly.
 
+**Layer 0 Architectural Constraints (Critical)**:
+- **Deterministic & Stateless**: Layer 0 must be fast and dumb, never predict intent or adapt creatively
+- **Boring Failures**: Protocol misclassification must fail boringly (dead socket, timeout, malformed banner), never intelligently
+- **Verdict-Only Caching**: Cache metadata (boring/L1/noise), NEVER cache responses to avoid determinism fingerprinting
+- **Downward Degradation**: Circuit breaker degrades L4→L3→L2→L1→static, NEVER upward
+- **Reflex Responses Only**: Aho-Corasick/Bloom triggers fake errors/crashes, NEVER blocks/alerts/adaptive responses
+- **Rate Stats Isolation**: Sliding rate stats exposed ONLY to Layer 0 and Layer 3 (not Layer 1—different signals)
+
 
 **Objective**: Real-time attacker behavior prediction using Markov chains
 
 **Implementation Tasks**:
 
-#### Week 7-8: Mathematical Foundation
+#### Week 7-8: Mathematical Foundation & Layer 0 Integration
 - [/] Implement variable-order Markov chains
   - Order 1: Single command dependency
   - Order 2: Two-command sequence dependency
@@ -117,6 +125,13 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
   - Prior probability initialization
   - Likelihood calculation
   - Posterior probability updates
+- [ ] **Layer 0 Reducers** (Rust - Complete)
+  - ✅ Protocol classifier with boring failure semantics
+  - ✅ Aho-Corasick multi-match for known noise (reflex only)
+  - ✅ Verdict-only caching (metadata, not responses)
+  - ✅ Sliding rate stats (per-IP behavioral shaping)
+  - ✅ Bloom filter for scanner noise (static path on FP)
+  - ✅ Adaptive circuit breaker (downward degradation)
 
 #### Week 9-10: Service-Specific Models
 - [ ] SSH command prediction model

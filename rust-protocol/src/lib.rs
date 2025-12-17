@@ -5,6 +5,7 @@
 pub mod circuit_breaker;
 pub mod protocol;
 pub mod utils;
+pub mod reducers;
 
 use chrono::{DateTime, Utc};
 #[cfg(feature = "pyo3")]

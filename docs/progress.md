@@ -29,7 +29,7 @@
 | **MTTD Monitoring Infrastructure** | ✅ Complete | 100% | 2025-11-25 |
 | **Layer 0: Reflex Layer (Rust)** | ✅ Complete | 100% | 2025-12-09 |
 | **Layer 1: Intuition Layer (HMM)** | 🔄 In Progress | 10% | 2025-12-09 |
-| **Layer 2: Reasoning Layer (ML)** | ⏳ Planned | 0% | Q2 2026 |
+| **Layer 2: Reasoning Layer (ML)** | 🔄 In Progress | 20% | 2025-12-09 |
 | **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
 | **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
 
@@ -45,35 +45,36 @@
 │ Layer 4: Persona Layer (Generative Content)                 │
 │ Technology: Python + LLM APIs | Status: Planned Q4 2026     │
 │ Function: Context-aware conversational responses            │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 3: Strategy Layer (Reinforcement Learning)            │
 │ Technology: Python → Rust + PPO | Status: Planned Q3 2026   │
 │ Function: Long-term engagement optimization                 │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 2: Reasoning Layer (Behavioral Classification)        │
-│ Technology: Python + scikit-learn | Status: Planned Q2 2026 │
+│ Technology: Python + scikit-learn | Status: In Progress Q2  |
+| 2026                                                        |
 │ Function: Attacker profiling and strategy generation        │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 1: Intuition Layer (Predictive Modeling)              │
-│ Technology: Python + HMM/Markov | Status: Planned Q1 2026   │
+│ Technology: Python + HMM/Markov| Status: In Progress Q1 2026│
 │ Function: Real-time command sequence prediction             │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 0: Reflex Layer (Deterministic Safety)                │
 │ Technology: Rust | Status: In Progress Q4 2025              │
 │ Function: Sub-millisecond threat containment                │
-│ MTTD Contribution: +5-10 minutes                           │
+│ MTTD Contribution: +5-10 minutes                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     [Apate Foundation - Complete]

@@ -15,13 +15,8 @@ This adapter will evolve to orchestrate interactions between all layers.
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-import sys
-import os
 
-# Add the ai module to path for import
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
-
-from ai.engine import AIEngine, ResponseType, AIProvider
+from ..ai.engine import AIEngine, ResponseType, AIProvider
 from .tokens import HoneytokenGenerator
 from ..monitoring import mttd_tracker
 

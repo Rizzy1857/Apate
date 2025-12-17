@@ -1,12 +1,8 @@
-import sys
 import os
 import numpy as np
 
-# Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-from ai.models import FeatureExtractor, BehavioralClassifier
-from ai.engine import AIEngine, AIProvider
+from backend.app.ai.models import FeatureExtractor, BehavioralClassifier
+from backend.app.ai.engine import AIEngine, AIProvider
 
 def test_layer2_components():
     print("Initializing Layer 2 Components...")

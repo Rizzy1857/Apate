@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Threat Detection Engine**: Implemented in Rust Reflex Layer (Layer 0).
+- **Threat Detection Engine (Basic)**: Implemented in Rust Reflex Layer (Layer 0).
 - **Latency Circuit Breaker**: Added fail-open protection mechanism.
     - **Atomic State Machine**: Lock-free `Closed` -> `Open` -> `HalfOpen` transitions.
     - **Performance Thresholds**: Trips after 10 requests > 5ms.

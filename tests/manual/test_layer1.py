@@ -1,11 +1,4 @@
-import asyncio
-import sys
-import os
-
-# Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-from ai.engine import MarkovPredictor
+from backend.app.ai.engine import MarkovPredictor
 
 def test_markov_prediction():
     print("Initializing Markov Predictor (PST + Kneser-Ney)...")
