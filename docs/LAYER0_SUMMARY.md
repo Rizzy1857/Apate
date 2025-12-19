@@ -1,31 +1,20 @@
-# Layer 0 Reducers Implementation Summary
+# Layer 0 Summary (Reflex Layer)
 
 ## What Was Built
 
-Six latency-reducing primitives for Mirage Layer 0, all following the "fast, dumb, boring" philosophy.
+Layer 0 primitives and router implementing the no-drop, tag-and-route contract with three response lanes. All follow the fast, dumb, boring philosophy.
 
-### Files Created
+### Key Files
 
-1. **`rust-protocol/src/reducers.rs`** (590 lines)
-   - All six reducer implementations in production Rust
-   - Full test coverage
-   - Performance-optimized with atomics, zero-copy, lock-free patterns
+1. `rust-protocol/src/reducers.rs`
+    - Layer 0 contract, tiny AC core, Bloom tagging, coarse rate states, work-shedding circuit breaker, three-lane router
+    - Unit tests updated and passing
 
-2. **`rust-protocol/demo_reducers.py`** (400 lines)
-   - Interactive demo showing each reducer in action
-   - Constraint validation (boring failures, verdict-only caching, etc.)
-   - Run with: `python3 demo_reducers.py`
+2. `docs/REDUCERS.md`
+    - Updated API docs reflecting `check_hint`, `is_probable_noise`, `should_skip_optional`, `ResponseProfile`, and `route_payload`
 
-3. **`rust-protocol/REDUCERS.md`** (350 lines)
-   - Complete API documentation
-   - Usage examples
-   - Anti-patterns to avoid
-   - Integration guide
-
-4. **`docs/AI_Engine_Plan.md`** (updated)
-   - Added Layer 0 architectural constraints
-   - Documented reducer completion
-   - Updated Phase 1 timeline
+3. `docs/AI_Engine_Plan.md`
+    - Updated non-negotiables and Layer 0 philosophy
 
 ### Dependencies Added
 
@@ -34,7 +23,7 @@ aho-corasick = "1.1"  # Fast multi-pattern matching
 bloom = "0.3"         # Probabilistic set membership
 ```
 
-## Reducers Implemented
+## Reducers Implemented (Updated)
 
 ### 1. Protocol Classifier ✅
 - **Function**: `classify_protocol_fast(data: &[u8]) -> Protocol`
@@ -42,11 +31,12 @@ bloom = "0.3"         # Probabilistic set membership
 - **Constraint**: Misclassification fails boringly (dead socket, timeout)
 - **Performance**: <0.1ms
 
-### 2. Aho-Corasick Noise Detector ✅
+### 2. Aho-Corasick Core Hints ✅
 - **Struct**: `NoiseDetector`
-- **Purpose**: Multi-pattern matching for scanner signatures
-- **Constraint**: Only triggers reflex responses (fake errors, never blocks)
-- **Patterns**: masscan, nmap, metasploit, spray credentials
+- **Purpose**: Tiny immutable pattern core (≤ 20) for obvious junk
+- **API**: `check_hint(payload) -> Option<usize>`
+- **Constraint**: Hint + boring reflex response shape; never drops; strategy/routing handled separately
+- **Patterns**: masscan, nmap, metasploit, shodan, NOP sleds, path traversal
 - **Performance**: <0.5ms
 
 ### 3. Verdict Cache ✅
@@ -56,25 +46,27 @@ bloom = "0.3"         # Probabilistic set membership
 - **TTL**: Configurable (default 1000ms)
 - **Performance**: <0.1ms (HashMap lookup)
 
-### 4. Sliding Rate Stats ✅
+### 4. Coarse Rate States ✅
 - **Structs**: `RateStats`, `RateTracker`
-- **Purpose**: Per-IP behavioral statistics for automation detection
-- **Metrics**: RPS, burstiness score, automation flag
-- **Constraint**: Exposed **only** to Layer 0 and Layer 3 (not Layer 1)
+- **Purpose**: Per-IP behavioral hints for automation
+- **States**: `Normal`, `Bursty`, `Insane` (coarse only)
+- **Constraint**: Exposed only to Layer 0 and Layer 3
 - **Performance**: <0.2ms (atomic operations)
 
-### 5. Scanner Noise Filter ✅
+### 5. Bloom Filter Tagging ✅
 - **Struct**: `ScannerNoiseFilter`
-- **Purpose**: Bloom filter for benign scanner traffic
-- **Constraint**: False positive → static path (never drop connection)
+- **Purpose**: Bloom tagging for probable benign scanner noise
+- **API**: `is_probable_noise(ip, payload) -> bool`
+- **Constraint**: No drops in L0 (home profile); deprioritization happens in upper layers
 - **FPR**: Configurable (default 1%)
 - **Performance**: <0.1ms
 
-### 6. Adaptive Circuit Breaker ✅
+### 6. Adaptive Circuit Breaker (Work Shedding) ✅
 - **Struct**: `AdaptiveCircuitBreaker`
-- **Purpose**: Dynamic degradation with latency-based thresholds
+- **Purpose**: Dynamic work shedding under load
 - **Levels**: Normal → L3 → L2 → L1 → Static
-- **Constraint**: Degradation is **downward only** (never upward)
+- **Constraint**: Degradation is downward only; security thresholds never relax. In enterprise profile, may skip optional analysis.
+- **API**: `AdaptiveCircuitBreaker::new(ProfileFlags)`; `should_skip_optional()`
 - **Threshold**: P95 latency, adaptive
 - **Performance**: <0.1ms
 
@@ -102,7 +94,7 @@ Attackers test for determinism by repeating commands. To avoid fingerprinting:
 
 Each response must have slight variations even if the verdict is cached.
 
-### 4. Downward Degradation
+### 4. Downward Degradation (Work Shedding)
 The circuit breaker degrades the cognitive stack under load:
 ```
 Normal → L3 Only → L2 Only → L1 Only → Static Only
@@ -122,6 +114,11 @@ Never:
 - Adaptive behavior changes
 
 ### 6. Rate Stats Isolation
+
+### 7. No Drop in Home Profile
+- Bloom filter is tagging only; never drop in L0
+- Aho–Corasick is a hint; strategy lives above
+- Three-lane router selects only response shape and escalation
 Rate statistics measure **automation** (clean, rhythmic behavior).
 Layer 1 predicts **intent** (command sequences).
 
@@ -135,7 +132,7 @@ These are different signals and must not be mixed. Rate stats are exposed **only
 | Aho-Corasick | <0.5ms | ~100KB | Precompiled DFA |
 | Verdict cache | <0.1ms | ~100KB | 1000 entries |
 | Rate stats | <0.2ms | ~10KB/IP | Circular buffer |
-| Bloom filter | <0.1ms | ~10KB | 10K elements |
+| Bloom filter | <0.1ms | ~10KB | 10K elements (tagging) |
 | Circuit breaker | <0.1ms | ~1KB | Atomic state |
 | **Total** | **<1ms** | **~220KB base** | Well within budget |
 
@@ -154,19 +151,9 @@ All tests pass:
 - Rate stats (RPS, burstiness)
 - Circuit breaker (degradation, recovery)
 
-### Demo
-```bash
-cd rust-protocol
-python3 demo_reducers.py
-```
-
-Demonstrates:
-- Boring failure semantics
-- Reflex-only responses
-- Verdict caching without response caching
-- Human vs. bot detection
-- Static path on Bloom FP
-- Downward degradation
+### Router
+- Router selects `ResponseProfile` based on tags and suspicion score
+- Tests confirm thresholds for Mirror/SlowFake/FastFake
 
 ## Integration Points
 
@@ -179,8 +166,8 @@ use rust_protocol::reducers::*;
 let detector = NoiseDetector::new();
 let cache = VerdictCache::new(1000, 1000);
 let tracker = RateTracker::new(100);
-let bloom = ScannerNoiseFilter::new(10_000, 0.01);
-let cb = AdaptiveCircuitBreaker::new();
+let bloom = ScannerNoiseFilter::new(10_000, 0.01, ProfileFlags::HOME);
+let cb = AdaptiveCircuitBreaker::new(ProfileFlags::ENTERPRISE);
 
 async fn handle_client(socket: TcpStream, peer_addr: SocketAddr) {
     let mut buffer = vec![0; 1024];
@@ -193,14 +180,13 @@ async fn handle_client(socket: TcpStream, peer_addr: SocketAddr) {
     }
     
     // 2. Noise detection
-    if let Some(idx) = detector.is_known_noise(&buffer) {
-        return send(detector.boring_noise_response(idx));
+    if let Some(idx) = detector.check_hint(&buffer) {
+        // tag EXPLOIT_HINT; choose response via router later
+        let _hint = detector.boring_noise_response(idx);
     }
     
     // 3. Bloom filter
-    if bloom.is_known_benign(&peer_addr.to_string(), &buffer) {
-        return send(static_response());
-    }
+    let probable_noise = bloom.is_probable_noise(&peer_addr.to_string(), &buffer);
     
     // 4. Verdict cache
     let key = VerdictCache::cache_key(&peer_addr.to_string(), &buffer);
@@ -219,12 +205,14 @@ async fn handle_client(socket: TcpStream, peer_addr: SocketAddr) {
     
     // 6. Circuit breaker check
     let start = Instant::now();
-    let response = match cb.degradation_level() {
-        DegradationLevel::Normal => invoke_all_layers(&buffer),
-        DegradationLevel::StaticOnly => static_response(),
-        // ...
+    let profile = route_payload(proto, suspicion_score, tag_bits);
+    let response = match profile {
+        ResponseProfile::FastFake => fast_fake(&buffer),
+        ResponseProfile::SlowFake => slow_inconsistent_fake_and_escalate(&buffer),
+        ResponseProfile::Mirror => escalate_immediately(&buffer),
     };
     cb.record_latency(start.elapsed().as_millis() as u64);
+    let _skip_optional = cb.should_skip_optional();
     
     send(response);
 }
@@ -238,11 +226,11 @@ import rust_protocol
 # Protocol classification
 proto = rust_protocol.classify_protocol(data)
 
-# Threat detection (includes circuit breaker)
-threat = rust_protocol.detect_threats(payload, source_ip)
+# Route profile and tags
+profile = rust_protocol.route_payload(proto, suspicion_score, tag_bits)
 ```
 
-## What's Next (Layer 1 Integration - Q1 2026)
+## What's Next (Layer 1 Integration)
 
 1. **Feature Extraction Pipeline**
    - Use `classify_protocol_fast` for routing
@@ -268,6 +256,7 @@ threat = rust_protocol.detect_threats(payload, source_ip)
 3. **Fail boringly**: Dead sockets and timeouts, not clever fallbacks
 4. **Degrade downward**: Under stress, become quieter, not smarter
 5. **Rate stats ≠ Layer 1**: Different signals (automation vs. intent)
+6. **No drop in home**: Only tag in L0; drop decisions live above
 
 ### For Code Reviews
 
@@ -280,7 +269,7 @@ Watch for:
 
 ## Conclusion
 
-All six Layer 0 reducers are implemented, tested, and documented. They follow the "fast, dumb, boring" philosophy and enforce the critical constraints needed for Mirage to achieve its 45-60 minute MTTD goal.
+Layer 0 reducers and router are implemented, tested, and documented. They follow the fast, dumb, boring philosophy and enforce the contract needed for Mirage to achieve its MTTD goals with no-drop semantics in the home profile.
 
 The demo shows each reducer in action with constraint validation. The next step is Layer 1 integration (Markov chain predictor) in Q1 2026.
 
@@ -288,7 +277,6 @@ The demo shows each reducer in action with constraint validation. The next step 
 
 **Implementation Date**: December 17, 2025  
 **Status**: Complete ✅  
-**LOC**: ~1,400 (Rust + Python + docs)  
-**Test Coverage**: 100%  
-**Performance**: <1ms total overhead  
-**Next Phase**: Layer 1 Intuition (Q1 2026)
+**Tests**: Reducers and router unit tests passing  
+**Performance**: <1ms total L0 overhead  
+**Next Phase**: Layer 1 integration and policy moves (Bloom gating in L1+)

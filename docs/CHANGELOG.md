@@ -23,6 +23,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phased Implementation**: Four phases over 2026 with measurable MTTD targets
 - **Technology Stack**: Rust + Python + ML/RL + LLMs in hierarchical architecture
 
+## [1.2.0] - 2025-12-17
+
+### Added
+
+- Layer 0 contract with `Layer0Output`, `ResponseProfile (FastFake|SlowFake|Mirror)`, and `route_payload` three-lane router.
+- Profile flags (`HOME`, `ENTERPRISE`) controlling Layer 0 behavior and circuit breaker work shedding.
+- Documentation updates aligning philosophy and APIs: `ONBOARDING.md`, `AI_Engine_Plan.md`, `FOUNDATIONS.md`, `docs/REDUCERS.md`, `docs/LAYER0_SUMMARY.md`, `docs/SECURITY.md`.
+
+### Changed
+
+- Aho–Corasick: replace `is_known_noise` with `check_hint`; shrink to ≤ 20 immutable patterns (hint-only, reflex responses).
+- Bloom filter: convert to tagging-only in Layer 0 (`ScannerNoiseFilter::is_probable_noise`); drop/gating decisions moved to Layer 1+ policy.
+- Circuit breaker: change to work shedding; introduce `AdaptiveCircuitBreaker::new(ProfileFlags)` and `should_skip_optional()` (enterprise only under sustained degradation). Security thresholds never relax.
+- Rate stats: simplify to coarse states (`Normal|Bursty|Insane`), still isolated to Layer 0 and Layer 3.
+- Router: formalize lane selection via suspicion score and tags; ensure escalation is explicit and deterministic.
+
+### Deprecated
+
+- `NoiseDetector::is_known_noise` (use `check_hint`).
+- `ScannerNoiseFilter::is_known_benign` and any Layer 0 static path gating (use `is_probable_noise` tagging and handle deprioritization in Layer 1+).
+
+### Migration
+
+- Replace AC calls to `is_known_noise` with `check_hint` and tag as needed; keep reflex-only responses in Layer 0.
+- Replace Bloom gating calls with `is_probable_noise` tagging; move any drop/deprioritization logic to Layer 1+ policy.
+- Instantiate circuit breaker with `AdaptiveCircuitBreaker::new(ProfileFlags)` and consult `should_skip_optional()` (enterprise profile) under degradation.
+- Use `route_payload(proto, suspicion_score, tags)` to determine `ResponseProfile` and escalation behavior.
+- Verify verdict-only caching: never cache responses or response shapes; maintain variability to avoid fingerprinting.
+
+### Tests
+
+- Updated reducers unit tests for new APIs and router thresholds; all tests passing.
+
 ## [1.1.0] - 2025-11-25
 
 ### Added

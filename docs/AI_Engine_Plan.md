@@ -48,7 +48,7 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 0: Reflex Layer (Deterministic Safety)                │
 │ Language: Rust | Status: Complete                           │
-│ Function: Sub-millisecond threat containment                │
+│ Function: Sub-millisecond tagging + triage (never drop)     │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     [Existing Apate Core]
@@ -98,12 +98,14 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 - **Latency Normalization**: Enforce consistent processing time (e.g., randomized jitter within kernel-like bounds) to defeat timing analysis.
 - **Fail-Open Safety**: Circuit breaker must ensure fallback to static emulation doesn't drop connections abruptly.
 
-**Layer 0 Architectural Constraints (Critical)**:
-- **Deterministic & Stateless**: Layer 0 must be fast and dumb, never predict intent or adapt creatively
-- **Boring Failures**: Protocol misclassification must fail boringly (dead socket, timeout, malformed banner), never intelligently
-- **Verdict-Only Caching**: Cache metadata (boring/L1/noise), NEVER cache responses to avoid determinism fingerprinting
-- **Downward Degradation**: Circuit breaker degrades L4→L3→L2→L1→static, NEVER upward
-- **Reflex Responses Only**: Aho-Corasick/Bloom triggers fake errors/crashes, NEVER blocks/alerts/adaptive responses
+- **Layer 0 Non-Negotiables** (Updated):
+- **What Layer 0 Answers**: (1) likely protocol? (2) boring enough to auto-respond? (3) interesting enough to escalate?
+- **Deterministic & Stateless**: Fast and dumb; wrong is fine, clever is not
+- **Boring Failures**: Dead sockets, timeouts, malformed banners; never “smart” errors
+- **Verdict-Only Caching**: Cache metadata only; never cache responses (prevents fingerprinting)
+- **Downward Degradation**: Under load, stop being clever (skip optional analysis); never relax suspicion thresholds
+- **Reflex Responses Only**: Hints trigger cheap fake errors/delays; never blocks or alerts in L0
+- **No Dropping**: Layer 0 never discards interesting payloads. Bloom moves to Layer 1+ as tagging, not dropping.
 - **Rate Stats Isolation**: Sliding rate stats exposed ONLY to Layer 0 and Layer 3 (not Layer 1—different signals)
 
 
@@ -127,11 +129,12 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
   - Posterior probability updates
 - [ ] **Layer 0 Reducers** (Rust - Complete)
   - ✅ Protocol classifier with boring failure semantics
-  - ✅ Aho-Corasick multi-match for known noise (reflex only)
+  - ✅ Tiny immutable Aho-Corasick core (<20 patterns) for hints only; full set moves to L1+
   - ✅ Verdict-only caching (metadata, not responses)
-  - ✅ Sliding rate stats (per-IP behavioral shaping)
-  - ✅ Bloom filter for scanner noise (static path on FP)
-  - ✅ Adaptive circuit breaker (downward degradation)
+  - ✅ Sliding rate stats (coarse buckets: normal/bursty/insane)
+  - ✅ Bloom tagging moves to L1+ (no dropping in L0)
+  - ✅ Adaptive circuit breaker (downward degradation by skipping optional analysis; never relax suspicion)
+  - ✅ 3-lane router: Auto-Respond, Curious (escalate), Suspicious (immediate escalate)
 
 #### Week 9-10: Service-Specific Models
 - [ ] SSH command prediction model

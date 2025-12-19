@@ -1,10 +1,20 @@
 # Layer 0 Reducers
 
 Fast, deterministic, and "boring" primitives for the Mirage cognitive deception framework.
+# Layer 0 Reducers (Contract + Router)
+
+Fast, deterministic, “boring” primitives for the Mirage cognitive deception framework.
 
 ## Philosophy
 
 Layer 0 exists to be **fast and dumb**. It never predicts intent, never adapts creatively, and always fails boringly.
+Layer 0 exists to be **fast and dumb**. It never predicts intent, never adapts creatively, and always fails boringly. It answers only three questions:
+
+1. What protocol is this most likely?
+2. Is this boring enough to auto-respond?
+3. Is this interesting enough to escalate?
+
+In the home profile, Layer 0 never drops traffic. It observes, tags, responds, and escalates.
 
 ### Core Constraints
 
@@ -58,16 +68,17 @@ match proto {
 **Constraint**: Only triggers reflex responses, never influences strategy.
 
 ```rust
-let detector = NoiseDetector::new();
+**Purpose**: Fast detection of obvious junk (tiny immutable core ≤ 20 patterns).
 if let Some(pattern_idx) = detector.is_known_noise(payload) {
-    // Return fake error (never block)
+**Constraint**: Returns a hint tag; never drops; never influences strategy directly.
     return detector.boring_noise_response(pattern_idx);
 }
 ```
-
-**Patterns**: masscan, nmap, metasploit, spray-and-pray credentials.
-
-### 3. Verdict Cache (`VerdictCache`)
+if let Some(idx) = detector.check_hint(payload) {
+        // Reflex-only: pick a boring response shape
+        let _hint = detector.boring_noise_response(idx);
+        // Tag EXPLOIT_HINT if needed; routing is handled separately
+}
 
 **Purpose**: Cache verdict metadata to reduce load without reducing realism.
 
@@ -92,7 +103,7 @@ if let Some(verdict) = cache.get(key) {
 **Constraint**: Exposed **only** to Layer 0 and Layer 3 (not Layer 1).
 
 ```rust
-let stats = rate_tracker.get_stats(ip);
+**Purpose**: Per-IP behavioral hints (not verdicts) to detect automation.
 stats.record();
 
 if stats.is_automated() {
@@ -104,35 +115,35 @@ if stats.is_automated() {
 **Metrics**:
 - Requests per second
 - Burstiness score (0.0 = steady, 1.0 = bursty)
-- Automation detection (high RPS + low burstiness = bot)
-
-### 5. Bloom Filter (`ScannerNoiseFilter`)
-
+**States**:
+- `Normal` | `Bursty` | `Insane`
+- Derived from RPS and inter-arrival variance (coarse only)
 **Purpose**: Drop obvious benign scanner noise early.
 
 **Constraint**: False positive → static path only, **never** drop connection.
-
+**Purpose**: Tag probable benign scanner noise. No drops in Layer 0.
 ```rust
-let bloom = ScannerNoiseFilter::new(10_000, 0.01);
+**Constraint**: Tags as `PROBABLE_NOISE`; Layer 1+ decides deprioritization.
 
 if bloom.is_known_benign(ip, payload) {
     // Route to static emulation (safe on false positive)
-    return static_response();
+let bloom = ScannerNoiseFilter::new(10_000, 0.01, ProfileFlags::HOME);
+if bloom.is_probable_noise(ip, payload) {
+        // Tag only; do not drop in L0
 }
-```
-
 **Key**: Bloom filters have false positives. In Mirage, FP → static emulation is acceptable. FP → connection drop breaks MTTD.
 
 ### 6. Adaptive Circuit Breaker (`AdaptiveCircuitBreaker`)
 
 **Purpose**: Dynamic degradation under load while preserving realism.
 
-**Constraint**: Degrade **downward only** (L4→L3→L2→L1→static).
+**Purpose**: Dynamic work shedding under load while preserving security posture.
 
-```rust
+**Constraint**: Degrade **downward only** (L4→L3→L2→L1→static). Never relax suspicion thresholds; only skip optional analysis in enterprise profile.
 let cb = AdaptiveCircuitBreaker::new();
 cb.record_latency(latency_ms);
 
+let cb = AdaptiveCircuitBreaker::new(ProfileFlags::ENTERPRISE);
 let level = cb.degradation_level();
 match level {
     DegradationLevel::Normal => invoke_all_layers(),
@@ -207,6 +218,7 @@ match cb.degradation_level() {
 
 ### Python (Demo)
 
+let skip_optional = cb.should_skip_optional(); // true when degraded (enterprise)
 ```bash
 cd rust-protocol
 python3 demo_reducers.py

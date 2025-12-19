@@ -84,29 +84,43 @@ Mirage uses a cascading intelligence stack where each layer handles what it can,
 **Status**: ✅ 100% Complete  
 **Location**: `rust-protocol/src/`
 
+#### Operating Mantra
+"Home Apate is not a firewall. It is a curious liar that wants to see everything." Layer 0 is allowed to **misclassify** and **be wrong**, but it must stay **cheap, nosy, and non-blocking**.
+
 #### Purpose
 Sub-millisecond deterministic threat detection and traffic filtering. Acts as the "immune system" for the honeypot.
 
 #### What It Does
-- **Protocol Classification**: Byte-prefix detection (SSH/HTTP/FTP/SMTP/Unknown)
-- **Noise Detection**: Aho-Corasick multi-pattern matching for known scanners (nmap, masscan, shodan)
+- **Protocol Classification**: Byte-prefix best-guess (SSH/HTTP/FTP/SMTP/Unknown); wrong is acceptable if it's cheap
+- **Noise Hints**: Tiny, immutable Aho-Corasick core (<20 patterns) for obvious junk; returns a hint, never a drop
 - **Verdict Caching**: Metadata-only caching to avoid recomputation without fingerprinting
-- **Rate Statistics**: Per-IP behavioral metrics (RPS, burstiness, automation detection)
-- **Bloom Filtering**: Probabilistic set for benign scanner noise
-- **Circuit Breaking**: Adaptive degradation under load (L4→L3→L2→L1→static)
+- **Rate Statistics**: Coarse buckets only (`normal`, `bursty`, `insane`) to flag interesting timing, not precise abuse
+- **Feature Extraction**: Cheap feature packaging (lengths, entropy, byte prefixes) for upstream use
+- **Circuit Breaking**: Adaptive degradation under load (L4→L3→L2→L1→static); stops being clever, never loosens suspicion
 
 #### Key Constraints
 - **Deterministic**: No clever logic, no intent prediction
 - **Boring Failures**: Dead sockets, timeouts, malformed banners (never intelligent)
-- **Downward Degradation**: System gets quieter under stress, never smarter
+- **Downward Degradation**: System gets quieter under stress, never smarter; high latency disables extras instead of relaxing suspicion
 - **Reflex Only**: Triggers fake errors/crashes, never blocks or alerts
+- **No Dropping**: Layer 0 never discards “interesting” data; it tags and forwards. Bloom filtering for noise lives in upper layers as tagging, not dropping.
 
 #### Files
-- `src/reducers.rs` - Six latency reducers (590 lines)
+- `src/reducers.rs` - Six latency reducers (590 lines) and 3-lane router
 - `src/protocol.rs` - Protocol parsing and threat detection
 - `src/circuit_breaker.rs` - Fail-safe circuit breaker
 - `src/utils.rs` - IP validation, entropy calculation, fingerprinting
 - `src/main.rs` - TCP echo server (port 7878)
+
+#### Routing Lanes (Keep It to Three)
+- **Lane 1 — Auto-Respond**: Known protocol, low-effort probe, no obvious exploit strings → respond instantly (fake banner/error/delay), log, move on.
+- **Lane 2 — Curious**: Unknown protocol, odd payload, weird timing → respond slower + slightly inconsistent, escalate to Layer 1, log all features.
+- **Lane 3 — Suspicious**: Exploit strings, aggressive rate, sequence patterns → escalate immediately with full metadata.
+
+#### Layer Boundaries
+- Bloom filter for “known noise” lives in Layer 1+ as a **tag**, not a drop.
+- Full Aho-Corasick set lives in Layer 1+; Layer 0 keeps a tiny immutable core for hints only.
+- Circuit breaker only **skips optional analysis** under load; it never lowers suspicion thresholds.
 
 #### Technologies
 - **Rust 2021 Edition** - Zero-cost abstractions, memory safety
@@ -1064,6 +1078,10 @@ LOG_FILE=/var/log/mirage.log
 # Security
 ENABLE_IP_ANONYMIZATION=true
 DATA_RETENTION_DAYS=90
+
+# Profiles (planned)
+# PROFILE=home|enterprise (home = drop_nothing, log_everything, relaxed latency; enterprise = optional noise tagging in upper layers)
+# Layer 0 never drops; profiles adjust tagging and aggregation in L1+.
 ```
 
 ### Production Deployment

@@ -173,6 +173,8 @@ struct Connection {
 - **Performance Monitoring**: Real-time connection metrics
 - **Async Processing**: High-performance concurrent connections
 - **Binary Protocol Support**: Raw TCP data handling
+- **Philosophy**: Layer 0 is a curious liar, not a firewall—no dropping of interesting data. It answers three questions only: likely protocol? boring enough to auto-respond? interesting enough to escalate?
+- **Routing Lanes**: Auto-Respond (fake banner/error), Curious (slow + escalate), Suspicious (immediate escalate). Bloom/large pattern sets are deferred to upper layers as tags, not drops.
 
 ### 6. Data Management
 

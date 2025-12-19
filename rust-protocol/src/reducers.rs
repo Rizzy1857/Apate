@@ -1,11 +1,19 @@
 // Layer 0 Latency Reducers
 // -----------------------
-// Fast, deterministic, boring primitives for Mirage cognitive stack.
+// Layer 0 Philosophy: Observe, Tag, Respond, Escalate. Never judge. Never drop.
+// "Home Apate is not a firewall. It is a curious liar that wants to see everything."
+//
+// Layer 0 answers three questions only:
+// 1. What protocol is this most likely?
+// 2. Is this boring enough to auto-respond?
+// 3. Is this interesting enough to escalate?
+//
 // Key constraints:
-// - No clever logic
+// - No clever logic, no intent prediction
 // - Deterministic and stateless (or bounded-state)
 // - Fail boringly, not intelligently
-// - Degrade downward only (never upward)
+// - Degrade downward only (work shedding, never relax suspicion)
+// - No dropping in home profile
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -13,6 +21,82 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use aho_corasick::AhoCorasick;
 use bloom::{BloomFilter, ASMS};
+
+// ============================================================================
+// LAYER 0 CONTRACT
+// ============================================================================
+
+/// Profile flags control behavior without changing architecture
+#[derive(Debug, Clone, Copy)]
+pub struct ProfileFlags {
+    pub drop_enabled: bool,           // home=false, enterprise=true
+    pub bloom_drop: bool,             // home=false, enterprise=true
+    pub benign_sampling: bool,        // home=false, enterprise=true
+    pub latency_adaptive_security: bool, // home=false, enterprise=partial
+}
+
+impl ProfileFlags {
+    pub const HOME: Self = Self {
+        drop_enabled: false,
+        bloom_drop: false,
+        benign_sampling: false,
+        latency_adaptive_security: false,
+    };
+
+    pub const ENTERPRISE: Self = Self {
+        drop_enabled: true,
+        bloom_drop: true,
+        benign_sampling: true,
+        latency_adaptive_security: true,
+    };
+}
+
+/// Tag bitflags for metadata propagation
+pub mod tags {
+    pub const PROBABLE_NOISE: u32 = 1 << 0;
+    pub const REPEATED_PROBE: u32 = 1 << 1;
+    pub const EXPLOIT_HINT: u32 = 1 << 2;
+    pub const BURSTY: u32 = 1 << 3;
+    pub const ODD_CADENCE: u32 = 1 << 4;
+    pub const PROTO_UNKNOWN: u32 = 1 << 5;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ResponseProfile {
+    FastFake,        // Lane 1: instant fake banner/error
+    SlowFake,        // Lane 2: delayed + inconsistent
+    Mirror,          // Lane 3: escalate immediately
+}
+
+/// Layer 0 Output Contract: tag and route, never drop
+#[derive(Debug, Clone)]
+pub struct Layer0Output {
+    pub proto_guess: Protocol,
+    pub response_profile: ResponseProfile,
+    pub tags: u32,              // Bitflags from tags::*
+    pub escalate: bool,
+    pub suspicion_score: u8,    // 0-255 additive score
+}
+
+impl Layer0Output {
+    pub fn new(proto: Protocol) -> Self {
+        Self {
+            proto_guess: proto,
+            response_profile: ResponseProfile::FastFake,
+            tags: 0,
+            escalate: false,
+            suspicion_score: 0,
+        }
+    }
+
+    pub fn add_tag(&mut self, tag: u32) {
+        self.tags |= tag;
+    }
+
+    pub fn add_score(&mut self, points: u8) {
+        self.suspicion_score = self.suspicion_score.saturating_add(points);
+    }
+}
 
 // ============================================================================
 // 1. PROTOCOL CLASSIFIER (Fast, Boring Failures)
@@ -93,33 +177,41 @@ pub fn boring_failure_response(expected: Protocol) -> &'static [u8] {
 // 2. AHO-CORASICK MULTI-MATCH (Known Noise Only)
 // ============================================================================
 
-/// Known garbage patterns (scanners, mass exploit kits, spray-and-pray)
-/// CONSTRAINT: Only triggers reflex responses (fake errors, simulated crashes)
-/// NEVER: blocks, alerts, adaptive responses
+/// TINY immutable core patterns (≤20) for Layer 0 hints only
+/// Full pattern set lives in Layer 1+
+/// CONSTRAINT: Returns hint tag, never drops
 pub struct NoiseDetector {
     ac: AhoCorasick,
 }
 
 impl NoiseDetector {
     pub fn new() -> Self {
+        // Layer 0 core: only high-confidence exploit strings
         let patterns = vec![
-            // Mass scanners
+            // Mass scanners (top 5)
             "masscan",
             "nmap",
             "zgrab",
             "shodan",
             "censys",
-            // Common exploit kit signatures
+            // Exploit kits (top 5)
             "metasploit",
             "msfconsole",
             "exploit/",
             "payload/",
-            // Spray patterns
+            "\\x90\\x90\\x90", // NOP sled
+            // Obvious spray (top 5)
             "admin:admin",
             "root:root",
             "test:test",
-            // Binary junk
+            "password:password",
+            "123456",
+            // Binary garbage (top 5)
             "\x00\x00\x00\x00",
+            "\x7f\x45\x4c\x46", // ELF header
+            "AAAA", // Buffer overflow pattern
+            "%s%s%s%s", // Format string
+            "../../../../", // Path traversal
         ];
 
         Self {
@@ -127,18 +219,18 @@ impl NoiseDetector {
         }
     }
 
-    /// Check if payload matches known noise patterns
-    /// Returns pattern index if matched, None otherwise
-    pub fn is_known_noise(&self, payload: &[u8]) -> Option<usize> {
+    /// Check if payload matches core patterns
+    /// Returns hint tag, NEVER drops
+    pub fn check_hint(&self, payload: &[u8]) -> Option<usize> {
         self.ac.find(payload).map(|m| m.pattern().as_usize())
     }
 
-    /// Get boring response for known noise (never blocks, always fake errors)
+    /// Get boring response hint (reflex only, never blocks)
     pub fn boring_noise_response(&self, pattern_idx: usize) -> &'static str {
         match pattern_idx {
             0..=4 => "Connection timed out\n", // Scanner patterns
-            5..=8 => "Segmentation fault (core dumped)\n", // Exploit patterns
-            9..=11 => "Authentication failed\n", // Spray patterns
+            5..=9 => "Segmentation fault (core dumped)\n", // Exploit patterns
+            10..=14 => "Authentication failed\n", // Spray patterns
             _ => "Bad request\n",
         }
     }
@@ -229,11 +321,19 @@ fn current_time_ms() -> u64 {
 }
 
 // ============================================================================
-// 4. SLIDING RATE STATS (Per-IP Behavioral Shaping)
+// 4. SIMPLIFIED RATE STATS (3 Coarse States)
 // ============================================================================
 
-/// Per-IP request statistics for latency shaping
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RateState {
+    Normal,
+    Bursty,
+    Insane,
+}
+
+/// Per-IP request statistics for behavioral hints
 /// CONSTRAINT: Only exposed to Layer 0 and Layer 3 (NOT Layer 1)
+/// Collapsed from fine-grained to 3 coarse states
 pub struct RateStats {
     // Sliding window of timestamps (circular buffer)
     requests: Vec<AtomicU64>,
@@ -313,6 +413,20 @@ impl RateStats {
         // High rate + low burstiness = bot
         rps > 5.0 && burstiness < 0.3
     }
+
+    /// Get coarse rate state (collapsed from fine-grained)
+    pub fn rate_state(&self) -> RateState {
+        let rps = self.requests_per_second();
+        let burstiness = self.burstiness_score();
+
+        if rps > 20.0 || (rps > 10.0 && burstiness > 0.8) {
+            RateState::Insane
+        } else if rps > 5.0 || burstiness > 0.6 {
+            RateState::Bursty
+        } else {
+            RateState::Normal
+        }
+    }
 }
 
 /// Global per-IP rate tracking
@@ -359,32 +473,35 @@ impl RateTracker {
 }
 
 // ============================================================================
-// 5. BLOOM FILTER (Scanner Noise Only)
+// 5. BLOOM FILTER (Tagging Only - No Drops)
 // ============================================================================
 
-/// Bloom filter for known benign scanner noise
-/// CONSTRAINT: False positive → static path only, NEVER drop connection
+/// Bloom filter for noise tagging (moved from gate to hint)
+/// CONSTRAINT: Tags as PROBABLE_NOISE, NEVER drops in home profile
+/// NOTE: Full bloom logic should migrate to Layer 1+ for advanced tagging
 pub struct ScannerNoiseFilter {
     bloom: Arc<Mutex<BloomFilter>>,
+    profile: ProfileFlags,
 }
 
 impl ScannerNoiseFilter {
-    pub fn new(expected_elements: usize, false_positive_rate: f64) -> Self {
+    pub fn new(expected_elements: usize, false_positive_rate: f64, profile: ProfileFlags) -> Self {
         let bloom = BloomFilter::with_rate(false_positive_rate as f32, expected_elements as u32);
         Self {
             bloom: Arc::new(Mutex::new(bloom)),
+            profile,
         }
     }
 
-    /// Check if IP+payload combo is known benign noise
-    pub fn is_known_benign(&self, ip: &str, payload: &[u8]) -> bool {
+    /// Check if IP+payload combo is probable noise (hint, not verdict)
+    pub fn is_probable_noise(&self, ip: &str, payload: &[u8]) -> bool {
         let key = format!("{}:{}", ip, String::from_utf8_lossy(payload));
         let bloom = self.bloom.lock().unwrap();
         bloom.contains(&key)
     }
 
-    /// Mark IP+payload as benign noise
-    pub fn mark_benign(&self, ip: &str, payload: &[u8]) {
+    /// Mark IP+payload as probable noise for future tagging
+    pub fn mark_noise(&self, ip: &str, payload: &[u8]) {
         let key = format!("{}:{}", ip, String::from_utf8_lossy(payload));
         let mut bloom = self.bloom.lock().unwrap();
         bloom.insert(&key);
@@ -392,9 +509,6 @@ impl ScannerNoiseFilter {
 
     /// Get false positive probability (for monitoring)
     pub fn false_positive_rate(&self) -> f64 {
-        // BloomFilter doesn't expose false_positive_rate method
-        // Return the configured rate (stored during construction would be ideal,
-        // but for now we return a placeholder)
         0.01 // 1% default FPR
     }
 }
@@ -403,8 +517,9 @@ impl ScannerNoiseFilter {
 // 6. ADAPTIVE CIRCUIT BREAKER (Downward Degradation Only)
 // ============================================================================
 
-/// Enhanced circuit breaker with adaptive thresholds
-/// CONSTRAINT: Degrades downward (L4→L3→L2→L1→static), never upward
+/// Circuit breaker with work shedding (NEVER relax suspicion)
+/// CONSTRAINT: High latency → skip optional analysis, keep thresholds constant
+/// Degrades downward (L4→L3→L2→L1→static), never upward
 pub struct AdaptiveCircuitBreaker {
     state: AtomicUsize, // CircuitState
     failure_count: AtomicUsize,
@@ -412,6 +527,7 @@ pub struct AdaptiveCircuitBreaker {
     // Latency histogram for adaptive thresholds
     latency_buckets: [AtomicUsize; 10], // 0-1ms, 1-2ms, ..., 9-10ms, 10+ms
     degradation_level: AtomicUsize, // 0=normal, 1=L3, 2=L2, 3=L1, 4=static
+    profile: ProfileFlags,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -436,7 +552,7 @@ impl From<usize> for DegradationLevel {
 }
 
 impl AdaptiveCircuitBreaker {
-    pub const fn new() -> Self {
+    pub fn new(profile: ProfileFlags) -> Self {
         const ATOMIC_ZERO: AtomicUsize = AtomicUsize::new(0);
         Self {
             state: AtomicUsize::new(0),
@@ -444,6 +560,7 @@ impl AdaptiveCircuitBreaker {
             last_failure_time: AtomicU64::new(0),
             latency_buckets: [ATOMIC_ZERO; 10],
             degradation_level: AtomicUsize::new(0),
+            profile,
         }
     }
 
@@ -485,7 +602,7 @@ impl AdaptiveCircuitBreaker {
         DegradationLevel::from(self.degradation_level.load(Ordering::Acquire))
     }
 
-    /// Degrade one level (downward only)
+    /// Degrade one level (work shedding only, never relax suspicion)
     pub fn degrade(&self) {
         let current = self.degradation_level.load(Ordering::Acquire);
         if current < 4 {
@@ -503,6 +620,41 @@ impl AdaptiveCircuitBreaker {
             self.degradation_level.store(current - 1, Ordering::Release);
         }
     }
+
+    /// Check if optional work should be skipped (work shedding)
+    pub fn should_skip_optional(&self) -> bool {
+        // In home profile, never skip (learning priority)
+        if !self.profile.latency_adaptive_security {
+            return false;
+        }
+
+        // In enterprise, skip extras if degraded
+        self.degradation_level.load(Ordering::Acquire) >= 2
+    }
+}
+
+// ============================================================================
+// 7. 3-LANE ROUTER (Hard Cap)
+// ============================================================================
+
+/// Route payload through one of three lanes based on suspicion score
+pub fn route_payload(
+    _proto: Protocol,
+    suspicion_score: u8,
+    tags: u32,
+) -> ResponseProfile {
+    // Lane 3: Suspicious (immediate escalate)
+    if suspicion_score >= 50 || (tags & tags::EXPLOIT_HINT) != 0 {
+        return ResponseProfile::Mirror;
+    }
+
+    // Lane 2: Curious (delayed + escalate)
+    if suspicion_score >= 20 || (tags & (tags::PROTO_UNKNOWN | tags::ODD_CADENCE)) != 0 {
+        return ResponseProfile::SlowFake;
+    }
+
+    // Lane 1: Auto-respond (instant fake)
+    ResponseProfile::FastFake
 }
 
 #[cfg(test)]
@@ -519,11 +671,12 @@ mod tests {
     }
 
     #[test]
-    fn test_noise_detector() {
+    fn test_noise_detector_no_drop() {
         let detector = NoiseDetector::new();
-        assert!(detector.is_known_noise(b"nmap scan").is_some());
-        assert!(detector.is_known_noise(b"metasploit payload").is_some());
-        assert!(detector.is_known_noise(b"benign request").is_none());
+        // Check hint returns, never drops
+        assert!(detector.check_hint(b"nmap scan").is_some());
+        assert!(detector.check_hint(b"metasploit payload").is_some());
+        assert!(detector.check_hint(b"benign request").is_none());
     }
 
     #[test]
@@ -536,29 +689,59 @@ mod tests {
     }
 
     #[test]
-    fn test_rate_stats() {
+    fn test_rate_stats_coarse_states() {
         let stats = RateStats::new(100);
         
-        // Simulate steady requests
-        for _ in 0..10 {
+        // Simulate slow steady requests (< 5 RPS)
+        for _ in 0..3 {
             stats.record();
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(std::time::Duration::from_millis(350));
         }
         
-        let rps = stats.requests_per_second();
-        assert!(rps > 0.0 && rps < 15.0);
+        let state = stats.rate_state();
+        // Should be Normal (< 5 RPS)
+        assert!(matches!(state, RateState::Normal), "Expected Normal, got {:?}", state);
     }
 
     #[test]
-    fn test_adaptive_circuit_breaker() {
-        let cb = AdaptiveCircuitBreaker::new();
+    fn test_adaptive_circuit_breaker_work_shed() {
+        let cb = AdaptiveCircuitBreaker::new(ProfileFlags::HOME);
         
         // Record fast latencies
         for _ in 0..100 {
             cb.record_latency(2);
         }
         
+        // Home profile never skips optional work
+        assert!(!cb.should_skip_optional());
+        
         let threshold = cb.adaptive_threshold();
         assert!(threshold <= 3);
+    }
+
+    #[test]
+    fn test_3_lane_router() {
+        // Lane 1: Auto-respond
+        let profile = route_payload(Protocol::SSH, 10, 0);
+        assert_eq!(profile, ResponseProfile::FastFake);
+
+        // Lane 2: Curious
+        let profile = route_payload(Protocol::Unknown, 25, tags::PROTO_UNKNOWN);
+        assert_eq!(profile, ResponseProfile::SlowFake);
+
+        // Lane 3: Suspicious
+        let profile = route_payload(Protocol::HTTP, 60, tags::EXPLOIT_HINT);
+        assert_eq!(profile, ResponseProfile::Mirror);
+    }
+
+    #[test]
+    fn test_profile_flags() {
+        let home = ProfileFlags::HOME;
+        assert!(!home.drop_enabled);
+        assert!(!home.bloom_drop);
+
+        let enterprise = ProfileFlags::ENTERPRISE;
+        assert!(enterprise.drop_enabled);
+        assert!(enterprise.bloom_drop);
     }
 }
