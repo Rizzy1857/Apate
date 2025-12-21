@@ -23,7 +23,7 @@ import random
 import json
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any, Union, Tuple, Set
 from enum import Enum
 
 # Import Rust protocol for Layer 0 threat detection
@@ -165,7 +165,7 @@ class MarkovPredictor:
     with Kneser-Ney smoothing (Absolute Discounting) and integer mapping.
     """
 
-    def __init__(self, max_order: int = 3, smoothing: float = 0.75):
+    def __init__(self, max_order: int = 3, smoothing: float = 0.5):
         self.max_order = max_order
         self.discount = smoothing  # 'd' parameter for absolute discounting
         self.root = PSTNode()
@@ -222,8 +222,11 @@ class MarkovPredictor:
         node.counts[target_symbol] += 1
         node.total_count += 1
 
-    def predict_next(self, history: List[str]) -> PredictionResult:
-        """Predict next command using Kneser-Ney recursiveness"""
+    def predict_next(self, history: List[str], whitelist: Optional[Set[str]] = None) -> PredictionResult:
+        """
+        Predict next command using Kneser-Ney recursiveness.
+        If whitelist is provided, only consider candidates in the whitelist.
+        """
         # SANITIZATION (Safety Net)
         history = self._sanitize_input(history)
         
@@ -260,10 +263,14 @@ class MarkovPredictor:
             else:
                 break
         
-        # 2. Collect candidates (Union of all symbols seen in these contexts)
         candidates = set()
         for node in path_nodes:
-            candidates.update(node.counts.keys())
+            # Filter by whitelist if provided
+            node_candidates = node.counts.keys()
+            for cand_id in node_candidates:
+                cand_str = self.symbol_table.get_symbol(cand_id)
+                if whitelist is None or cand_str in whitelist:
+                    candidates.add(cand_id)
             
         if not candidates:
              return PredictionResult(None, 0.0, 0, {})
@@ -345,18 +352,24 @@ class ComplexityRouter:
             return None
         
         try:
-            threat_json = rust_protocol.detect_threats(command, source_ip)
-            if threat_json:
-                # Parse threat and decide if we should block or engage
-                threat_data = json.loads(threat_json)
-                severity = threat_data.get("severity", "low")
+            # rust_protocol.detect_threats now returns a Dict or None
+            threat_data = rust_protocol.detect_threats(command, source_ip)
+            
+            if threat_data:
+                # Direct dictionary access (no more json.loads)
+                if threat_data.get("threat_detected", False):
+                    severity = threat_data.get("severity", "low")
+                    
+                    # Block critical threats immediately
+                    if severity == "critical":
+                        return f"[BLOCKED] Critical threat detected: {threat_data.get('event_type', 'unknown')}"
+                    
+                    # For other threats, let them through for honeypot engagement
+                    logger.info(f"Layer 0 threat detected but allowing for engagement: {threat_data.get('event_type', 'unknown')}")
                 
-                # Block critical threats immediately
-                if severity == "critical":
-                    return f"[BLOCKED] Critical threat detected: {threat_data.get('event_type', 'unknown')}"
-                
-                # For other threats, let them through for honeypot engagement
-                logger.info(f"Layer 0 threat detected but allowing for engagement: {threat_data.get('event_type', 'unknown')}")
+                # We can also check for 'is_noise' if needed in future
+                if threat_data.get("is_noise", False):
+                     logger.info("Layer 0: Identified as probable noise/scanner.")
             
             return None  # Safe to proceed to Layer 1
             
@@ -496,7 +509,22 @@ class AIEngine:
         self.personality_profiles = self._load_personality_profiles()
         self.response_templates = self._load_response_templates()
         self.personality_profiles = self._load_personality_profiles()
-        self.markov_predictor = MarkovPredictor(max_order=3, smoothing=0.5)
+        
+        # Layer 1: Service-Specific Intuition Models
+        # Separate predictors for SSH and HTTP to prevent cross-contamination
+        self.predictors: Dict[str, MarkovPredictor] = {
+            "ssh": MarkovPredictor(max_order=3, smoothing=0.5),
+            "http": MarkovPredictor(max_order=2, smoothing=0.5)  # URL paths usually have shorter context dependency
+        }
+        
+        # Valid commands whitelist for Hallucination Guard
+        # Ideally this would be loaded from the SSHEmulator capabilities
+        self.command_whitelist = {
+            "ls", "cd", "cat", "pwd", "whoami", "id", "uname", "ps", "netstat",
+            "echo", "mkdir", "rm", "touch", "mv", "cp", "grep", "find", "ssh",
+            "scp", "wget", "curl", "ping", "systemctl", "service", "crontab",
+            "vi", "nano", "vim", "history", "exit", "sudo", "su", "help", "clear"
+        }
         
         # Layer 2: Behavioral Classifier
         self.behavioral_classifier = None
@@ -597,12 +625,20 @@ class AIEngine:
             session_history = context.get("session_history", [])
 
             # Train predictor with recent history (excluding current command if provided separately)
-            history_for_training = attacker_context.command_history[-(self.markov_predictor.max_order + 1):]
-            self.markov_predictor.learn_sequence(history_for_training)
+            # Use the SSH-specific predictor
+            predictor = self.predictors["ssh"]
+            
+            history_for_training = attacker_context.command_history[-(predictor.max_order + 1):]
+            predictor.learn_sequence(history_for_training)
 
             # Predict next command using history without the current command to gauge predictability
             history_for_prediction = attacker_context.command_history[:-1] if attacker_context.command_history else []
-            markov_prediction = self.markov_predictor.predict_next(history_for_prediction)
+            
+            # Layer 1 Hallucination Guard: Only predict valid commands
+            markov_prediction = predictor.predict_next(
+                history_for_prediction, 
+                whitelist=self.command_whitelist
+            )
             
             # MIRAGE CASCADING SHORT-CIRCUIT ARCHITECTURE
             

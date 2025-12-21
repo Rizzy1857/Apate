@@ -4,8 +4,8 @@
 
 pub mod circuit_breaker;
 pub mod protocol;
-pub mod utils;
 pub mod reducers;
+pub mod utils;
 
 use chrono::{DateTime, Utc};
 #[cfg(feature = "pyo3")]
@@ -46,7 +46,17 @@ pub fn generate_fingerprint(data: &[u8]) -> String {
 #[cfg(feature = "pyo3")]
 mod python_bindings {
     use super::*;
+    use crate::reducers::{classify_protocol_fast, NoiseDetector};
+    use pyo3::types::PyDict;
     use std::panic;
+    use std::sync::OnceLock;
+
+    /// Static NoiseDetector instance
+    static NOISE_DETECTOR: OnceLock<NoiseDetector> = OnceLock::new();
+
+    fn get_noise_detector() -> &'static NoiseDetector {
+        NOISE_DETECTOR.get_or_init(|| NoiseDetector::new())
+    }
 
     /// Python module for the Rust protocol library
     #[pymodule]
@@ -132,11 +142,13 @@ mod python_bindings {
 
     #[pyfunction]
     #[pyo3(name = "detect_threats")]
-    fn detect_threats_py(py: Python, payload: &str, source_ip: &str) -> PyResult<Option<String>> {
+    fn detect_threats_py<'py>(
+        py: Python<'py>,
+        payload: &str,
+        source_ip: &str,
+    ) -> PyResult<Option<Bound<'py, PyDict>>> {
         // 1. Check Circuit Breaker
         if !CIRCUIT_BREAKER.check_allow() {
-            // Fail open: Return None (no threat detected) to avoid blocking traffic
-            // In a real system, we might want to log this bypass
             return Ok(None);
         }
 
@@ -146,15 +158,21 @@ mod python_bindings {
             ));
         }
 
-        let payload = payload.to_string();
-        let source_ip = source_ip.to_string();
+        // Pre-calculation for Fast Classification & Noise (Low Latency)
+        let payload_bytes = payload.as_bytes();
+        let proto_guess = classify_protocol_fast(payload_bytes);
+        let noise_hint = get_noise_detector().check_hint(payload_bytes).is_some();
 
-        py.allow_threads(move || {
+        let payload_str = payload.to_string();
+        let source_ip_str = source_ip.to_string();
+
+        // Run deep analysis in threaded block
+        let (threat, duration_ms) = py.allow_threads(move || {
             let start_time = std::time::Instant::now();
 
             let result = panic::catch_unwind(|| {
                 // Create a dummy message for analysis
-                let source_addr = format!("{}:0", source_ip)
+                let source_addr = format!("{}:0", source_ip_str)
                     .parse()
                     .unwrap_or_else(|_| "0.0.0.0:0".parse().unwrap());
 
@@ -162,32 +180,51 @@ mod python_bindings {
                     id: "temp".to_string(),
                     timestamp: Utc::now(),
                     source: source_addr,
-                    message_type: "unknown".to_string(),
-                    payload,
+                    message_type: proto_guess.as_str().to_string(), // Use fast guess
+                    payload: payload_str,
                     fingerprint: None,
                 };
 
-                let threat = protocol::analyze_for_threats(&message);
-
-                // Return JSON representation of the threat
-                if let Some(t) = &threat {
-                    Ok(Some(serde_json::to_string(t).unwrap_or_default()))
-                } else {
-                    Ok(None)
-                }
+                protocol::analyze_for_threats(&message)
             });
 
-            // 2. Record Latency
             let duration = start_time.elapsed().as_millis() as u64;
             CIRCUIT_BREAKER.record_result(duration);
 
             match result {
-                Ok(val) => val,
-                Err(_) => Err(pyo3::exceptions::PyRuntimeError::new_err(
-                    "Rust panic in detect_threats",
-                )),
+                Ok(val) => (val, duration),
+                Err(_) => (None, duration), // Swallow panic for now, or bubble up error
             }
-        })
+        });
+
+        // 3. Construct Python Dict Return
+        // Return None if nothing interesting (no threat, no noise, known proto?)
+        // Actually, we should return metadata if requested.
+        // For now, if threat detected OR noise detected, return Struct.
+
+        if threat.is_none() && !noise_hint {
+            return Ok(None);
+        }
+
+        let dict = PyDict::new_bound(py);
+        dict.set_item("protocol", proto_guess.as_str())?;
+        dict.set_item("is_noise", noise_hint)?;
+        dict.set_item("latency_ms", duration_ms)?;
+
+        if let Some(t) = threat {
+            // API schema: threat_detected (bool), severity (str), event_type (str), description (str)
+            dict.set_item("threat_detected", true)?;
+            dict.set_item("severity", t.severity)?;
+            dict.set_item("event_type", t.event_type)?;
+            dict.set_item("description", t.description)?;
+
+            // Raw JSON for complex metadata if needed
+            dict.set_item("raw_metadata", t.metadata.to_string())?;
+        } else {
+            dict.set_item("threat_detected", false)?;
+        }
+
+        Ok(Some(dict))
     }
 
     #[pyfunction]

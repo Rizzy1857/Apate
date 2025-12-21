@@ -149,7 +149,7 @@ type DeviceInfo struct {
 
 ### 5. Rust Protocol Server (`rust-protocol/src/main.rs`)
 
-**Purpose**: Low-level TCP protocol emulation  
+**Purpose**: Layer 0 reflex tagging, triage, and three-lane routing  
 **Language**: Rust  
 **Port**: 7878
 
@@ -166,15 +166,23 @@ struct Connection {
 }
 ```
 
+#### Philosophy & Routing Lanes
+
+- **No Dropping**: Layer 0 never drops interesting data in home profile. It observes, tags, responds, and escalates.
+- **Tag-and-Route**: Tiny Aho-Corasick core (≤ 20 patterns) and Bloom filter are tagging hints; strategy lives in Layer 1+.
+- **Three Lanes**:
+  - **Auto**: Known proto + low suspicion → instant fake (FastFake)
+  - **Curious**: Odd cadence / unknown proto → delayed fake + escalate (SlowFake)
+  - **Suspicious**: Exploit hint / insane rate → immediate escalate (Mirror)
+
 #### Features
 
-- **TCP Echo Service**: Basic protocol-level interaction
-- **Connection Tracking**: Session management and statistics
-- **Performance Monitoring**: Real-time connection metrics
+- **Protocol Classification**: Byte-prefix detection (SSH, HTTP, FTP, etc.)
+- **Verdict Caching**: Cache verdicts only; responses always vary
+- **Rate Stats**: Per-IP automation hints (Normal/Bursty/Insane) exposed only to L0 and L3
+- **Circuit Breaker**: Work shedding under load; never relaxes security thresholds
 - **Async Processing**: High-performance concurrent connections
 - **Binary Protocol Support**: Raw TCP data handling
-- **Philosophy**: Layer 0 is a curious liar, not a firewall—no dropping of interesting data. It answers three questions only: likely protocol? boring enough to auto-respond? interesting enough to escalate?
-- **Routing Lanes**: Auto-Respond (fake banner/error), Curious (slow + escalate), Suspicious (immediate escalate). Bloom/large pattern sets are deferred to upper layers as tags, not drops.
 
 ### 6. Data Management
 
