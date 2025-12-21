@@ -74,6 +74,8 @@ class AttackerContext:
         self.behavior_patterns: List[str] = []
         self.geographical_info: Dict[str, Any] = {}
         self.tools_detected: List[str] = []
+        self.threat_accum = ThreatAccumulator()
+        self.risk_multiplier = 1.0 # Correlation multiplier
         
     def update_activity(self, activity_type: str, data: Dict[str, Any]):
         """Update attacker context with new activity"""
@@ -96,15 +98,19 @@ class AttackerContext:
         if command.split()[0].lower() in reconnaissance_commands:
             if "reconnaissance" not in self.behavior_patterns:
                 self.behavior_patterns.append("reconnaissance")
+                self.threat_accum.update("reconnaissance", self.risk_multiplier)
         elif command.split()[0].lower() in lateral_movement:
             if "lateral_movement" not in self.behavior_patterns:
                 self.behavior_patterns.append("lateral_movement")
+                self.threat_accum.update("lateral_movement", self.risk_multiplier)
         elif command.split()[0].lower() in persistence:
             if "persistence" not in self.behavior_patterns:
                 self.behavior_patterns.append("persistence")
+                self.threat_accum.update("persistence", self.risk_multiplier)
         elif command.split()[0].lower() in data_exfiltration:
             if "data_exfiltration" not in self.behavior_patterns:
                 self.behavior_patterns.append("data_exfiltration")
+                self.threat_accum.update("data_exfiltration", self.risk_multiplier)
     
     def _analyze_login_patterns(self, login_data: Dict[str, Any]):
         """Analyze login patterns for threat assessment"""
@@ -115,9 +121,75 @@ class AttackerContext:
         if username in ["admin", "administrator", "root"]:
             if "privilege_escalation" not in self.behavior_patterns:
                 self.behavior_patterns.append("privilege_escalation")
+                self.threat_accum.update("privilege_escalation", self.risk_multiplier)
         
             if "weak_password_attack" not in self.behavior_patterns:
                 self.behavior_patterns.append("weak_password_attack")
+                self.threat_accum.update("weak_password_attack", self.risk_multiplier)
+                # Correlation: Suspicious HTTP activity increases risk for SSH
+                self.risk_multiplier += 0.5
+
+    # Old calculate_risk_score removed in favor of ThreatAccumulator
+    def get_threat_score(self) -> float:
+        return self.threat_accum.score
+
+
+class ThreatAccumulator:
+    """
+    Simplified threat scoring system.
+    Uses accumulated weighted scores + time decay instead of complex Bayesian inference.
+    """
+    def __init__(self):
+        self.score = 0.0
+        self.weights = {
+            "reconnaissance": 5.0,
+            "lateral_movement": 15.0,
+            "persistence": 20.0,
+            "data_exfiltration": 25.0,
+            "privilege_escalation": 30.0,
+            "weak_password_attack": 10.0
+        }
+        self.last_update = datetime.utcnow()
+        self.decay_rate = 0.5  # Points per minute decay
+
+    def update(self, event: str, multiplier: float = 1.0):
+        """Add weighted score for an event"""
+        self._apply_decay()
+        base_points = self.weights.get(event, 2.0)
+        self.score += base_points * multiplier
+        self.last_update = datetime.utcnow()
+
+    def _apply_decay(self):
+        """Apply time-based linear decay"""
+        now = datetime.utcnow()
+        minutes_passed = (now - self.last_update).total_seconds() / 60.0
+        if minutes_passed > 0:
+            decay_amount = minutes_passed * self.decay_rate
+            self.score = max(0.0, self.score - decay_amount)
+            self.last_update = now
+
+    def get_risk_level(self) -> Tuple[str, float]:
+        """Return qualitative risk level and raw score"""
+        self._apply_decay()
+        if self.score > 80: return ("Critical", self.score)
+        if self.score > 50: return ("High", self.score)
+        if self.score > 20: return ("Elevated", self.score)
+        return ("Low", self.score)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "score": self.score, 
+            "last_update": self.last_update.isoformat()
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ThreatAccumulator':
+        acc = cls()
+        acc.score = data.get("score", 0.0)
+        if "last_update" in data:
+            acc.last_update = datetime.fromisoformat(data["last_update"])
+        return acc
+
 
 
 class PredictionResult:
@@ -150,6 +222,21 @@ class SymbolTable:
     def __len__(self):
         return self.next_id
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "str_to_int": self.str_to_int,
+            "next_id": self.next_id
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'SymbolTable':
+        st = cls()
+        st.str_to_int = data.get("str_to_int", {})
+        st.next_id = data.get("next_id", 0)
+        # Rebuild reverse mapping
+        st.int_to_str = {v: k for k, v in st.str_to_int.items()}
+        return st
+
 
 class PSTNode:
     """Node in the Probabilistic Suffix Tree"""
@@ -157,6 +244,25 @@ class PSTNode:
         self.counts: Dict[int, int] = defaultdict(int)  # Next symbol counts
         self.total_count: int = 0
         self.children: Dict[int, PSTNode] = {}  # Suffix links (reverse direction)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "counts": dict(self.counts), # Convert defaultdict to dict
+            "total_count": self.total_count,
+            "children": {str(k): v.to_dict() for k, v in self.children.items()} # Keys must be strings for JSON
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'PSTNode':
+        node = cls()
+        node.counts = defaultdict(int, {int(k): v for k, v in data.get("counts", {}).items()})
+        node.total_count = data.get("total_count", 0)
+        
+        children_data = data.get("children", {})
+        for k, v in children_data.items():
+            node.children[int(k)] = cls.from_dict(v)
+            
+        return node
 
 
 class MarkovPredictor:
@@ -170,6 +276,24 @@ class MarkovPredictor:
         self.discount = smoothing  # 'd' parameter for absolute discounting
         self.root = PSTNode()
         self.symbol_table = SymbolTable()
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "max_order": self.max_order,
+            "discount": self.discount,
+            "symbol_table": self.symbol_table.to_dict(),
+            "root": self.root.to_dict()
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'MarkovPredictor':
+        predictor = cls(
+            max_order=data.get("max_order", 3),
+            smoothing=data.get("discount", 0.5)
+        )
+        predictor.symbol_table = SymbolTable.from_dict(data.get("symbol_table", {}))
+        predictor.root = PSTNode.from_dict(data.get("root", {}))
+        return predictor
 
     def _sanitize_input(self, sequence: List[str]) -> List[str]:
         """Sanitize input sequence: strip non-printables and limit length"""
@@ -221,6 +345,27 @@ class MarkovPredictor:
     def _update_node(self, node: PSTNode, target_symbol: int):
         node.counts[target_symbol] += 1
         node.total_count += 1
+
+    def prune(self, min_count: int = 2):
+        """
+        Prune low-frequency nodes to manage memory usage.
+        Removes children with total_count < min_count.
+        """
+        self._prune_recursive(self.root, min_count)
+
+    def _prune_recursive(self, node: PSTNode, min_count: int):
+        # Identify children to remove
+        to_remove = []
+        for sym, child in node.children.items():
+            if child.total_count < min_count:
+                to_remove.append(sym)
+            else:
+                # Recurse if kept
+                self._prune_recursive(child, min_count)
+        
+        # Remove them
+        for sym in to_remove:
+            del node.children[sym]
 
     def predict_next(self, history: List[str], whitelist: Optional[Set[str]] = None) -> PredictionResult:
         """
@@ -426,20 +571,23 @@ class ComplexityRouter:
     @staticmethod
     def check_l2_exit(attacker_profile: AttackerContext, classifier: Any = None, confidence_threshold: float = 0.8) -> bool:
         """
-        Layer 2 Exit Check: Is this a known attacker profile with a cached strategy?
-        Uses RandomForest Signal if available, fallback to heuristics.
-        If True -> Route to Static Emulator (with cached strategy)
-        If False -> Proceed to Layer 3
+        Layer 2: Behavioral Analysis (Advisory Only)
+        
+        SAFEGUARD 1: Evidence Gate
+        Only run inference if we have enough data (>= 5 commands).
+        
+        SAFEGUARD 2: Advisory Only
+        Never returns True (exit/block) based solely on L2.
+        Instead, it updates the AttackerContext with an advisory signal.
         """
+        # SAFEGUARD 1: Evidence Gate
+        if len(attacker_profile.command_history) < 5:
+             return False
+
         classification = None
         
         if ML_AVAILABLE and classifier and classifier.is_trained:
-            # Generate features
-            # We need to construct a dict-like object or use the raw context if compatible
-            # FeatureExtractor expects a dict with keys matching AttackerContext fields + analysis
-            # We'll approximate this transformation here or ensure FeatureExtractor handles Context objects
-            
-            # Quick adapter
+            # Generate features (mock adaptation)
             context_dict = {
                 "session_duration": (attacker_profile.last_seen - attacker_profile.first_seen).total_seconds(),
                 "command_count": len(attacker_profile.command_history),
@@ -456,27 +604,21 @@ class ComplexityRouter:
                 classification = best_class[0]
                 confidence = best_class[1]
                 
-                logger.info(f"Layer 2 ML Classification: {classification} ({confidence:.2f})")
+                # SAFEGUARD 3: Blind Labels (Cluster_A/B)
+                # Map internal clusters to human readable names for logging only
+                display_name = classification
+                if classification == "Cluster_A": display_name = "APT (High Stealth)"
+                if classification == "Cluster_B": display_name = "Script Kiddie (Noisy)"
+
+                logger.info(f"Layer 2 Advisory: {display_name} ({confidence:.2f})")
                 
                 if confidence >= confidence_threshold:
-                    # Update profile with detected type
-                    attacker_profile.threat_level = classification
-                    return True
-        
-        # Fallback Heuristics
-        if len(attacker_profile.behavior_patterns) == 0:
-            return False
-        
-        # Simple confidence calculation based on pattern consistency
-        pattern_confidence = min(len(attacker_profile.behavior_patterns) / 3.0, 1.0)
-        
-        # Check if we have a strong classification
-        known_profiles = ["script_kiddie", "automated_scanner", "persistence_seeker", "data_harvester"]
-        
-        if (attacker_profile.threat_level in known_profiles and 
-            pattern_confidence >= confidence_threshold):
-            logger.info(f"High-confidence heuristic profile match: {attacker_profile.threat_level} ({pattern_confidence:.2f})")
-            return True
+                    # ADVISORY ACTION: Boost risk score instead of blocking
+                    attacker_profile.risk_multiplier += 0.5
+                    logger.info("Layer 2 increased risk multiplier due to high-confidence classification.")
+                    
+                    # We DO NOT return True here. Layer 2 never exits/blocks alone.
+                    return False
         
         return False
 
@@ -499,14 +641,19 @@ class ComplexityRouter:
         
         return not needs_generative
 
+import os
+
 class AIEngine:
     """Main AI engine for generating adaptive honeypot responses"""
     
-    def __init__(self, provider: AIProvider = AIProvider.STUB):
+    def __init__(self, provider: AIProvider = AIProvider.STUB, storage_path: str = "data/ai_models"):
         self.provider = provider
+        self.storage_path = storage_path
+        
+        # Create storage directory if it doesn't exist
+        os.makedirs(self.storage_path, exist_ok=True)
+        
         self.attacker_contexts: Dict[str, AttackerContext] = {}
-        self.response_templates = self._load_response_templates()
-        self.personality_profiles = self._load_personality_profiles()
         self.response_templates = self._load_response_templates()
         self.personality_profiles = self._load_personality_profiles()
         
@@ -514,11 +661,13 @@ class AIEngine:
         # Separate predictors for SSH and HTTP to prevent cross-contamination
         self.predictors: Dict[str, MarkovPredictor] = {
             "ssh": MarkovPredictor(max_order=3, smoothing=0.5),
-            "http": MarkovPredictor(max_order=2, smoothing=0.5)  # URL paths usually have shorter context dependency
+            "http": MarkovPredictor(max_order=2, smoothing=0.5)
         }
         
+        # Attempt to load persisted models
+        self.load_state()
+        
         # Valid commands whitelist for Hallucination Guard
-        # Ideally this would be loaded from the SSHEmulator capabilities
         self.command_whitelist = {
             "ls", "cd", "cat", "pwd", "whoami", "id", "uname", "ps", "netstat",
             "echo", "mkdir", "rm", "touch", "mv", "cp", "grep", "find", "ssh",
@@ -530,7 +679,6 @@ class AIEngine:
         self.behavioral_classifier = None
         if ML_AVAILABLE:
             self.behavioral_classifier = BehavioralClassifier()
-            # Ensure it has at least some training data
             if not self.behavioral_classifier.is_trained:
                 logger.info("Initializing Layer 2 model with mock training data...")
                 self.behavioral_classifier.mock_train()
@@ -545,7 +693,36 @@ class AIEngine:
         }
         
         logger.info(f"AI Engine initialized with provider: {provider}")
-    
+
+    def save_state(self) -> None:
+        """Persist AI models to disk"""
+        try:
+            for name, predictor in self.predictors.items():
+                file_path = os.path.join(self.storage_path, f"{name}_markov.json")
+                with open(file_path, 'w') as f:
+                    json.dump(predictor.to_dict(), f)
+            logger.info("AI Engine state saved successfully.")
+        except Exception as e:
+            logger.error(f"Failed to save AI Engine state: {e}")
+
+    def load_state(self) -> None:
+        """Load AI models from disk"""
+        try:
+            for name in self.predictors.keys():
+                file_path = os.path.join(self.storage_path, f"{name}_markov.json")
+                if os.path.exists(file_path):
+                    with open(file_path, 'r') as f:
+                        data = json.load(f)
+                        self.predictors[name] = MarkovPredictor.from_dict(data)
+                    logger.info(f"Loaded {name} model from {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to load AI Engine state: {e}")
+
+    def shutdown(self):
+        """Explicitly save state on shutdown"""
+        logger.info("AIEngine shutting down, saving state...")
+        self.save_state()
+
     def _load_response_templates(self) -> Dict[str, List[str]]:
         """Load response templates for different scenarios"""
         return {
@@ -611,12 +788,16 @@ class AIEngine:
                               session_id: str) -> str:
         """Generate adaptive response based on context and attacker behavior"""
         
-        # Get or create attacker context
-        context_key = f"{attacker_ip}_{session_id}"
+        # KEY CHANGE FOR CORRELATION: 
+        # Context is now keyed by IP only. This links SSH and HTTP sessions together.
+        context_key = attacker_ip
         if context_key not in self.attacker_contexts:
             self.attacker_contexts[context_key] = AttackerContext(attacker_ip, session_id)
         
         attacker_context = self.attacker_contexts[context_key]
+        # Update latest session ID if it changed
+        if attacker_context.session_id != session_id:
+             attacker_context.session_id = session_id 
         
         # Update context with new activity
         if response_type == ResponseType.SSH_COMMAND:

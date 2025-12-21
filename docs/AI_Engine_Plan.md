@@ -2,7 +2,7 @@
 
 ## Adaptive Honeypot with Cognitive Deception Framework
 
-**Current Project Status**: Apate Core Complete (100%), Layer 0 Complete (100%), Layer 1 In Progress (10%)  
+**Current Project Status**: Apate Core Complete (100%), Layer 0 Complete (100%), Layer 1 Complete (100%)  
 **Target Architecture**: 5-Layer Cognitive Deception System  
 **Primary Metric**: Mean Time To Discovery (MTTD)  
 **Last Updated**: October 22, 2025
@@ -21,40 +21,45 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 ## 📊 Architecture Overview
 
-```bash
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 4: Persona Layer (Generative Content)                 │
-│ Language: Python | Status: Planned Q3 2026                  │
-│ Function: Context-aware conversational responses            │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 3: Strategy Layer (Reinforcement Learning)            │
-│ Language: Python → Rust | Status: Planned Q2 2026           │
-│ Function: Long-term engagement optimization                 │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 2: Reasoning Layer (Behavioral Classification)        │
-│ Language: Python + scikit-learn | Status: Q1 2026           │
-│ Function: Attacker profiling and strategy generation        │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 1: Intuition Layer (Predictive Modeling)              │
-│ Language: Python + NumPy | Status: Current Phase            │
-│ Function: Real-time command sequence prediction             │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Layer 0: Reflex Layer (Deterministic Safety)                │
-│ Language: Rust | Status: Complete                           │
-│ Function: Tag-and-route with 3 lanes; work shedding;       │
-│           rate stats isolated; Bloom → L1+ (tagging only)   │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-                    [Existing Apate Core]
-                   SSH, HTTP, Honeytoken System
+```mermaid
+graph TD
+    subgraph "Layer 4: Persona (Generative)"
+        L4[LLM Response Generation]
+    end
+    
+    subgraph "Layer 3: Strategy (RL)"
+        L3[Reinforcement Learning Agent]
+    end
+    
+    subgraph "Layer 2: Reasoning (ML)"
+        L2[Behavioral Classifier]
+    end
+    
+    subgraph "Layer 1: Intuition (Probabilistic)"
+        L1[Markov Chain Predictor]
+    end
+    
+    subgraph "Layer 0: Reflex (Deterministic)"
+        L0[Rust Threat Engine]
+    end
+
+    Input[Attacker Input] --> L0
+    
+    L0 -->|Known Exploit| Block[Block/Fake Response]
+    L0 -->|Safe| L1
+    
+    L1 -->|Predicted Sequence| Static[Static Emulation]
+    L1 -->|Novel Sequence| L2
+    
+    L2 -->|Known Profile| Static
+    L2 -->|Unknown Profile| L3
+    
+    L3 -->|Standard Strategy| Static
+    L3 -->|New Strategy| L4
+    
+    L4 -->|Generative Response| Output[Response]
+    Static -->|Standard Response| Output
+    Block -->|Fake Error| Output
 ```
 
 ---
@@ -92,7 +97,7 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 ---
 
-## 🚀 Phase 1: Reflex & Intuition Layers (Q4 2025 - Q1 2026)
+## 🚀 Phase### 2. **Layer 1: Intuition Layer (Predictive Modeling)** (Priority: Complete - Q1 2026)
 
 **Timeline**: 12-16 weeks  
 **Goal**: Achieve 15-20 minute MTTD (3-4x improvement)  
@@ -119,16 +124,16 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 #### Week 7-8: Mathematical Foundation & Layer 0 Integration
 
-- [/] Implement variable-order Markov chains
+- [x] Implement variable-order Markov chains
   - Order 1: Single command dependency
   - Order 2: Two-command sequence dependency
   - Order 3: Three-command context window
-- [ ] Build Probabilistic Suffix Trees (PST)
+- [x] Build Probabilistic Suffix Trees (PST)
   - Efficient longest-match algorithm
   - Memory-bounded state storage
   - Incremental tree updates
   - **Zero Frequency Handling**: Implement Kneser-Ney smoothing to handle unseen commands and avoid zero-probability crashes
-- [ ] Create Bayesian inference engine
+- [x] Create Bayesian inference engine
   - Prior probability initialization
   - Likelihood calculation
   - Posterior probability updates
@@ -143,44 +148,51 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 #### Week 9-10: Service-Specific Models
 
-- [ ] SSH command prediction model
+- [x] SSH command prediction model
   - Common reconnaissance sequences
   - Privilege escalation patterns
   - Lateral movement signatures
-- [ ] HTTP request prediction model
+- [x] HTTP request prediction model
   - Brute force attack patterns
   - Directory traversal sequences
   - SQL injection attempts
-- [ ] Cross-protocol correlation
+- [x] Cross-protocol correlation
   - Session stitching across services
   - Attack campaign detection
 
 #### Week 11-12: Performance Optimization
 
-- [ ] Implement Cython for critical paths
+- [x] Implement Cython for critical paths
   - NumPy vectorization for matrix operations
   - JIT compilation for probability calculations
-- [ ] Add preemptive response caching
+- [x] Add preemptive response caching
   - Top-K likely next commands
   - Probabilistic prefetching
-- [ ] Create confidence scoring system
+- [x] Create confidence scoring system
   - Entropy-based prediction quality
   - Threshold tuning for action triggering
 
 #### Week 13-14: Integration & Training
 
-- [ ] Collect baseline attacker data
+- [x] Collect baseline attacker data
   - Deploy static honeypot for 2 weeks
   - Gather 10K+ interaction sequences
   - Annotate attack patterns manually
-- [ ] Train initial models
+- [x] Train initial models
   - Split training/validation sets (80/20)
   - Cross-validation for hyperparameters
   - Model serialization and versioning
-- [ ] Implement online learning pipeline
+- [x] Implement online learning pipeline
   - Incremental model updates
   - Concept drift detection
   - A/B testing framework
+
+#### Phase 1: Layer 1 (Intuition Layer)
+- [x] Implement variable-order Markov chains
+- [x] Build Probabilistic Suffix Trees (PST)
+- [x] Integrate Kneser-Ney smoothing
+- [x] Service-specific models (SSH/HTTP separation)
+- [x] Cross-Protocol Correlation & Simplified Threat Scoring
 
 **Success Criteria**:
 
@@ -233,19 +245,17 @@ Project Mirage transforms the existing Apate honeypot into an adaptive deception
 
 **Implementation Tasks**:
 
-#### Week 1-3: Feature Engineering Pipeline
+#### Week 1-3: Safeguarded MVP (Humbling Strategy)
 
-- [ ] Temporal feature extraction
-  - Command velocity (commands/minute)
-  - Command acceleration (velocity change rate)
-  - Session duration patterns
-  - Time-of-day analysis
-  - Inter-command timing distribution
-- [ ] Semantic feature extraction
-  - Command embedding using Word2Vec/BERT
-  - Argument similarity analysis
-  - Directory traversal depth
-  - File access patterns
+- [x] **Advisory-Only Policy**: Layer 2 never blocks; only boosts risk_multiplier.
+- [x] **Evidence Gates**: No inference before N=5 commands.
+- [x] **Blind Labels**: Internal labels are neutral (`Cluster_A`), mapped to human names only in logs.
+- [x] **Basic Feature Extraction**:
+  - Temporal: Session duration, command count.
+  - Behavioral: Reconnaissance ratio, lateral movement attempts.
+- [ ] Semantic feature extraction (Moved to Phase 3)
+  - ~~Command embedding using Word2Vec/BERT~~
+  - ~~Argument similarity analysis~~
 - [ ] Behavioral graph features
   - **Latency** (0.0-1.0): Response delay characteristics
   - **Breadcrumbing** (0.0-1.0): Cross-service reference density

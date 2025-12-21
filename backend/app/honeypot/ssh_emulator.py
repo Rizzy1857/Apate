@@ -9,7 +9,8 @@ Includes honeytoken deployment and advanced fingerprint masking.
 import logging
 import random
 from datetime import datetime, UTC
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
+from ..ai.engine import AIEngine, ResponseType
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,8 @@ class SSHSession:
 class SSHEmulator:
     """Main SSH emulation engine with AI-driven responses"""
     
-    def __init__(self):
+    def __init__(self, ai_engine: Optional[AIEngine] = None):
+        self.ai_engine = ai_engine
         self.sessions: Dict[str, SSHSession] = {}
         self.command_handlers = {
             "ls": self._handle_ls,
@@ -119,6 +121,34 @@ class SSHEmulator:
         args = cmd_parts[1:] if len(cmd_parts) > 1 else []
         
         # Handle command
+        # AI/Intelligence Integration
+        # We process the command through AI Engine for:
+        # 1. Behavioral tracking (AttackerContext update)
+        # 2. Prediction/Hallucination if command is unknown locally
+        
+        ai_response = None
+        if self.ai_engine:
+            # Prepare context for AI
+            # We assume session_id maps to attacker_ip roughly or we use IP from session
+            context_data = {
+                "command": command,
+                "session_history": [h["command"] for h in session.command_history[:-1]], # exclude current
+                "cwd": session.current_directory
+            }
+            
+            # Fire and forget tracking? No, generate_response updates state.
+            # We await it.
+            try:
+                ai_response = await self.ai_engine.generate_response(
+                    response_type=ResponseType.SSH_COMMAND,
+                    context=context_data,
+                    attacker_ip=source_ip,
+                    session_id=session_id
+                )
+            except Exception as e:
+                logger.error(f"AI Engine error: {e}")
+
+        # Handle command locally if possible (High Fidelity Layer)
         if base_command in self.command_handlers:
             try:
                 response = await self.command_handlers[base_command](session, args)
@@ -127,6 +157,10 @@ class SSHEmulator:
                 logger.error(f"Command handler error: {e}")
                 return f"bash: {base_command}: command error"
         else:
+            # Fallback to AI (Hallucination Layer)
+            if ai_response:
+                return ai_response
+            
             return await self._handle_unknown_command(session, base_command, args)
     
     async def _handle_ls(self, session: SSHSession, args: List[str]) -> str:

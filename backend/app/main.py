@@ -58,9 +58,12 @@ app.add_middleware(
 # Include additional routes
 app.include_router(router, prefix="/api/v1", tags=["honeypot"])
 
+from .ai.engine import AIEngine
+
 # Initialize honeypot components
-ssh_emulator = SSHEmulator()
-http_emulator = HTTPEmulator()
+ai_engine = AIEngine()
+ssh_emulator = SSHEmulator(ai_engine=ai_engine)
+http_emulator = HTTPEmulator() # HTTPEmulator update reserved for future step if needed
 
 # JSON request models
 class SSHInteractionRequest(BaseModel):
@@ -282,6 +285,6 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=False,
         log_level="info"
     )
