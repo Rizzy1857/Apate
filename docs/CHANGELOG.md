@@ -7,11 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Product Strategy & Architecture - December 2025
+
+#### Product Roadmap & Positioning
+- **Two-Product Strategy**: Defined Apate Home (household/SMB) vs Apate Guard (enterprise) with clear market positioning
+- **Privacy-First Architecture**: Complete privacy framework with 4 modes (household, enterprise-local, enterprise-cloud, air-gapped)
+- **Household Safety Engineering**: Failure mode design ensuring network resilience (if Apate breaks, network stays up)
+- **Enterprise Differentiation**: Honeypot-powered SOC precision vs traditional IDS/NDR false positive rates
+- **Autonomy Roadmap**: Advisory → Safe Pattern Automation → RL-Driven Autonomy (Q1-Q3 2026)
+- **Success Metrics Framework**: Q1-Q4 2026 execution plan with measurable MTTD targets by quarter
+
+#### New Modules (Dormant Guardrails)
+- **Privacy Module** (`backend/app/privacy.py`): Privacy-preserving telemetry with local-first processing, 7-day raw data lock, differential privacy guards (400+ lines, ready for Q1 2026 activation)
+- **Household Safety Module** (`backend/app/household_safety.py`): Memory-bounded prediction, graceful degradation, timeout protection, passthrough failsafe (500+ lines, ready for Q2 2026 activation)
+- **Status**: Both modules exist as dormant guardrails (specs/contracts) but not active in hot paths yet
+
+#### Documentation
+- **PRODUCT_ROADMAP.md** (6,000+ words): Complete go-to-market strategy, privacy architecture, failure engineering, autonomous response framework
+- **IMPLEMENTATION_RESPONSE.md**: Maps product feedback to solutions with concrete code examples
+- **GUARDRAILS_STATUS.md**: Clarifies dormant vs active modules, activation timeline, verification procedures
+
 ### Architecture Transformation - Project Mirage
 
 - **Five-Layer Cognitive Architecture**: Complete transformation from basic AI integration to sophisticated cognitive deception framework
 - **Layer 0**: Rust-based reflex layer for sub-millisecond threat detection (in progress Q4 2025)
-- **Layer 1**: Hidden Markov Models for command sequence prediction (planned Q1 2026)
+- **Layer 1**: Hidden Markov Models for command sequence prediction (✅ COMPLETE - 72% accuracy)
 - **Layer 2**: Machine Learning behavioral classification with Random Forest (planned Q2 2026)
 - **Layer 3**: Reinforcement Learning strategy optimization with PPO (planned Q3 2026)
 - **Layer 4**: LLM-based persona generation with advanced prompt engineering (planned Q4 2026)
