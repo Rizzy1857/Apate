@@ -61,8 +61,14 @@ Welcome to **Apate**, a next-generation adaptive honeypot platform. This isn't y
 - 50-site household beta (TIER 1: passive observer)
 - Target MTTD: 8-12 minutes
 
-**Q2 2026**: Intelligence + Safety
-- Complete Layer 2 (ML classifier)
+**Q1–Q2 2026**: Observation Phase (Data Collection)
+- Layer 0 + Layer 1 in passive mode (predict but do not influence)
+- Activate privacy.py (local-first telemetry, aggregates only)
+- Freeze schemas at v1.0; collect 10k+ clean sessions
+- Target: Clean dataset, not MTTD improvement
+
+**Q2–Q3 2026**: Intelligence + Safety
+- Complete Layer 2 (ML classifier) trained on clean data
 - Activate household_safety.py (transparent proxy)
 - Launch Apate Guard (enterprise product)
 - Safe autonomous patterns (brute force, scanners)
@@ -125,7 +131,7 @@ Mirage uses a cascading intelligence stack where each layer handles what it can,
          └────────────┬───────────────┘
                       ↓
          ┌────────────────────────────┐
-         │      RESPONSE OUTPUT        │
+         │      RESPONSE OUTPUT       │
          └────────────────────────────┘
 ```
 

@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PRODUCT_ROADMAP.md** (6,000+ words): Complete go-to-market strategy, privacy architecture, failure engineering, autonomous response framework
 - **IMPLEMENTATION_RESPONSE.md**: Maps product feedback to solutions with concrete code examples
 - **GUARDRAILS_STATUS.md**: Clarifies dormant vs active modules, activation timeline, verification procedures
+ - **Schemas v1.0 locked**: Introduced canonical data schemas in `backend/app/schemas/v1_0.py` for sessions, sequences, outcomes
+ - **Observation Phase added**: Updated ONBOARDING and PROGRESS to reflect Q1–Q2 2026 passive data collection before Layer 2
 
 ### Architecture Transformation - Project Mirage
 

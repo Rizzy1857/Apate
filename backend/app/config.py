@@ -9,6 +9,7 @@ import os
 import json
 from typing import Any, Optional, List
 from dataclasses import dataclass
+from typing import Literal
 
 @dataclass
 class DatabaseConfig:
@@ -110,10 +111,25 @@ class Config:
         self.honeytokens = HoneytokenConfig()
         self.logging = LoggingConfig()
         self.security = SecurityConfig()
+        # Observation/engagement deployment toggles
+        self.deployment = DeploymentConfig()
         
         # Load configuration
         self._load_from_env()
         self._load_from_file()
+
+@dataclass
+class DeploymentConfig:
+    """Deployment mode and layer toggles for observation phase"""
+    SCHEMA_VERSION: str = "v1.0"
+    MODE: Literal["observation", "engagement"] = "observation"
+    # Layer 1
+    LAYER_1_PREDICT: bool = True
+    LAYER_1_INFLUENCE: bool = False  # predict only, don't act
+    # Upper layers disabled during clean data collection
+    LAYER_2_ENABLED: bool = False
+    LAYER_3_ENABLED: bool = False
+    LAYER_4_ENABLED: bool = False
     
     def _load_from_env(self):
         """Load configuration from environment variables"""

@@ -4,10 +4,10 @@
 
 **Project Mirage** is an adaptive honeypot with a five-layer cognitive deception framework, transforming the existing Apate honeypot into an intelligent deception platform. The system uses a hierarchical architecture with deterministic safety, predictive modeling, behavioral classification, reinforcement learning, and generative content capabilities.
 
-**Current Status**: **Foundation Complete, Layer 0 Partially Implemented** (75% Foundation + 25% Layer 0 = 80% Total)  
+**Current Status**: **Observation Phase Initiated (Dec 2025)** — Foundation complete; Layer 0+1 active in passive mode (data collection only).  
 **Target Architecture**: 5-Layer Cognitive Deception System  
 **Primary Metric**: Mean Time To Discovery (MTTD)  
-**Current Baseline MTTD**: Not yet measured (infrastructure now available)  
+**Current Baseline MTTD**: Not measured intentionally (prioritizing clean data collection)  
 **Ultimate Goal MTTD**: 45-60+ minutes (with all five layers)
 
 ---
@@ -29,7 +29,7 @@
 | **MTTD Monitoring Infrastructure** | ✅ Complete | 100% | 2025-11-25 |
 | **Layer 0: Reflex Layer (Rust)** | ✅ Complete | 100% | 2025-12-09 |
 | **Layer 1: Intuition Layer (HMM)** | ✅ Complete | 100% | 2025-12-21 |
-| **Layer 2: Reasoning Layer (ML)** | 🔄 In Progress | 20% | 2025-12-09 |
+| **Layer 2: Reasoning Layer (ML)** | ⏸ Deferred | 0% | Q2–Q3 2026 |
 | **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
 | **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
 
@@ -86,8 +86,8 @@
 | Phase | Layers Active | Target MTTD | Improvement Factor | Timeline |
 |-------|---------------|-------------|--------------------|----------|
 | **Q4 2025** | Layer 0 (Rust Reflex) | 5-8 min | ✅ Complete | |
-| **Q1 2026** | Layer 1 (Markov Intuition) | 15-20 min | ✅ Complete | Q1 2026 |
-| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
+| **Q1–Q2 2026** | Observation Phase (Layer 0+1 passive) | n/a | n/a | Data collection |
+| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2–Q3 2026 |
 | **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
 | **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |
 
