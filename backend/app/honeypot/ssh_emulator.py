@@ -11,6 +11,8 @@ import random
 from datetime import datetime, UTC
 from typing import Dict, List, Any, Optional
 from ..ai.engine import AIEngine, ResponseType
+from ..config import get_config
+from ..data_logger import log_session_start, log_sequence
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +103,11 @@ class SSHEmulator:
         # Get or create session
         if session_id not in self.sessions:
             self.sessions[session_id] = SSHSession(session_id, source_ip)
+            # Log session start (protocol ssh)
+            try:
+                log_session_start(session_id=session_id, protocol="ssh")
+            except Exception as e:
+                logger.debug(f"Session logging failed: {e}")
             
         session = self.sessions[session_id]
         session.command_history.append({
@@ -147,6 +154,16 @@ class SSHEmulator:
                 )
             except Exception as e:
                 logger.error(f"AI Engine error: {e}")
+        # Log sequence snapshot using canonicalized history
+        try:
+            log_sequence(
+                session_id=session_id,
+                commands=[h["command"] for h in session.command_history],
+                timing_buckets=["medium"] * len(session.command_history),
+                errors=[False] * len(session.command_history)
+            )
+        except Exception as e:
+            logger.debug(f"Sequence logging failed: {e}")
 
         # Handle command locally if possible (High Fidelity Layer)
         if base_command in self.command_handlers:
@@ -157,8 +174,9 @@ class SSHEmulator:
                 logger.error(f"Command handler error: {e}")
                 return f"bash: {base_command}: command error"
         else:
-            # Fallback to AI (Hallucination Layer)
-            if ai_response:
+            # Fallback behavior: in observation mode, ignore AI influence and return deterministic error
+            deployment = get_config().deployment
+            if deployment.MODE == "engagement" and ai_response:
                 return ai_response
             
             return await self._handle_unknown_command(session, base_command, args)

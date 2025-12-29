@@ -598,5 +598,13 @@ server {
 - **[PostgreSQL Documentation](https://www.postgresql.org/docs/)**: Database configuration and management
 
 ---
-
 *Last Updated: October 24, 2025*
+
+---
+## Appendix: Dormant Guardrails Status
+
+Refer to the **[Guardrails Status](GUARDRAILS_STATUS.md)** document for detailed information on the current state and future activation plans of the `household_safety.py` and `privacy.py` modules.
+
+## Appendix: Layer 0 Summary
+
+Refer to the **[Layer 0 Summary](LAYER0_SUMMARY.md)** document for a comprehensive overview of the Layer 0 implementation, including protocol classification, routing logic, and critical reminders for future development and code reviews.

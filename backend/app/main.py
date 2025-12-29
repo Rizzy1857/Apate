@@ -23,6 +23,10 @@ from .honeypot.ssh_emulator import SSHEmulator
 from .honeypot.http_emulator import HTTPEmulator
 from .routes import router
 from .monitoring import mttd_tracker
+
+# NOTE: privacy.py and household_safety.py are imported in Q2 2026+.
+# They currently exist as dormant guardrails, not active machinery.
+# See docs/PRODUCT_ROADMAP.md and docs/IMPLEMENTATION_RESPONSE.md
 # DB init is imported lazily in startup to avoid hard dependency at import time
 
 # Configure logging

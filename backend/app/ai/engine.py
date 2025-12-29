@@ -642,6 +642,7 @@ class ComplexityRouter:
         return not needs_generative
 
 import os
+from ..config import get_config
 
 class AIEngine:
     """Main AI engine for generating adaptive honeypot responses"""
@@ -693,6 +694,8 @@ class AIEngine:
         }
         
         logger.info(f"AI Engine initialized with provider: {provider}")
+        # Deployment toggles for observation/predict-only mode
+        self.deployment = get_config().deployment
 
     def save_state(self) -> None:
         """Persist AI models to disk"""
@@ -829,6 +832,11 @@ class AIEngine:
                 logger.info(f"Layer 0 exit: {layer0_result}")
                 return layer0_result
             
+            # Observation mode short-circuit: predict-only, do not influence
+            if self.deployment.MODE == "observation" and not self.deployment.LAYER_1_INFLUENCE:
+                # Update context/predictors only; return deterministic stub
+                return await self._generate_stub_response(response_type, context, attacker_context)
+
             # Layer 1: Intuition - Predictable command sequences
             if ComplexityRouter.check_l1_exit(command, session_history, markov_prediction):
                 logger.info(f"Layer 1 exit: Standard command sequence for '{command}'")
@@ -850,8 +858,11 @@ class AIEngine:
                 return await self._generate_stub_response(response_type, context, attacker_context)
             
             # Layer 4: Persona - LLM-based generative response
-            logger.info(f"Layer 4: Generative LLM response needed for novel interaction")
-            return await self._generate_llm_response(response_type, context, attacker_context)
+            # In engagement mode only, escalate to LLM; otherwise keep stub
+            if self.deployment.MODE == "engagement":
+                logger.info(f"Layer 4: Generative LLM response needed for novel interaction")
+                return await self._generate_llm_response(response_type, context, attacker_context)
+            return await self._generate_stub_response(response_type, context, attacker_context)
             
         elif response_type == ResponseType.HTTP_LOGIN:
             attacker_context.update_activity("login_attempt", context)
