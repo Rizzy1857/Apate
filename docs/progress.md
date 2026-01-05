@@ -4,7 +4,7 @@
 
 **Project Mirage** is an adaptive honeypot with a five-layer cognitive deception framework, transforming the existing Apate honeypot into an intelligent deception platform. The system uses a hierarchical architecture with deterministic safety, predictive modeling, behavioral classification, reinforcement learning, and generative content capabilities.
 
-**Current Status**: **Observation Phase Initiated (Dec 2025)** — Foundation complete; Layer 0+1 active in passive mode (data collection only).  
+**Current Status**: **Observation Phase Active (Jan 2026)** — Foundation 100% complete; Layer 0+1 deployed in passive mode (predict-only, data collection). Full test suite: 66 tests passing. 
 **Target Architecture**: 5-Layer Cognitive Deception System  
 **Primary Metric**: Mean Time To Discovery (MTTD)  
 **Current Baseline MTTD**: Not measured intentionally (prioritizing clean data collection)  
@@ -28,7 +28,7 @@
 | **AI Engine Integration** | ✅ Complete | 100% | 2025-11-25 |
 | **MTTD Monitoring Infrastructure** | ✅ Complete | 100% | 2025-11-25 |
 | **Layer 0: Reflex Layer (Rust)** | ✅ Complete | 100% | 2025-12-09 |
-| **Layer 1: Intuition Layer (HMM)** | ✅ Complete | 100% | 2025-12-21 |
+| **Layer 1: Intuition Layer (HMM)** | ✅ Complete (Passive) | 100% | 2026-01-05 |
 | **Layer 2: Reasoning Layer (ML)** | ⏸ Deferred | 0% | Q2–Q3 2026 |
 | **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
 | **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
@@ -214,6 +214,15 @@
 
 ## ✅ **Recently Completed**
 
+### Configuration & Testing Stabilization (Jan 2026)
+
+- ✅ Restored and hardened `config.py` (docstring fix, removed corrupted blocks)
+- ✅ Installed missing dependencies: `numpy`, `scikit-learn`, `pandas`, `joblib`
+- ✅ Built and installed `rust_protocol` Python extension via maturin with pyo3
+- ✅ Added import guards to `household_safety.py` (psutil optional with safe fallbacks)
+- ✅ Full pytest suite passing: **66 tests** with 8 scikit-learn version warnings (non-blocking)
+- ✅ Verified observation-mode behavior: AIEngine imports successfully, SSH emulator gating functional
+
 ### API Documentation (100% Complete - 2024-12-24)
 
 - ✅ OpenAPI/Swagger documentation configuration
@@ -224,8 +233,6 @@
 - ✅ Complete API reference guide
 
 ---
-
-## ⏳ **Planned Components**
 
 ## ⏳ **Planned Components**
 

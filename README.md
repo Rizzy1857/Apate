@@ -35,16 +35,16 @@ For a deep dive into the system architecture and implementation details, please 
 
 ## 📊 **Project Status**
 
-**Foundation Complete**: 87% ✅  
-**Mirage Architecture**: 3% (Layer 1 in progress)
+**Foundation Complete**: 100% ✅  
+**Mirage Architecture**: 15% (Layers 0–1 passive + infrastructure)
 
 ### Current Implementation Status
 
 | Layer | Component | Status | Target Timeline |
-|-------|-----------|--------|-----------------|
+|-------|-----------|--------|------------------|
 | **Foundation** | Apate Core (SSH/HTTP/DB) | ✅ Complete | - |
-| **Layer 0** | Reflex Layer (Rust) | 🔄 In Progress | Q4 2025 |
-| **Layer 1** | Intuition Layer (HMM) | ⏳ Planned | Q1 2026 |
+| **Layer 0** | Reflex Layer (Rust) | ✅ Complete | Q4 2025 |
+| **Layer 1** | Intuition Layer (HMM) | ✅ Complete (Passive) | Q1 2026 |
 | **Layer 2** | Reasoning Layer (ML) | ⏳ Planned | Q2 2026 |
 | **Layer 3** | Strategy Layer (RL) | ⏳ Planned | Q3 2026 |
 | **Layer 4** | Persona Layer (LLM) | ⏳ Planned | Q4 2026 |
@@ -72,4 +72,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **⚠️ Disclaimer**: This tool is for research and legitimate cybersecurity purposes only. Users are responsible for compliance with applicable laws and regulations.
 
 > [!NOTE]
-> **Work in Progress**: The AI components (Layers 1-4) described in this document are currently in the planning and development phase. The current codebase reflects the robust static foundation and the initial implementation of Layer 0 (Reflex Layer). Please check back for updates as we implement the cognitive architecture.
+> **Observation Phase Active (Jan 2026)**: Layers 0–1 are deployed in passive (predict-only) mode for 30–60 days of clean data collection. All components are functional; Layer 2+ are deferred to Q2+ 2026. Full test suite (66 tests) passing. See [Progress](docs/progress.md) for timeline.
