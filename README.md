@@ -1,10 +1,11 @@
-# Project Mirage - Adaptive Cognitive Deception Framework
+# Project Mirage - Adaptive Deception Framework
 
-A next-generation honeypot system that uses a five-layer cognitive architecture to create adaptive, intelligent deception environments. Mirage transforms traditional honeypots from static decoys into dynamic, learning systems that adapt to attacker behavior in real-time.
+An intelligent honeypot system built on a staged cognitive architecture with a five-layer research roadmap. Mirage augments the robust Apate foundation with progressive, advisory-only behavioral modeling to improve Mean Time To Discovery (MTTD) through context-enrichment rather than autonomous decision-making.
 
 **Primary Metric**: Mean Time To Discovery (MTTD)  
-**Current Baseline**: 2-5 minutes (static honeypot)  
-**Target Goal**: 45-60+ minutes (9-12x improvement)
+**Current Baseline**: 2–5 minutes (static honeypot)  
+**Projected Research Target**: 45–60+ minutes (pending real-world observation data)  
+**All MTTD figures beyond Phase 1 are research projections, not validated metrics.**
 
 ## 📖 **Documentation**
 
@@ -17,47 +18,50 @@ For a deep dive into the system architecture and implementation details, please 
 
 ## 🎯 What Makes Mirage Different
 
-### Five-Layer Cognitive Architecture
+### The Advisory Cascade
 
-- **Layer 0 - Reflex Layer**: Fast, dumb, deterministic tag-and-route in Rust (no-drop, three lanes)
-- **Cognitive Pipeline**: Cascading short-circuit logic to route traffic efficiently
-- **Layer 1 - Intuition Layer**: Real-time command prediction + Bloom tagging using Hidden Markov Models  
-- **Layer 2 - Reasoning Layer**: Attacker behavioral classification with Machine Learning
-- **Layer 3 - Strategy Layer**: Long-term engagement optimization via RL (has access to rate stats from L0)
-- **Layer 4 - Persona Layer**: Context-aware conversational responses using LLMs
+All layers operate in a cascading advisory model—progressively enriching security context without enforcing hard decisions until explicitly authorized. This humility-first design avoids false positives, autonomous blocking, and unintended network impact.
 
-### Adaptive Intelligence
+### Five-Layer Cognitive Architecture (Research Roadmap)
 
-- **Predictive Modeling**: Anticipates attacker actions before they happen
-- **Behavioral Learning**: Builds comprehensive attacker profiles over time
-- **Strategic Optimization**: Learns optimal deception strategies through self-play
-- **Dynamic Personas**: Maintains consistent character across extended interactions
+- **Layer 0 – Reflex Layer** ✅ (Operational): Fast, deterministic threat tagging in Rust; no intelligence, pure routing
+- **Layer 1 – Intuition Layer** ✅ (Operational, advisory-only): Probabilistic sequence modeling (PST-based) to predict likely attacker actions and emit behavioral continuity signals
+- **Layer 2 – Reasoning Layer** (Specification-only; advisory-only when implemented): ML-based behavioral clustering to contextualize attacker profiles and influence threat scoring
+- **Layer 3 – Strategy Layer** (Specification-only; not implemented): RL-based long-term engagement optimization via strategy generation  
+- **Layer 4 – Persona Layer** (Specification-only; not implemented): Context-aware conversational responses using LLMs
+
+### Operational Principles
+
+- **Predict, Don't Act**: Layers 0–2 enrich context; they never block or modify traffic unilaterally
+- **Observable Degradation**: System gracefully reduces capability under load (Layers 2+ drop first)
+- **Guardrails Dormant**: Privacy and safety modules exist as specifications, not runtime enforcement
+- **Passive-Only Observation Phase**: Jan–Mar 2026 data collection with predict-only gating
 
 ## 📊 **Project Status**
 
 **Foundation Complete**: 100% ✅  
-**Mirage Architecture**: 15% (Layers 0–1 passive + infrastructure)
+**Mirage Architecture**: ~30% (Layers 0–1 operational, Layer 2 spec-only advisory)
 
 ### Current Implementation Status
 
-| Layer | Component | Status | Target Timeline |
-|-------|-----------|--------|------------------|
-| **Foundation** | Apate Core (SSH/HTTP/DB) | ✅ Complete | - |
-| **Layer 0** | Reflex Layer (Rust) | ✅ Complete | Q4 2025 |
-| **Layer 1** | Intuition Layer (HMM) | ✅ Complete (Passive) | Q1 2026 |
-| **Layer 2** | Reasoning Layer (ML) | ⏳ Planned | Q2 2026 |
-| **Layer 3** | Strategy Layer (RL) | ⏳ Planned | Q3 2026 |
-| **Layer 4** | Persona Layer (LLM) | ⏳ Planned | Q4 2026 |
+| Layer | Component | Status | Mode | Timeline |
+|-------|-----------|--------|------|----------|
+| **Foundation** | Apate Core (SSH/HTTP/DB) | ✅ Complete | Operational | — |
+| **Layer 0** | Reflex Layer (Rust) | ✅ Complete | Deterministic routing | Q4 2025 |
+| **Layer 1** | Intuition Layer (PST) | ✅ Complete | Advisory (passive) | Q1 2026 |
+| **Layer 2** | Reasoning Layer (ML) | 📋 Specification | Advisory-only (future) | Q2 2026 |
+| **Layer 3** | Strategy Layer (RL) | 📋 Specification | Not implemented | Q3 2026 |
+| **Layer 4** | Persona Layer (LLM) | 📋 Specification | Not implemented | Q4 2026 |
 
 ### MTTD Progression Targets
 
-| Phase | Layers Active | Target MTTD | Improvement | Timeline |
-|-------|---------------|-------------|-------------|----------|
-| **Baseline** | Static Foundation | 2-5 min | 1x | Current |
-| **Phase 1** | Layer 0+1 | 15-20 min | 3-4x | Q1 2026 |
-| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
-| **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
-| **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |
+| Phase | Layers Active | Target MTTD | Basis | Timeline |
+|-------|---------------|-------------|-------|----------|
+| **Baseline** | Static Foundation | 2–5 min | Measured | Current |
+| **Phase 1** | Layer 0+1 (passive) | Not measured | Observation phase | Q1–Q2 2026 |
+| **Phase 2** | Layers 0+1+2 (advisory) | 25–35 min | Research projection | Q2–Q3 2026 |
+| **Phase 3** | Layers 0+1+2+3 (advisory) | 35–50 min | Research projection | Q3 2026 |
+| **Phase 4** | All five layers (advisory) | 45–60+ min | Research projection | Q4 2026 |
 
 ## 🤝 Contributing
 
@@ -72,4 +76,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **⚠️ Disclaimer**: This tool is for research and legitimate cybersecurity purposes only. Users are responsible for compliance with applicable laws and regulations.
 
 > [!NOTE]
-> **Observation Phase Active (Jan 2026)**: Layers 0–1 are deployed in passive (predict-only) mode for 30–60 days of clean data collection. All components are functional; Layer 2+ are deferred to Q2+ 2026. Full test suite (66 tests) passing. See [Progress](docs/progress.md) for timeline.
+> **Observation Phase Active (Jan–Mar 2026)**: Layers 0–1 deployed in passive (predict-only) mode for 30–60 days of clean data collection. Layer 2+ are currently specification-only; runtime implementation begins Q2 2026. Guardrails (privacy, safety) exist as architectural specs, not active enforcement. Full test suite (66 tests) passing. See [Progress](docs/progress.md) for implementation details.
