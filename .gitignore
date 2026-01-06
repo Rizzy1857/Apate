@@ -167,6 +167,13 @@ data/processed/
 data/archive/
 data/temp/
 data/cache/
+# Observation-phase captures (CSV/TSV/JSON)
+data/*.csv
+data/*.tsv
+data/*.json
+data/sessions.csv
+data/sequences.csv
+data/outcomes.csv
 backups/
 exports/
 dumps/
