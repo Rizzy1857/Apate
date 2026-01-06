@@ -10,6 +10,7 @@ import random
 import hashlib
 from datetime import datetime, timedelta, UTC
 from typing import Dict, List, Optional, Any
+from ..data_logger import log_outcome
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,18 @@ class HTTPEmulator:
         """Handle honeytoken credential usage - high priority alert"""
         session.threat_score = 10.0
         session.is_suspicious = True
+        # Log outcome signal for analysis
+        try:
+            log_outcome(
+                session_id=session.session_id,
+                session_duration_bucket="1-5m",
+                honeytoken_triggered=True,
+                protocol_switched=False,
+                repeated_after_error=False,
+                abandoned_after_delay=False,
+            )
+        except Exception:
+            pass
         
         # Simulate successful login to keep attacker engaged
         return {

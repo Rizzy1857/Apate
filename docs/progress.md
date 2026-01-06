@@ -4,10 +4,10 @@
 
 **Project Mirage** is an adaptive honeypot with a five-layer cognitive deception framework, transforming the existing Apate honeypot into an intelligent deception platform. The system uses a hierarchical architecture with deterministic safety, predictive modeling, behavioral classification, reinforcement learning, and generative content capabilities.
 
-**Current Status**: **Foundation Complete** (87% Complete)  
+**Current Status**: **Observation Phase Initiated (Dec 2025)** — Foundation complete; Layer 0+1 active in passive mode (data collection only).  
 **Target Architecture**: 5-Layer Cognitive Deception System  
 **Primary Metric**: Mean Time To Discovery (MTTD)  
-**Current Baseline MTTD**: 2-5 minutes (static honeypot)  
+**Current Baseline MTTD**: Not measured intentionally (prioritizing clean data collection)  
 **Ultimate Goal MTTD**: 45-60+ minutes (with all five layers)
 
 ---
@@ -25,14 +25,16 @@
 | **Database Integration** | ✅ Complete | 100% | 2025-08-24 |
 | **Code Quality Tools** | ✅ Complete | 100% | 2025-08-24 |
 | **Documentation** | ✅ Complete | 100% | 2024-12-24 |
-| **Layer 0: Reflex Layer (Rust)** | 🔄 In Progress | 15% | - |
-| **Layer 1: Intuition Layer (HMM)** | ⏳ Planned | 0% | Q1 2026 |
-| **Layer 2: Reasoning Layer (ML)** | ⏳ Planned | 0% | Q2 2026 |
+| **AI Engine Integration** | ✅ Complete | 100% | 2025-11-25 |
+| **MTTD Monitoring Infrastructure** | ✅ Complete | 100% | 2025-11-25 |
+| **Layer 0: Reflex Layer (Rust)** | ✅ Complete | 100% | 2025-12-09 |
+| **Layer 1: Intuition Layer (HMM)** | ✅ Complete | 100% | 2025-12-21 |
+| **Layer 2: Reasoning Layer (ML)** | ⏸ Deferred | 0% | Q2–Q3 2026 |
 | **Layer 3: Strategy Layer (RL)** | ⏳ Planned | 0% | Q3 2026 |
 | **Layer 4: Persona Layer (LLM)** | ⏳ Planned | 0% | Q4 2026 |
 
-**Overall Foundation**: 87% ✅  
-**Mirage Architecture**: 3% (Layer 0 in progress)
+**Overall Foundation**: 100% ✅  
+**Mirage Architecture**: 12% (Layer 0 in progress + monitoring + integration)
 
 ---
 
@@ -43,35 +45,36 @@
 │ Layer 4: Persona Layer (Generative Content)                 │
 │ Technology: Python + LLM APIs | Status: Planned Q4 2026     │
 │ Function: Context-aware conversational responses            │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 3: Strategy Layer (Reinforcement Learning)            │
 │ Technology: Python → Rust + PPO | Status: Planned Q3 2026   │
 │ Function: Long-term engagement optimization                 │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 2: Reasoning Layer (Behavioral Classification)        │
-│ Technology: Python + scikit-learn | Status: Planned Q2 2026 │
+│ Technology: Python + scikit-learn | Status: In Progress Q2  |
+| 2026                                                        |
 │ Function: Attacker profiling and strategy generation        │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 1: Intuition Layer (Predictive Modeling)              │
-│ Technology: Python + HMM/Markov | Status: Planned Q1 2026   │
+│ Technology: Python + HMM/Markov| Status: In Progress Q1 2026│
 │ Function: Real-time command sequence prediction             │
-│ MTTD Contribution: +10-15 minutes                          │
+│ MTTD Contribution: +10-15 minutes                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 0: Reflex Layer (Deterministic Safety)                │
 │ Technology: Rust | Status: In Progress Q4 2025              │
 │ Function: Sub-millisecond threat containment                │
-│ MTTD Contribution: +5-10 minutes                           │
+│ MTTD Contribution: +5-10 minutes                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     [Apate Foundation - Complete]
@@ -82,9 +85,9 @@
 
 | Phase | Layers Active | Target MTTD | Improvement Factor | Timeline |
 |-------|---------------|-------------|--------------------|----------|
-| **Baseline** | Apate Core (Static) | 2-5 min | 1x | Current |
-| **Phase 1** | Layer 0+1 | 15-20 min | 3-4x | Q1 2026 |
-| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2 2026 |
+| **Q4 2025** | Layer 0 (Rust Reflex) | 5-8 min | ✅ Complete | |
+| **Q1–Q2 2026** | Observation Phase (Layer 0+1 passive) | n/a | n/a | Data collection |
+| **Phase 2** | Layer 0+1+2 | 25-35 min | 5-7x | Q2–Q3 2026 |
 | **Phase 3** | Layer 0+1+2+3 | 35-50 min | 7-10x | Q3 2026 |
 | **Phase 4** | All Five Layers | 45-60+ min | 9-12x | Q4 2026 |
 
@@ -533,8 +536,10 @@
 ### Phase 1 Milestones (Q4 2025 - Q1 2026)
 
 1. **Week 1-6**: Layer 0 (Reflex Layer) implementation in Rust
-   - FFI integration with existing Python backend
-   - Deterministic threat detection engine
+   - [x] **FFI Integration**: Exposes efficient Python bindings via PyO3.
+    - [x] **Native Dictionary Support**: Returns rich `dict` metadata instead of JSON strings.
+    - [x] **Reducer Integration**: Uses `reducers.rs` for fast classification and noise tagging.
+- [x] **Zero-Copy DPI**: Inspects payloads without serialization overhead (where possible).
    - Performance benchmarking (<1ms response target)
 
 2. **Week 7-14**: Layer 1 (Intuition Layer) development  

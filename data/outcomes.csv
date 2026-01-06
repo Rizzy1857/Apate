@@ -1,0 +1,4 @@
+session_id,session_duration_bucket,honeytoken_triggered,protocol_switched,repeated_after_error,abandoned_after_delay
+60be3328b71ac5f75401fdf1d50cb1f5,1-5m,true,false,false,false
+8b41f32a5d5d9237a03960b6bd0492ab,1-5m,true,false,false,false
+a115556e95dbf1631ef889dbd974bb0e,1-5m,true,false,false,false

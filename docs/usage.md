@@ -198,6 +198,11 @@ ANTHROPIC_API_KEY=ant-your-key
 
 # Honeypot Behavior
 HONEYPOT_MODE=adaptive      # adaptive, static, aggressive
+
+# Profiles (planned rollout)
+# home:    drop_nothing=true, log_everything=true, latency_budget=relaxed
+# enterprise: drop_known_noise=true, sample_benign=true, latency_budget=strict
+# These map to routing lanes (auto-respond, curious, suspicious) and will live in Layer 1+ tagging, not Layer 0 drops.
 THREAT_THRESHOLD=medium     # low, medium, high, critical
 LOG_LEVEL=INFO             # DEBUG, INFO, WARNING, ERROR
 ```
@@ -593,5 +598,13 @@ server {
 - **[PostgreSQL Documentation](https://www.postgresql.org/docs/)**: Database configuration and management
 
 ---
+*Last Updated: October 24, 2025*
 
-*Last Updated: August 24, 2025*
+---
+## Appendix: Dormant Guardrails Status
+
+Refer to the **[Guardrails Status](GUARDRAILS_STATUS.md)** document for detailed information on the current state and future activation plans of the `household_safety.py` and `privacy.py` modules.
+
+## Appendix: Layer 0 Summary
+
+Refer to the **[Layer 0 Summary](LAYER0_SUMMARY.md)** document for a comprehensive overview of the Layer 0 implementation, including protocol classification, routing logic, and critical reminders for future development and code reviews.

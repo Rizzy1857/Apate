@@ -10,8 +10,8 @@ use std::str::FromStr;
 pub fn current_timestamp_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as u64
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0) // Fallback to 0 if system time is before epoch (unlikely but safe)
 }
 
 /// Validate if a string is a valid IP address

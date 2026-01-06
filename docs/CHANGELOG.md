@@ -7,11 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Product Strategy & Architecture - December 2025
+
+#### Product Roadmap & Positioning
+- **Two-Product Strategy**: Defined Apate Home (household/SMB) vs Apate Guard (enterprise) with clear market positioning
+- **Privacy-First Architecture**: Complete privacy framework with 4 modes (household, enterprise-local, enterprise-cloud, air-gapped)
+- **Household Safety Engineering**: Failure mode design ensuring network resilience (if Apate breaks, network stays up)
+- **Enterprise Differentiation**: Honeypot-powered SOC precision vs traditional IDS/NDR false positive rates
+- **Autonomy Roadmap**: Advisory → Safe Pattern Automation → RL-Driven Autonomy (Q1-Q3 2026)
+- **Success Metrics Framework**: Q1-Q4 2026 execution plan with measurable MTTD targets by quarter
+
+#### New Modules (Dormant Guardrails)
+- **Privacy Module** (`backend/app/privacy.py`): Privacy-preserving telemetry with local-first processing, 7-day raw data lock, differential privacy guards (400+ lines, ready for Q1 2026 activation)
+- **Household Safety Module** (`backend/app/household_safety.py`): Memory-bounded prediction, graceful degradation, timeout protection, passthrough failsafe (500+ lines, ready for Q2 2026 activation)
+- **Status**: Both modules exist as dormant guardrails (specs/contracts) but not active in hot paths yet
+
+#### Documentation
+- **PRODUCT_ROADMAP.md** (6,000+ words): Complete go-to-market strategy, privacy architecture, failure engineering, autonomous response framework
+- **IMPLEMENTATION_RESPONSE.md**: Maps product feedback to solutions with concrete code examples
+- **GUARDRAILS_STATUS.md**: Clarifies dormant vs active modules, activation timeline, verification procedures
+ - **Schemas v1.0 locked**: Introduced canonical data schemas in `backend/app/schemas/v1_0.py` for sessions, sequences, outcomes
+ - **Observation Phase added**: Updated ONBOARDING and PROGRESS to reflect Q1–Q2 2026 passive data collection before Layer 2
+
 ### Architecture Transformation - Project Mirage
 
 - **Five-Layer Cognitive Architecture**: Complete transformation from basic AI integration to sophisticated cognitive deception framework
 - **Layer 0**: Rust-based reflex layer for sub-millisecond threat detection (in progress Q4 2025)
-- **Layer 1**: Hidden Markov Models for command sequence prediction (planned Q1 2026)
+- **Layer 1**: Hidden Markov Models for command sequence prediction (✅ COMPLETE - 72% accuracy)
 - **Layer 2**: Machine Learning behavioral classification with Random Forest (planned Q2 2026)
 - **Layer 3**: Reinforcement Learning strategy optimization with PPO (planned Q3 2026)
 - **Layer 4**: LLM-based persona generation with advanced prompt engineering (planned Q4 2026)
@@ -23,7 +45,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phased Implementation**: Four phases over 2026 with measurable MTTD targets
 - **Technology Stack**: Rust + Python + ML/RL + LLMs in hierarchical architecture
 
-## [1.0.0] - 2024-12-24
+## [1.2.0] - 2025-12-17
+
+### Added
+
+- Layer 0 contract with `Layer0Output`, `ResponseProfile (FastFake|SlowFake|Mirror)`, and `route_payload` three-lane router.
+- Profile flags (`HOME`, `ENTERPRISE`) controlling Layer 0 behavior and circuit breaker work shedding.
+- Documentation updates aligning philosophy and APIs: `ONBOARDING.md`, `AI_Engine_Plan.md`, `FOUNDATIONS.md`, `docs/REDUCERS.md`, `docs/LAYER0_SUMMARY.md`, `docs/SECURITY.md`.
+
+### Changed
+
+- Aho–Corasick: replace `is_known_noise` with `check_hint`; shrink to ≤ 20 immutable patterns (hint-only, reflex responses).
+- Bloom filter: convert to tagging-only in Layer 0 (`ScannerNoiseFilter::is_probable_noise`); drop/gating decisions moved to Layer 1+ policy.
+- Circuit breaker: change to work shedding; introduce `AdaptiveCircuitBreaker::new(ProfileFlags)` and `should_skip_optional()` (enterprise only under sustained degradation). Security thresholds never relax.
+- Rate stats: simplify to coarse states (`Normal|Bursty|Insane`), still isolated to Layer 0 and Layer 3.
+- Router: formalize lane selection via suspicion score and tags; ensure escalation is explicit and deterministic.
+
+### Deprecated
+
+- `NoiseDetector::is_known_noise` (use `check_hint`).
+- `ScannerNoiseFilter::is_known_benign` and any Layer 0 static path gating (use `is_probable_noise` tagging and handle deprioritization in Layer 1+).
+
+### Migration
+
+- Replace AC calls to `is_known_noise` with `check_hint` and tag as needed; keep reflex-only responses in Layer 0.
+- Replace Bloom gating calls with `is_probable_noise` tagging; move any drop/deprioritization logic to Layer 1+ policy.
+- Instantiate circuit breaker with `AdaptiveCircuitBreaker::new(ProfileFlags)` and consult `should_skip_optional()` (enterprise profile) under degradation.
+- Use `route_payload(proto, suspicion_score, tags)` to determine `ResponseProfile` and escalation behavior.
+- Verify verdict-only caching: never cache responses or response shapes; maintain variability to avoid fingerprinting.
+
+### Tests
+
+- Updated reducers unit tests for new APIs and router thresholds; all tests passing.
+
+## [1.1.0] - 2025-11-25
+
+### Added
+
+- **Threat Detection Engine (Basic)**: Implemented in Rust Reflex Layer (Layer 0).
+- **Latency Circuit Breaker**: Added fail-open protection mechanism.
+    - **Atomic State Machine**: Lock-free `Closed` -> `Open` -> `HalfOpen` transitions.
+    - **Performance Thresholds**: Trips after 10 requests > 5ms.
+    - **Self-Healing**: Auto-recovery attempts after 30 seconds.
+- **ReDoS Protection**: Integrated `regex` crate with linear-time pattern matching.
+- **Static Threat Patterns**: Added detection for SQL Injection, XSS, Directory Traversal, and Command Injection.
+- **FFI Safety**: Hardened Rust-Python boundary with `panic::catch_unwind` and GIL release.
+- **Unit Tests**: Added comprehensive tests for threat detection logic.
+
+## [1.0.0] - 2025-08-25
 
 ### Added
 
@@ -203,23 +272,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git repository initialization
 - Basic CI/CD pipeline setup
 - Development workflow establishment
-
----
-
-## Version History Summary
-
-| Version | Release Date | Major Features | Completion |
-|---------|--------------|----------------|------------|
-| 1.0.0 | 2024-12-24 | API Documentation, Setup Scripts | 87% |
-| 0.9.0 | 2025-08-24 | Testing & CI/CD Infrastructure | 85% |
-| 0.8.0 | 2025-08-24 | Database & Redis Integration | 80% |
-| 0.7.0 | 2025-08-24 | FastAPI Backend & APIs | 75% |
-| 0.6.0 | 2025-08-15 | Rust Protocol Library | 70% |
-| 0.5.0 | 2025-08-10 | Advanced Honeytoken System | 65% |
-| 0.4.0 | 2025-08-08 | HTTP Emulator & Web Services | 55% |
-| 0.3.0 | 2025-08-05 | SSH Emulator & Shell Simulation | 45% |
-| 0.2.0 | 2025-08-01 | Core Architecture & Framework | 25% |
-| 0.1.0 | 2025-07-28 | Project Initialization | 10% |
 
 ---
 

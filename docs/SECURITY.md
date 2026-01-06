@@ -60,6 +60,14 @@ services:
 - **Data retention**: Configurable retention policies
 - **Encryption**: TLS for all external communications
 
+### Layer 0 Safety Posture
+
+- **No-drop (home profile)**: Layer 0 never drops traffic in home profile; it tags, responds with safe fakes, and escalates when needed.
+- **Work shedding, not weaker checks**: The adaptive circuit breaker only skips optional analysis under sustained load (enterprise profile). It never relaxes suspicion thresholds.
+- **Reflex-only responses**: Aho–Corasick and Bloom are hints that trigger boring fake errors or delays; they do not block or gate traffic in Layer 0.
+- **Response variability**: Verdicts may be cached for performance, but responses are never cached. This avoids determinism fingerprinting while maintaining safety.
+- **Profiles**: `HOME` prioritizes observation fidelity (no skip); `ENTERPRISE` may skip optional analysis under degradation, preserving security posture.
+
 ## ⚠️ **Deployment Security**
 
 ### Pre-deployment Checklist

@@ -5,7 +5,7 @@ This file starts the FastAPI server and exposes a root endpoint for health/statu
 Main server that orchestrates the honeypot services and API endpoints.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
@@ -16,11 +16,17 @@ import asyncio
 import uvicorn
 from datetime import datetime, UTC
 import os
+import time
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from .honeypot.ssh_emulator import SSHEmulator
 from .honeypot.http_emulator import HTTPEmulator
 from .routes import router
+from .monitoring import mttd_tracker
+
+# NOTE: privacy.py and household_safety.py are imported in Q2 2026+.
+# They currently exist as dormant guardrails, not active machinery.
+# See docs/PRODUCT_ROADMAP.md and docs/IMPLEMENTATION_RESPONSE.md
 # DB init is imported lazily in startup to avoid hard dependency at import time
 
 # Configure logging
@@ -56,9 +62,12 @@ app.add_middleware(
 # Include additional routes
 app.include_router(router, prefix="/api/v1", tags=["honeypot"])
 
+from .ai.engine import AIEngine
+
 # Initialize honeypot components
-ssh_emulator = SSHEmulator()
-http_emulator = HTTPEmulator()
+ai_engine = AIEngine()
+ssh_emulator = SSHEmulator(ai_engine=ai_engine)
+http_emulator = HTTPEmulator() # HTTPEmulator update reserved for future step if needed
 
 # JSON request models
 class SSHInteractionRequest(BaseModel):
@@ -115,6 +124,11 @@ async def get_status():
         "ai_engine": {"status": "ready", "model": "adaptive"},
         "logging": {"status": "active", "level": "INFO"}
     }
+
+@app.get("/mttd")
+async def get_mttd_metrics():
+    """Get Mean Time To Discovery metrics and honeypot effectiveness data"""
+    return mttd_tracker.get_metrics_summary()
 
 @app.post("/honeypot/ssh/interact")
 async def ssh_interact(body: SSHInteractionRequest):
@@ -200,24 +214,52 @@ REQUEST_LATENCY = Histogram(
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5),
 )
 
+# Simple in-memory IP rate limiter (best-effort, process-local)
+_RATE_LIMIT_WINDOW = 60.0  # seconds
+_RATE_LIMIT_MAX = 120      # requests per window per IP
+_rate_limit_store: Dict[str, Dict[str, float]] = {}
+_rate_limit_lock = asyncio.Lock()
+
 @app.middleware("http")
-async def _metrics_middleware(request, call_next):
+async def _metrics_and_ratelimit_middleware(request: Request, call_next):
     method = request.method
     path = request.url.path
     start = datetime.now(UTC)
+
+    # Best-effort IP rate limiting to prevent abuse/crash
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    allowed = True
+    async with _rate_limit_lock:
+        entry = _rate_limit_store.get(client_ip)
+        if not entry or now - entry.get("window_start", 0) > _RATE_LIMIT_WINDOW:
+            _rate_limit_store[client_ip] = {"count": 1.0, "window_start": now}
+        else:
+            entry["count"] = entry.get("count", 0.0) + 1.0
+            if entry["count"] > _RATE_LIMIT_MAX:
+                allowed = False
+
+    if not allowed:
+        REQUEST_COUNT.labels(method=method, path=path, status="429").inc()
+        return Response(status_code=429, content="Rate limit exceeded")
+
+    status = "500"
     try:
         response = await call_next(request)
         status = str(response.status_code)
         return response
     finally:
         duration = (datetime.now(UTC) - start).total_seconds()
-        REQUEST_COUNT.labels(method=method, path=path, status=locals().get("status", "500")).inc()
+        REQUEST_COUNT.labels(method=method, path=path, status=status).inc()
         REQUEST_LATENCY.labels(method=method, path=path).observe(duration)
 
 @app.get("/metrics", include_in_schema=False)
 async def metrics():
-    data = generate_latest()
-    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+    # Combine built-in metrics with MTTD metrics
+    builtin_data = generate_latest()
+    mttd_data = mttd_tracker.export_prometheus_metrics()
+    combined_metrics = builtin_data.decode('utf-8') + "\n" + mttd_data
+    return Response(content=combined_metrics, media_type=CONTENT_TYPE_LATEST)
 
 # Lifespan events
 @app.on_event("startup")
@@ -247,6 +289,6 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=False,
         log_level="info"
     )

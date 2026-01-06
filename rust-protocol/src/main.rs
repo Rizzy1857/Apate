@@ -15,6 +15,8 @@ use log::{info, warn, error, debug};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use socket2::{Socket, Domain, Type, Protocol};
+use rand::Rng;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Connection {
@@ -121,6 +123,10 @@ async fn handle_client(mut socket: TcpStream, peer_addr: SocketAddr, stats: Arc<
                 // Process the received data and generate response
                 let response = process_data(&received_str, &connection_id, peer_addr).await;
                 
+                // Add randomized jitter to defeat timing analysis (1-5ms)
+                let jitter = rand::thread_rng().gen_range(1..=5);
+                sleep(Duration::from_millis(jitter)).await;
+
                 // Echo back with potential modifications
                 match writer.write_all(response.as_bytes()).await {
                     Ok(_) => {
@@ -247,7 +253,20 @@ async fn main() -> io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     
     let bind_addr = "0.0.0.0:7878";
-    let listener = TcpListener::bind(bind_addr).await?;
+    
+    // Create a custom socket with specific TTL to mimic Linux kernel behavior
+    // This defeats basic nmap OS fingerprinting which often flags default socket behavior
+    let socket = Socket::new(Domain::IPV4, Type::STREAM, Some(Protocol::TCP))?;
+    socket.set_ttl(64)?; // Linux default TTL
+    socket.set_reuse_address(true)?;
+    socket.set_nonblocking(true)?;
+    
+    let address: SocketAddr = bind_addr.parse().unwrap();
+    socket.bind(&address.into())?;
+    socket.listen(128)?;
+    
+    let listener = TcpListener::from_std(socket.into())?;
+    
     let stats = Arc::new(ServerStats::new());
     
     info!("TCP Echo Server starting on {}", bind_addr);
