@@ -9,11 +9,9 @@ An intelligent honeypot system built on a staged cognitive architecture with a f
 
 ## 📖 **Documentation**
 
-For a deep dive into the system architecture and implementation details, please refer to the **[🏗️ Technical Foundations](docs/FOUNDATIONS.md)**.
-
-- **[📚 Usage Guide](docs/usage.md)** - Setup and operation
-- **[📊 Progress Tracking](docs/progress.md)** - Development status
-- **[🧠 AI Engine Plan](docs/AI_Engine_Plan.md)** - Cognitive roadmap
+- **[🏗️ System Architecture](docs/ARCHITECTURE.md)** - Design philosophy and 5-layer stack (formerly Onboarding)
+- **[📚 Manual & Usage](docs/MANUAL.md)** - Setup, deployment, and operation
+- **[🗺️ Roadmap](docs/ROADMAP.md)** - Strategic direction and milestones
 - **[🔧 API Reference](docs/API.md)** - API documentation
 
 ## 🎯 What Makes Mirage Different
@@ -75,5 +73,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **⚠️ Disclaimer**: This tool is for research and legitimate cybersecurity purposes only. Users are responsible for compliance with applicable laws and regulations.
 
-> [!NOTE]
-> **Observation Phase Active (Jan–Mar 2026)**: Layers 0–1 deployed in passive (predict-only) mode for 30–60 days of clean data collection. Layer 2+ are currently specification-only; runtime implementation begins Q2 2026. Guardrails (privacy, safety) exist as architectural specs, not active enforcement. Full test suite (66 tests) passing. See [Progress](docs/progress.md) for implementation details.
+> **Observation Phase Active (Jan–Mar 2026)**: Layers 0–1 deployed in passive (predict-only) mode for 30–60 days of clean data collection. Layer 2+ are currently specification-only; runtime implementation begins Q2 2026. Guardrails (privacy, safety) exist as architectural specs, not active enforcement. Full test suite (66 tests) passing. See [Roadmap](docs/ROADMAP.md) for implementation details.

@@ -49,9 +49,7 @@ Welcome to **Apate**, a next-generation adaptive honeypot platform. This isn't y
 - Target: Enterprise SOC teams, MSSPs, critical infrastructure
 
 **Strategic Documents**:
-- `docs/PRODUCT_ROADMAP.md` — Complete go-to-market strategy (6,000+ words)
-- `docs/IMPLEMENTATION_RESPONSE.md` — Product feedback response
-- `docs/GUARDRAILS_STATUS.md` — Module activation timeline
+- `docs/ROADMAP.md` — Complete go-to-market strategy and technical plans
 
 ### Q1-Q4 2026 Milestones
 
@@ -172,7 +170,7 @@ AIR_GAPPED = "air_gapped"            # No internet at all
 
 **Key Files**:
 - `backend/app/privacy.py` — 450+ lines, fully implemented
-- See `docs/PRODUCT_ROADMAP.md` (Section 2) for complete architecture
+- See `docs/ROADMAP.md` (Section 2) for complete architecture
 
 ### Household Safety Engineering (`backend/app/household_safety.py`)
 
@@ -217,7 +215,7 @@ AIR_GAPPED = "air_gapped"            # No internet at all
 
 **Key Files**:
 - `backend/app/household_safety.py` — 500+ lines, fully implemented
-- See `docs/GUARDRAILS_STATUS.md` for activation timeline and verification procedures
+- See `docs/MANUAL.md` for activation timeline and verification procedures
 
 ---
 
@@ -2253,7 +2251,6 @@ See `docs/SAFETY_AND_STABILITY_PLAN.md`.
 1. **Start Here**:
    - Read `README.md` for project overview
    - Read `docs/FOUNDATIONS.md` for technical details
-   - Read `docs/AI_Engine_Plan.md` for roadmap
    - Complete this onboarding guide
 
 2. **Hands-On**:
