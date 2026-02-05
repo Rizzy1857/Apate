@@ -1,5 +1,7 @@
 # Project Mirage - Adaptive Deception Framework
 
+⚠️**Archived**: The project is being archived as it functions as a great prototype but fails to grow into a final project, having many fatal issues. Till I find a solution for these issues, I will be working on other projects, feel free to browse the repo and suggest changes if you have any.
+
 An intelligent honeypot system built on a staged cognitive architecture with a five-layer research roadmap. Mirage augments the robust Apate foundation with progressive, advisory-only behavioral modeling to improve Mean Time To Discovery (MTTD) through context-enrichment rather than autonomous decision-making.
 
 **Primary Metric**: Mean Time To Discovery (MTTD)  
