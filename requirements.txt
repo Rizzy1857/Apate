@@ -1,2 +1,9 @@
--r backend/requirements.txt
--r requirements-dev.txt
+fusepy==3.0.1
+redis==5.0.1
+psycopg2-binary==2.9.9
+pydantic==2.5.3
+cryptography==41.0.7
+PyYAML==6.0.1
+requests==2.31.0
+click==8.1.7
+colorama==0.4.6
