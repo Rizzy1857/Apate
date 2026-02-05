@@ -9,20 +9,20 @@ services:
   # Python FastAPI Backend - Main honeypot orchestrator
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: mirage-backend
     ports:
-      - "8000:8000"  # Main API
-      - "2222:2222"  # SSH honeypot
-      - "8080:8080"  # HTTP honeypot
+      - "8000:8000" # Main API
+      - "2222:2222" # SSH honeypot
+      - "8080:8080" # HTTP honeypot
     environment:
       - ENVIRONMENT=development
       - LOG_LEVEL=INFO
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
     volumes:
-      - ./backend:/app:ro  # Read-only mount
+      - ./backend:/app:ro # Read-only mount
       - ./data:/app/data
       - honeypot-logs:/app/logs
       - /etc/passwd:/etc/passwd:ro
@@ -35,17 +35,17 @@ services:
     # Security hardening
     security_opt:
       - no-new-privileges:true
-      - apparmor:unconfined  # Consider custom AppArmor profile
-    read_only: false  # FastAPI needs write access for temp files
+      - apparmor:unconfined # Consider custom AppArmor profile
+    read_only: false # FastAPI needs write access for temp files
     tmpfs:
       - /tmp:noexec,nosuid,size=200m
       - /var/tmp:noexec,nosuid,size=100m
-      - /app/logs:noexec,nosuid,size=500m
+
     cap_drop:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-      - DAC_OVERRIDE  # For log writing
+      - DAC_OVERRIDE # For log writing
     user: "1000:1000"
     # Resource limits
     deploy:
@@ -64,7 +64,7 @@ services:
         max-file: "3"
         labels: "service=honeypot-backend"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/status"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/status" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -76,8 +76,8 @@ services:
       dockerfile: Dockerfile
     container_name: mirage-rust
     ports:
-      - "7878:7878"  # TCP echo service
-      - "7879:7879"  # Stats/monitoring
+      - "7878:7878" # TCP echo service
+      - "7879:7879" # Stats/monitoring
     environment:
       - RUST_LOG=info
       - BIND_ADDR=0.0.0.0:7878
@@ -114,7 +114,7 @@ services:
         max-file: "3"
         labels: "service=honeypot-rust"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "7878"]
+      test: [ "CMD", "nc", "-z", "localhost", "7878" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -126,7 +126,7 @@ services:
       dockerfile: Dockerfile
     container_name: mirage-iot
     ports:
-      - "8081:8081"  # IoT device API
+      - "8081:8081" # IoT device API
     environment:
       - PORT=8081
       - LOG_LEVEL=info
@@ -162,7 +162,7 @@ services:
         max-file: "3"
         labels: "service=honeypot-iot"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/status"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/status" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -187,7 +187,7 @@ services:
       - /tmp:noexec,nosuid,size=50m
     cap_drop:
       - ALL
-    user: "999:999"  # Redis user in Alpine
+    user: "999:999" # Redis user in Alpine
     # Resource limits
     deploy:
       resources:
@@ -205,11 +205,10 @@ services:
         max-file: "2"
         labels: "service=honeypot-redis"
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "honeypot_redis_2023", "ping"]
+      test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "honeypot_redis_2023", "ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
-
   # Security Monitoring Container (optional - enable for production)
   # security-monitor:
   #   image: falcosecurity/falco:latest
@@ -250,11 +249,11 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1
     driver_opts:
       com.docker.network.bridge.name: "mirage-br0"
-      com.docker.network.bridge.enable_icc: "false"  # Disable inter-container communication
+      com.docker.network.bridge.enable_icc: "false" # Disable inter-container communication
       com.docker.network.bridge.enable_ip_masquerade: "true"
 
 volumes:

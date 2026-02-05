@@ -50,3 +50,4 @@ lateral_test,ssh,2025-12-29T10:02:23.939468,,0,L0,false
 realism_test,ssh,2025-12-29T10:02:23.940432,,0,L0,false
 sysinfo_test,ssh,2025-12-29T10:02:23.941219,,0,L0,false
 env_test,ssh,2025-12-29T10:02:23.942346,,0,L0,false
+attacker-001,ssh,2026-02-03T09:00:00.744450,,0,L0,false

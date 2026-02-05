@@ -1,24 +1,25 @@
 # Go Services Dockerfile
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 COPY . .
 
-RUN go mod init go-services && \
+RUN if [ ! -f go.mod ]; then go mod init go-services; fi && \
     go mod tidy && \
-    go build -o iot-gateway main.go
+    CGO_ENABLED=0 go build -o iot-gateway main.go && \
+    chmod +x iot-gateway
 
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates wget
 
-WORKDIR /root/
-
+WORKDIR /app
 COPY --from=builder /app/iot-gateway .
+RUN chmod +x iot-gateway && chown 1000:1000 iot-gateway
 
 EXPOSE 8081
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8081/status || exit 1
+# Healthcheck requires wget or curl, which are present in Alpine.
+# docker-compose.yml uses: wget --quiet --tries=1 --spider http://localhost:8081/status
 
-CMD ["./iot-gateway"]
+CMD ["/app/iot-gateway"]

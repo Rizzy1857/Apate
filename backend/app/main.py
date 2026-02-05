@@ -284,11 +284,30 @@ async def _shutdown():
         pass
 
 if __name__ == "__main__":
-    # Run directly without string import to avoid duplicate imports
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        reload=False,
-        log_level="info"
-    )
+    def find_available_port(start_port: int, max_attempts: int = 100) -> int:
+        import socket
+        for port in range(start_port, start_port + max_attempts):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                try:
+                    sock.bind(("0.0.0.0", port))
+                    return port
+                except OSError:
+                    continue
+        raise RuntimeError(f"Could not find an available port in range {start_port}-{start_port + max_attempts}")
+
+    # Find available port dynamically
+    try:
+        port = find_available_port(8000)
+        logger.info(f"Starting server on port {port}")
+        
+        # Run directly without string import to avoid duplicate imports
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=port,
+            reload=False,
+            log_level="info"
+        )
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        exit(1)

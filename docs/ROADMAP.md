@@ -28,7 +28,9 @@ Project Mirage transforms the Apate honeypot into a **Cognitive Deception Framew
 ## 🏗️ Technical Roadmap
 
 ### ✅ Phase 1: Foundation & Reflex (Completed Q4 2025)
+
 **Goal**: Sub-millisecond threat detection and stable infrastructure.
+
 - **Layer 0 (Rust Reflex)**:
     - [x] Deterministic 3-Lane Router (FastFake, SlowFake, Mirror)
     - [x] Adaptive Circuit Breaker (Fail-open under load)
@@ -39,7 +41,9 @@ Project Mirage transforms the Apate honeypot into a **Cognitive Deception Framew
     - [x] Passive prediction mode (Advisory only)
 
 ### 🔄 Phase 2: Reasoning & Safety (Current - Q1/Q2 2026)
+
 **Goal**: Attacker classification and safe autonomous response.
+
 - **Layer 2 (Reasoning)**:
     - [ ] Behavioral Classification (Random Forest)
     - [ ] Feature Extraction (Time-series, semantic)
@@ -49,14 +53,18 @@ Project Mirage transforms the Apate honeypot into a **Cognitive Deception Framew
     - [ ] Deploy `household_safety.py` (Appliance constraints)
 
 ### ⏳ Phase 3: Strategy & Autonomy (Planned Q3 2026)
+
 **Goal**: Long-term engagement via Reinforcement Learning.
+
 - **Layer 3 (Strategy)**:
     - [ ] PPO Agent for engagement optimization
     - [ ] Dynamic Strategy Vectors (Latency, Complexity, Enticement)
     - [ ] Rust migration for inference (<10ms)
 
 ### ⏳ Phase 4: Persona & Generative (Planned Q4 2026)
+
 **Goal**: Natural language interaction.
+
 - **Layer 4 (Persona)**:
     - [ ] LLM Integration (Context-aware responses)
     - [ ] Semantic Caching (Vector DB)
@@ -67,13 +75,17 @@ Project Mirage transforms the Apate honeypot into a **Cognitive Deception Framew
 ## 📦 Product Roadmap
 
 ### 1. Apate Home (Household/SMB)
+
 **Promise**: "Plug-and-play network observer."
+
 - **Tier 1 (Passive)**: Read-only port mirror. Safe.
 - **Tier 2 (Proxy)**: Inline with circuit breaker.
 - **Privacy**: 100% local processing. No cloud dependency.
 
 ### 2. Apate Guard (Enterprise)
+
 **Promise**: "Find APTs before EDR."
+
 - **Deployment**: On-prem or Hybrid Cloud.
 - **Integration**: SIEM (Splunk/ELK) pipelines.
 - **Feature**: Autonomous response for known patterns (Brute force, Scanners).

@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U apate_user -d apate_dev"]
+      test: [ "CMD-SHELL", "pg_isready -U apate_user -d apate_dev" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -41,8 +41,8 @@ services:
   # FastAPI backend service
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -60,7 +60,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -77,8 +77,6 @@ services:
       - "7878:7878"
     environment:
       RUST_LOG: info
-    volumes:
-      - ./rust-protocol:/app
     networks:
       - apate-network
     restart: unless-stopped
@@ -92,8 +90,6 @@ services:
       - "8081:8081"
     environment:
       GO_ENV: development
-    volumes:
-      - ./go-services:/app
     networks:
       - apate-network
     restart: unless-stopped

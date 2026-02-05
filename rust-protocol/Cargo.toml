@@ -20,11 +20,15 @@ uuid = { version = "1.0", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 url = "2.4"
 pyo3 = { version = "0.22.0", features = ["extension-module"], optional = true }
+
 regex = "1.10"
 socket2 = "0.5"
 rand = "0.8"
 aho-corasick = "1.1"
 bloom = "0.3"
+
+[features]
+default = ["pyo3"]
 
 [[bin]]
 name = "main"
