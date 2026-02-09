@@ -10,22 +10,45 @@ Chronos is a high-fidelity honeypot framework designed to solve the "state hallu
 *   **State Consistency**: A "State Hypervisor" ensures filesystem operations are atomic and persistent. If an attacker creates a file, it stays there. No more disappearing artifacts.
 *   **FUSE Interface**: Intercepts system calls at the kernel-user boundary. Supports standard tools (`ls`, `cat`, `rm`, `vi`, `gcc`) without modification.
 *   **Cognitive Intelligence**: Integrated **Persona Engine** generates content for files on-the-fly using LLMs (OpenAI/Anthropic) only when accessed, creating an infinite, realistic depth.
-*   **Layer 0 Routing**: High-performance Rust-based traffic analysis (adapted from Project Mirage) for initial threat tagging.
-*   **Audit Logging**: Every filesystem operation requires a commit to the PostgreSQL audit log for forensic replay.
+*   **Multi-Protocol Gateway**: SSH and HTTP honeypot servers that capture credentials and exploitation attempts.
+*   **Real-Time Analysis**: Command analyzer detects attack techniques using MITRE ATT&CK framework patterns.
+*   **Threat Intelligence**: Built-in library of known attack signatures and threat patterns.
+*   **Skill Profiling**: Automatically classifies attacker skill level from script kiddie to expert APT.
+*   **Audit Streaming**: Real-time event processing and pattern detection across attack sessions.
+*   **Layer 0 Routing**: High-performance Rust-based traffic analysis for initial threat tagging.
+*   **Forensic Logging**: Complete audit trail in PostgreSQL for incident response and threat hunting.
 
 ## 🏗️ Architecture
 
-Chronos is built on three pillars:
+Chronos implements a layered architecture:
 
-1.  **The Foundation (Data & State)**: 
-    *   **Hot State**: Redis 7.0 for milliseconds-latency filesystem metadata (inodes, directory maps).
-    *   **Cold Storage**: PostgreSQL 15 for audit logs and forensic data.
-2.  **The Interface (FUSE)**:
-    *   Python-based FUSE implementation interfacing with the Linux kernel.
-    *   Translates VFS calls (`getattr`, `read`, `write`) into Redis atomic transactions.
-3.  **The Intelligence (LLM)**:
-    *   **Persona Engine**: Injects personality (e.g., "Vulnerable Database Server") into generated content.
-    *   **Lazy Generation**: Config files (`/etc/passwd`, `/etc/nginx.conf`) are generated continuously upon first read.
+1.  **Gateway Layer (Entry Points)**:
+    *   **SSH Honeypot**: Accepts any credentials, provides interactive shell on port 2222
+    *   **HTTP Honeypot**: Simulates vulnerable web apps, captures exploits on port 8080
+    *   All entry points log to the audit system for analysis
+    
+2.  **Core Layer (State & Logic)**:
+    *   **State Hypervisor**: Ensures filesystem consistency via Redis atomic operations
+    *   **FUSE Interface**: Intercepts kernel VFS calls, translates to database operations
+    *   **Hot State**: Redis 7.0 for sub-millisecond metadata access
+    *   **Cold Storage**: PostgreSQL 15 for forensic audit logs
+
+3.  **Intelligence Layer (Cognitive)**:
+    *   **Persona Engine**: Injects realistic personality into generated content
+    *   **LLM Integration**: OpenAI/Anthropic/Mock providers for lazy content generation
+    *   Generates files on first access, persists forever (consistency guarantee)
+
+4.  **Analysis Layer (Skills & Watcher)**:
+    *   **Command Analyzer**: Detects 50+ attack techniques (MITRE ATT&CK)
+    *   **Threat Library**: Database of known attack signatures and IOCs
+    *   **Skill Detector**: Profiles attacker from script kiddie → expert APT
+    *   **Event Processor**: Real-time pattern detection and correlation
+    *   **Audit Streamer**: Pub-sub event streaming for external SIEM integration
+
+5.  **Layer 0 (Rust Performance)**:
+    *   High-speed protocol classification and noise filtering
+    *   Circuit breakers and adaptive degradation under load
+    *   Direct integration with Python via PyO3
 
 ## ⚡ Quick Start
 
@@ -53,12 +76,57 @@ Chronos is built on three pillars:
     docker exec -it chronos_core /bin/bash
     cd /mnt/honeypot
     
-    # Try standard commands
-    ls -la
-    touch malware.sh
-    echo "rm -rf /" > malware.sh
-    cat malware.sh
-    ```
+## 🧪 Verification & Testing
+
+Run verification tests to confirm all components:
+
+```bash
+# Run all verification phases
+make verify
+
+# Or individually
+python3 verify_phase1.py  # Core: State & FUSE
+python3 verify_phase2.py  # Persistence & Lua
+python3 verify_phase3.py  # Intelligence & Persona
+python3 verify_phase4.py  # Gateway, Watcher, Skills
+```
+
+Run the interactive demo:
+
+```bash
+# Standalone demo (no infrastructure needed)
+python3 demo_standalone.py
+```
+
+This simulates a complete APT attack session and shows:
+- Real-time command analysis
+- Threat signature matching
+- Attacker skill profiling
+- Attack phase detection
+- Risk scoring and reporting
+
+## 📊 Component Overview
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| State Hypervisor | Filesystem consistency engine | ✅ Complete |
+| FUSE Interface | Kernel VFS interception | ✅ Complete |
+| Persona Engine | Content generation AI | ✅ Complete |
+| SSH Gateway | Interactive shell honeypot | ✅ Complete |
+| HTTP Gateway | Web app honeypot | ✅ Complete |
+| Command Analyzer | Attack technique detection | ✅ Complete |
+| Threat Library | Signature database (12 threats) | ✅ Complete |
+| Skill Detector | Attacker profiling | ✅ Complete |
+| Event Processor | Pattern correlation | ✅ Complete |
+| Audit Streamer | Real-time event streaming | ✅ Complete |
+| Layer 0 (Rust) | Traffic analysis | ✅ Complete |
+
+## 📚 Documentation
+
+*   [System Architecture](docs/ARCHITECTURE.md) - Deep dive into technical design
+*   [Developer Onboarding](docs/ONBOARDING.md) - Get started contributing
+
+## 📜 License
 
 ## 🛠️ Configuration
 
