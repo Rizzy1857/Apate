@@ -21,11 +21,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir -p /mnt/honeypot
 
 # Copy entrypoint script if needed (we use command in compose for now)
-# COPY src/ /app/src/
+COPY src/ /app/src/
 
 # Set environment
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app/src
 
 # Default command
 CMD ["python3", "-m", "chronos.core.main"]

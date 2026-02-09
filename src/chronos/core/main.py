@@ -2,6 +2,7 @@ import sys
 import os
 import signal
 from fuse import FUSE
+from prometheus_client import start_http_server
 from chronos.core.state import StateHypervisor
 from chronos.interface.fuse import ChronosFUSE
 
@@ -27,7 +28,11 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # 3. Mount FUSE
+    # 3. Start Metrics Server
+    print("[*] Starting Metrics Server on port 8000...")
+    start_http_server(8000)
+
+    # 4. Mount FUSE
     print("[*] Mounting FUSE filesystem (foreground)...")
     try:
         # allow_other is crucial for Docker if accessed from host or other users

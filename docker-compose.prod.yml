@@ -1,0 +1,114 @@
+services:
+  redis-store:
+    image: redis:7-alpine
+    container_name: chronos_redis
+    restart: always
+    volumes:
+      - redis-data:/data
+    networks:
+      - chronos-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  db-store:
+    image: postgres:15-alpine
+    container_name: chronos_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chronos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chronos_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-chronos}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - chronos-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U chronos" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  core-engine:
+    build: .
+    container_name: chronos_core
+    restart: always
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    security_opt:
+      - apparmor:unconfined
+    depends_on:
+      redis-store:
+        condition: service_healthy
+      db-store:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis-store
+      - POSTGRES_HOST=db-store
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
+    volumes:
+      - fuse-mount:/mnt/honeypot
+      - ./src:/app/src
+    networks:
+      - chronos-net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: chronos_prometheus
+    restart: always
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - chronos-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: chronos_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-chronos_admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - chronos-net
+    depends_on:
+      - prometheus
+
+volumes:
+  redis-data:
+  postgres-data:
+  fuse-mount:
+  prometheus_data:
+  grafana_data:
+
+
+networks:
+  chronos-net:
+    driver: bridge
