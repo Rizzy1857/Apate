@@ -4,6 +4,8 @@
 
 This document provides a deep dive into the internal architecture of the Chronos Framework. It details the interaction between the **FUSE Interface**, **State Hypervisor**, and **Cognitive Intelligence** layers.
 
+**For a comprehensive analysis of the state hallucination problem and how Chronos solves it**, see [Problem Analysis](PROBLEM_ANALYSIS.md).
+
 ---
 
 ## 🏗️ System Components
@@ -47,13 +49,34 @@ graph TD
 The **State Hypervisor** (`src/chronos/core/state.py`) is the guardian of consistency. It abstracts low-level Redis operations into high-level filesystem verbs (`create_file`, `link`, `mkdir`).
 
 ### The "Hallucination" Problem
-Traditional honeypots often suffer from state inconsistency:
-*   Atttacker: `touch /tmp/exploit`
-*   Honeypot: "OK"
-*   Attacker: `ls /tmp`
-*   Honeypot: (Empty list) -> **BUSTED**
 
-Chronos solves this by treating the filesystem state as a database transaction.
+**Traditional honeypots** (Honeyd, Cowrie) suffer from:
+- Limited interaction (only scripted commands work)
+- State inconsistency (create file → disappears on ls)
+- Easily detectable by attackers
+
+**LLM-based honeypots** suffer from:
+- **Memory window limits**: After N commands, LLM forgets earlier actions
+- **State contradictions**: `cd /home` then later `pwd` returns `/root` (hallucination)
+- **Permission inconsistencies**: `whoami` returns `root` but `touch /root/file` fails
+- **No persistent state tracking**: Each response independently generated
+
+**Chronos solves this by**:
+1. Using FUSE to implement a real POSIX filesystem
+2. Using Redis to atomically persist ALL state changes
+3. Using LLMs ONLY for content generation (NOT state management)
+4. Using Lua scripts to ensure atomic transactions
+
+**Example**:
+```
+Attacker: touch /tmp/pwn && cd /tmp && ls
+Chronos:
+1. FUSE intercepts syscalls
+2. State Hypervisor creates inode in Redis (ATOMIC)
+3. LLM never involved in state (only in file content if needed)
+4. ls reads directly from Redis
+→ File guaranteed to be there (no hallucination)
+```
 
 ### Redis Data Schema
 We use a hybrid schema optimized for O(1) lookups and atomic updates.

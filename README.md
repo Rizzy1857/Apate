@@ -3,7 +3,31 @@
 > **Cognitive Deception Infrastructure**  
 > *From Theoretical Specification to Deployable Asset*
 
-Chronos is a high-fidelity honeypot framework designed to solve the "state hallucination" problem in cyber deception. Unlike traditional honeypots that emulate services via scripts, Chronos implements a fully consistent **FUSE Filesystem** backed by a **Redis State Hypervisor**, allowing it to behave exactly like a real Linux system while intercepting and analyzing every attacker interaction.
+Chronos is a high-fidelity honeypot framework that solves **state hallucination** and **consistency issues** plaguing both traditional rule-based and LLM-based honeypots. It implements a fully consistent **FUSE Filesystem** backed by a **Redis State Hypervisor**, allowing attackers to interact with it exactly like a real Linux system while Chronos tracks and analyzes every action.
+
+### The Problem This Solves
+
+**Traditional honeypots** suffer from limited interaction - file operations aren't atomic, so attackers detect inconsistencies:
+```
+Attacker: touch /tmp/pwn && ls /tmp
+Honeypot: (file not in listing) → DETECTED AS FAKE
+```
+
+**LLM-based honeypots** maintain conversation context but hallucinate state:
+```
+Command: cd /home/attacker → LLM remembers
+[50 commands later]
+Command: pwd → LLM forgets (context window exceeded) → HALLUCINATION
+```
+
+**Chronos** provides true atomic state management backed by Redis:
+```
+Command: cd /home/attacker → Stored in Redis
+[50 commands later]
+Command: pwd → Reads from Redis → CORRECT every time
+```
+
+For deep analysis, see [Problem Analysis](docs/PROBLEM_ANALYSIS.md).
 
 ## 🚀 Key Features
 
