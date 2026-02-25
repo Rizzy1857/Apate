@@ -10,18 +10,20 @@ This document provides a deep dive into the internal architecture of the Chronos
 
 ## 🏗️ System Components
 
-The architecture follows a strict separation of concerns:
+The architecture follows a strict separation of concerns (top to bottom):
 
 1.  **Interface Layer (FUSE)**: The "skin" of the honeypot. Purely reactive.
-2.  **Core Layer (Hypervisor)**: The "brain". Enforces logic and consistency.
-3.  **Data Layer (Persistence)**: The "memory". Atomic storage and audit logs.
+2.  **Gateway Layer (SSH/HTTP)**: Entry points for attacker interaction.
+3.  **Core Layer (Hypervisor)**: The "brain". Enforces logic and consistency.
 4.  **Intelligence Layer (Cognitive)**: The "imagination". Generates content on demand.
+5.  **Data Layer (Persistence)**: The "memory". Atomic storage and audit logs.
+6.  **Layer 0 (Rust)**: High-performance traffic analysis and threat detection.
 
 ```mermaid
 graph TD
-    subgraph "Attacker Interaction"
-        Shell[SSH/Bash] -->|Commands| Kernel
-        Kernel -->|VFS Calls| Fuse[FUSE Interface]
+    subgraph "Attacker Interaction - TOP"
+        Shell[SSH/HTTP Clients] -->|Commands/Requests| Gateway[Gateway Layer]
+        Gateway -->|Syscalls| Fuse[FUSE Interface]
     end
 
     subgraph "Chronos Core"
@@ -39,6 +41,12 @@ graph TD
     subgraph "Persistence"
         Lua -->|Commit| Redis[(Redis DB)]
         Hypervisor -->|Audit| Postgres[(PostgreSQL)]
+    end
+
+    subgraph "Layer 0 - BOTTOM"
+        Gateway -->|Traffic| Layer0[Rust Protocol Analysis]
+        Layer0 -->|Threats| Skills[Threat Detection]
+        Skills -->|Risk Scores| Postgres
     end
 ```
 
