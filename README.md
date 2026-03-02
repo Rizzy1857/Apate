@@ -134,6 +134,9 @@ make up
 
 # Run brutal honesty validation
 make validate-core
+
+# Run attack simulation
+make validate-attacks
 ```
 
 This tests:
@@ -142,6 +145,7 @@ This tests:
 - Lua script execution
 - Directory simulation
 - Performance baselines
+- Real attack detection (28 commands across 5 scenarios)
 
 ### Run Implementation Tests
 
@@ -152,10 +156,10 @@ Run verification tests to confirm component functionality:
 make verify
 
 # Or individually
-python3 verify_phase1.py  # Core: State & FUSE
-python3 verify_phase2.py  # Persistence & Lua
-python3 verify_phase3.py  # Intelligence & Persona
-python3 verify_phase4.py  # Gateway, Watcher, Skills
+python3 tests/verification/verify_phase1.py  # Core: State & FUSE
+python3 tests/verification/verify_phase2.py  # Persistence & Lua
+python3 tests/verification/verify_phase3.py  # Intelligence & Persona
+python3 tests/verification/verify_phase4.py  # Gateway, Watcher, Skills
 ```
 
 ### Run Demo
@@ -164,7 +168,10 @@ Run the interactive demo:
 
 ```bash
 # Standalone demo (no infrastructure needed)
-python3 demo_standalone.py
+make demo-standalone
+
+# Or directly
+python3 tests/integration/demo_standalone.py
 ```
 
 This simulates a complete APT attack session and shows:

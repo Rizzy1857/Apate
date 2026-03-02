@@ -6,10 +6,15 @@ Simulates actual attacker behavior to test system under realistic conditions.
 
 import time
 import sys
+import os
 from datetime import datetime
-from src.chronos.skills.command_analyzer import CommandAnalyzer
-from src.chronos.skills.threat_library import ThreatLibrary
-from src.chronos.skills.skill_detector import SkillDetector
+
+# Add src to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+from chronos.skills.command_analyzer import CommandAnalyzer
+from chronos.skills.threat_library import ThreatLibrary
+from chronos.skills.skill_detector import SkillDetector
 
 # Real attack sequences collected from honeypot data
 ATTACK_SCENARIOS = {

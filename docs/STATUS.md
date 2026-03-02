@@ -100,13 +100,17 @@
 
 ## 📊 Test Coverage
 
-### Verification Scripts
+### Verification Scripts (`tests/verification/`)
 - ✅ `verify_phase1.py` - State Hypervisor & Database
 - ✅ `verify_phase2.py` - FUSE Interface
 - ✅ `verify_phase3.py` - Intelligence & Persona
 - ✅ `verify_phase4.py` - Gateway, Watcher, Skills (4/4 tests passing)
 
-### Demonstration Scripts
+### Validation Scripts (`tests/validation/`)
+- ✅ `validate_core.py` - Core infrastructure integrity (8/8 tests passing)
+- ✅ `test_real_attack.py` - Real attack simulation (78.6% detection rate)
+
+### Integration Demos (`tests/integration/`)
 - ✅ `demo_standalone.py` - Skills showcase (no infrastructure dependencies)
 - ✅ `demo_integration.py` - Full system integration demo
 
@@ -136,17 +140,17 @@ Apate/
 │   │   ├── llm.py
 │   │   └── persona.py
 │   │
-│   ├── gateway/           ✅ NEW: SSH/HTTP entry points
+│   ├── gateway/           ✅ SSH/HTTP entry points
 │   │   ├── __init__.py
 │   │   ├── ssh_server.py
 │   │   └── http_server.py
 │   │
-│   ├── watcher/           ✅ NEW: Audit log monitoring
+│   ├── watcher/           ✅ Audit log monitoring
 │   │   ├── __init__.py
 │   │   ├── log_streamer.py
 │   │   └── event_processor.py
 │   │
-│   ├── skills/            ✅ NEW: Threat detection & analysis
+│   ├── skills/            ✅ Threat detection & analysis
 │   │   ├── __init__.py
 │   │   ├── command_analyzer.py
 │   │   ├── threat_library.py
@@ -162,26 +166,40 @@ Apate/
 │       │   └── utils.rs
 │       └── target/
 │
+├── tests/                 ✅ NEW: Organized test suite
+│   ├── validation/        ✅ Phase 1 core validation
+│   │   ├── validate_core.py
+│   │   └── test_real_attack.py
+│   │
+│   ├── verification/      ✅ Implementation verification
+│   │   ├── verify_phase1.py
+│   │   ├── verify_phase2.py
+│   │   ├── verify_phase3.py
+│   │   └── verify_phase4.py
+│   │
+│   ├── integration/       ✅ End-to-end demos
+│   │   ├── demo_standalone.py
+│   │   └── demo_integration.py
+│   │
+│   └── README.md          ✅ Test suite documentation
+│
 ├── docs/
 │   ├── ARCHITECTURE.md    ✅ System architecture
-│   └── ONBOARDING.md      ✅ Developer guide
+│   ├── ONBOARDING.md      ✅ Developer guide
+│   ├── PHASE1_VALIDATION.md      ✅ Validation criteria
+│   ├── PHASE1_RESULTS.md         ✅ Test results & findings
+│   └── PHASE1_ACTION_CHECKLIST.md ✅ Validation roadmap
 │
 ├── config/
 │   └── prometheus/
 │       └── prometheus.yml
 │
-├── verify_phase1.py       ✅ Phase 1 tests
-├── verify_phase2.py       ✅ Phase 2 tests
-├── verify_phase3.py       ✅ Phase 3 tests
-├── verify_phase4.py       ✅ Phase 4 tests (NEW)
-├── demo_standalone.py     ✅ Skills demo (NEW)
-├── demo_integration.py    ✅ Full system demo (NEW)
-│
 ├── requirements.txt       ✅ Updated with new dependencies
-├── Makefile              ✅ Updated with verify target
+├── Makefile              ✅ Updated with test targets
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
 ├── Dockerfile
+├── VALIDATION_COMPLETE.txt ✅ Validation summary
 └── README.md             ✅ Project overview
 ```
 
