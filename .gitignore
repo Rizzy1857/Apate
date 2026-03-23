@@ -10,6 +10,9 @@
 logs/
 *.log
 
+# Detached report workspace
+report_workspace/
+
 # Python
 __pycache__/
 *.py[cod]

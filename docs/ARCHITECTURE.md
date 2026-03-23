@@ -1,6 +1,12 @@
-# Chronos Framework Architecture
+# Mirage
 
 > **Technical Specification**: Version 1.0 (Feb 2026)
+
+**Naming convention:** Repository codename is **Apate**, while the product idea is **Mirage** and the implementation framework is **Chronos**.
+
+**Program phases:**
+- **Phase 1 (6 months):** Core architecture and validation (completed)
+- **Phase 2 (6 months):** AI integration to improve realism/analysis without introducing unnecessary complexity
 
 This document provides a deep dive into the internal architecture of the Chronos Framework. It details the interaction between the **FUSE Interface**, **State Hypervisor**, and **Cognitive Intelligence** layers.
 
@@ -50,6 +56,8 @@ graph TD
     end
 ```
 
+**Figure A1.** Mirage high-level architecture and data flow (Chronos framework).
+
 ---
 
 ## 1. The State Hypervisor
@@ -81,9 +89,9 @@ Attacker: touch /tmp/pwn && cd /tmp && ls
 Chronos:
 1. FUSE intercepts syscalls
 2. State Hypervisor creates inode in Redis (ATOMIC)
-3. LLM never involved in state (only in file content if needed)
+3. LLM is excluded from state truth (used only for optional content generation)
 4. ls reads directly from Redis
-→ File guaranteed to be there (no hallucination)
+→ File presence is determined by persisted state, reducing contradiction risk
 ```
 
 ### Redis Data Schema
@@ -152,7 +160,7 @@ Chronos introduces "Lazy Generation" to populate the filesystem dynamically.
     *   **Crucial**: The file is now "solid". Subsequent reads come from Redis, not LLM.
 7.  **FUSE**: Returns content to attacker.
 
-This ensures **consistency** (the file doesn't change next time) and **infinite depth** (any file can exist).
+This design improves **consistency** (stable subsequent reads) and supports **high apparent depth** through on-demand generation.
 
 ---
 

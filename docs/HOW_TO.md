@@ -1,4 +1,8 @@
-# Chronos Honeypot - Complete User Guide
+# Mirage User Guide (Chronos Framework)
+
+**Naming convention:** Repo codename is **Apate**; refer to the product as **Mirage** and the underlying framework as **Chronos**.
+
+**Roadmap context:** Phase 1 (core platform) is complete. Phase 2 prioritizes AI integration that supports operator clarity and system consistency rather than adding unnecessary AI complexity.
 
 ## Table of Contents
 1. [Quick Start](#quick-start)
@@ -36,7 +40,7 @@ ls -la
 cat etc/passwd
 ```
 
-**What just happened?** Every file operation you performed was:
+**What just happened?** The file operations above were:
 1. Intercepted by the FUSE filesystem
 2. Logged to Redis with microsecond precision
 3. Analyzed for attack patterns
@@ -91,10 +95,12 @@ cat etc/passwd
 └─────────────────────────────────────────────────────┘
 ```
 
+**Figure H1.** Mirage technology stack overview used by the Chronos framework.
+
 ### Component Breakdown
 
 #### 1. **FUSE Filesystem** (`src/chronos/interface/fuse.py`)
-- **Purpose**: Creates a fake Linux filesystem that looks real but tracks everything
+- **Purpose**: Creates a realistic Linux-like filesystem and tracks key operations
 - **How it works**:
   - Implements all standard POSIX filesystem operations
   - Each operation (read, write, list) is intercepted
@@ -175,7 +181,7 @@ Expert (80-100):       Zero-days, custom malware, nation-state TTPs
 
 ## Layer 0: The Rust Speed Layer
 
-### The Philosophy: "Observe, Tag, Respond, Escalate. Never Judge. Never Drop."
+### The Philosophy: "Observe, Tag, Respond, Escalate. Keep decisions explicit and controlled."
 
 Layer 0 is Chronos's **ultra-fast first line of defense**, written in Rust for maximum performance. It sits at the network boundary and answers three critical questions in **microseconds**:
 
@@ -185,10 +191,10 @@ Layer 0 is Chronos's **ultra-fast first line of defense**, written in Rust for m
 
 **Key Design Principles:**
 - **No Clever Logic**: Deterministic pattern matching only
-- **No Dropping** (in home profile): Every packet is seen and logged
+- **No Dropping** (in home profile): Packet dropping is disabled by profile configuration
 - **Stateless or Bounded-State**: Prevents memory exhaustion
 - **Fail Boringly**: Degrade gracefully under load
-- **Linear Time Guarantees**: Regex with ReDoS protection
+- **Linear-Time Regex Strategy**: Pattern matching is designed to reduce ReDoS risk
 
 ### Architecture
 
@@ -362,7 +368,7 @@ impl NoiseDetector {
 **Bloom Filter Properties:**
 - **Space efficient**: 1M fingerprints in ~1.4MB
 - **Constant time**: O(1) for insert and lookup
-- **No false negatives**: Never misses a real repeat
+- **False-negative behavior**: Designed not to miss real repeats for inserted fingerprints
 - **Bounded false positives**: 1% chance of thinking new is old
 
 **What gets fingerprinted:**
@@ -468,7 +474,7 @@ pub fn analyze_for_threats(message: &ProtocolMessage) -> Option<ThreatEvent> {
 
 **ReDoS Protection:**
 
-The `regex` crate guarantees **linear time execution** (O(m × n)) - no catastrophic backtracking possible. This prevents Regular Expression Denial of Service attacks.
+The `regex` crate is used with a linear-time strategy (O(m × n)) to reduce catastrophic backtracking risk and improve resilience against Regular Expression Denial of Service patterns.
 
 #### 5. Response Router
 
@@ -637,7 +643,7 @@ Speedup:                100x
 impl ProfileFlags {
     // Home honeypot: see everything
     pub const HOME: Self = Self {
-        drop_enabled: false,              // Never drop packets
+        drop_enabled: false,              // Configured not to drop packets
         bloom_drop: false,                // Log all noise
         benign_sampling: false,           // Log all benign
         latency_adaptive_security: false, // Fixed security
@@ -657,10 +663,10 @@ impl ProfileFlags {
 
 | Feature | Home Profile | Enterprise Profile |
 |---------|-------------|-------------------|
-| Scanner noise | Log every probe | Drop after first seen |
-| Benign traffic | Log everything | Sample 1 in 100 |
+| Scanner noise | Log probes by default | Drop after first seen |
+| Benign traffic | Log by default | Sample 1 in 100 |
 | Under load | Keep all security | Shed benign traffic |
-| Packet drops | Never | When bloom filter hits |
+| Packet drops | Disabled by profile | Enabled by policy |
 
 ### Testing Layer 0
 

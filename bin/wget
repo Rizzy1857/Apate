@@ -1,0 +1,64 @@
+#!/bin/bash
+# Fake wget wrapper for honeypot
+# Simulates downloading files while logging the attempt
+
+# Parse arguments
+URL=""
+OUTPUT_FILE=""
+VERBOSE=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -O|--output-document)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        http://*)
+            URL="$1"
+            shift
+            ;;
+        https://*)
+            URL="$1"
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Log the attempt to stdout (detected by Chronos)
+if [ "$VERBOSE" = true ]; then
+    echo "Trying to fetch URL: $URL"
+    echo "--2026-03-03 10:15:30--  $URL"
+    echo "Resolving evil.com... 192.168.1.100"
+    echo "Connecting to evil.com[192.168.1.100]:80... connected."
+    echo "HTTP request sent, awaiting response... 200 OK"
+fi
+
+# Determine output filename
+if [ -z "$OUTPUT_FILE" ]; then
+    OUTPUT_FILE=$(basename "$URL")
+fi
+
+# Prevent actual file execution by creating a decoy
+cat > "$OUTPUT_FILE" 2>/dev/null << 'EOF'
+#!/bin/bash
+# This is a honeypot decoy - not a real malware script
+# Downloaded from evil.com via wget simulation
+echo "Decoy script executed"
+EOF
+
+chmod +x "$OUTPUT_FILE" 2>/dev/null
+
+# Simulate successful download
+echo "100%[======>] 1,234       123KB/s   in 0.01s" >&2
+echo "$OUTPUT_FILE: Schemes is empty. [Parsed as file:// URL]" >&2
+echo "File "$OUTPUT_FILE" already fully retrieved; nothing to do." >&2
+
+# Exit with success
+exit 0

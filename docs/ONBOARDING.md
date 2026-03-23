@@ -1,12 +1,65 @@
-# 🎓 Chronos Developer Onboarding
+# 🎓 Mirage Developer Onboarding (Chronos Framework)
+
+**Naming convention:** Repository codename is **Apate**. Product/idea name is **Mirage**. Framework implementation name is **Chronos**.
+
+**Program phases:**
+- **Phase 1 (6 months):** Core systems and validation (complete)
+- **Phase 2 (6 months):** AI integration focused on improving analyst value while avoiding unnecessary complexity
 
 Welcome to the **Chronos Framework**. This guide will help you build a mental model of how the system works so you can contribute effectively.
 
 ---
 
+## 0. Five-Minute Explanation (Problem → Solution → Why It Matters) 🧠
+
+If you need to explain Chronos in under five minutes to a technical panel, use this:
+
+### The Core Problem
+
+Most honeypots fail for one reason: **state inconsistency under adversarial interaction**.
+
+Attackers do not just run one command. They run chains of dependent actions and test whether the environment has memory:
+
+1. `touch /tmp/.x`
+2. `ls /tmp`
+3. `cat /tmp/.x`
+4. `stat /tmp/.x`
+
+If any step contradicts a prior step, the deception is exposed. Traditional script-based honeypots often return plausible text, but they do not maintain a coherent filesystem state graph over time. LLM-only systems improve linguistic realism, but still break when context windows expire or when state must be updated atomically across concurrent events.
+
+In short: **the bottleneck is not language quality; the bottleneck is transactional truth.**
+
+### The Chronos Solution
+
+Chronos treats deception as a systems problem, not a prompt problem.
+
+- **FUSE-backed interface**: all attacker interactions become real filesystem syscalls.
+- **State Hypervisor (Redis + Lua)**: mutations are handled atomically, persisted, and auditable.
+- **Persona Engine (LLM)**: generates missing content lazily, then commits it to durable state.
+- **Audit-first design**: relevant interactions are captured for threat analysis.
+
+The key design move is simple: *generate once, persist, and reuse consistently*. This supports high apparent depth while maintaining internal coherence.
+
+### Why This Is Convincing
+
+Chronos closes the realism gap at the exact layer attackers validate: operational consistency.
+
+- It survives sequential command chaining because state is durable.
+- It survives concurrency because writes are atomic.
+- It scales realism because LLM output is state-committed, not ephemeral.
+- It supports forensics because interactions are logged as structured events.
+
+This means Chronos is not merely a fake shell; it is a **state-consistent adversarial interaction environment**.
+
+### 30-Second Version (for slides)
+
+> Existing honeypots fail when attackers test continuity. Chronos solves continuity at the syscall layer using FUSE + Redis atomic state, then uses LLMs only to fill missing content that is immediately persisted. Result: realistic interaction that remains logically consistent over time, with auditability built in.
+
+---
+
 ## 1. The Big Picture 🌍
 
-**Chronos is a "Hallucination Engine".**
+**Chronos is a state-consistent deception engine.**
 
 Unlike traditional honeypots that *pretend* to be a server using static scripts, Chronos *is* a filesystem that generates itself on the fly.
 

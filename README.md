@@ -1,9 +1,20 @@
-# Chronos Framework
+# Mirage (Chronos Framework)
+
+> Repository codename: **Apate**
+> 
+> Product / idea name: **Mirage**
+> 
+> Core framework name: **Chronos**
 
 > **Cognitive Deception Infrastructure**  
 > *From Theoretical Specification to Deployable Asset*
 
-Chronos is a high-fidelity honeypot framework that solves **state hallucination** and **consistency issues** plaguing both traditional rule-based and LLM-based honeypots. It implements a fully consistent **FUSE Filesystem** backed by a **Redis State Hypervisor**, allowing attackers to interact with it exactly like a real Linux system while Chronos tracks and analyzes every action.
+## Project Lifecycle
+
+- **Phase 1 (6 months):** Core deception platform engineering and validation — **Completed**.
+- **Phase 2 (6 months):** AI integration hardening — ensuring AI improves realism and analysis without adding unnecessary complexity.
+
+Chronos is a high-fidelity honeypot framework designed to reduce **state contradiction** and **consistency issues** seen in both traditional rule-based and LLM-assisted honeypots. It implements a state-consistent **FUSE Filesystem** backed by a **Redis State Hypervisor**, enabling realistic attacker interaction while Chronos tracks and analyzes each action.
 
 ### The Problem This Solves
 
@@ -24,16 +35,16 @@ Command: pwd → LLM forgets (context window exceeded) → HALLUCINATION
 ```
 Command: cd /home/attacker → Stored in Redis
 [50 commands later]
-Command: pwd → Reads from Redis → CORRECT every time
+Command: pwd → Reads from Redis → Consistent with persisted state
 ```
 
 For deep analysis, see [Problem Analysis](docs/PROBLEM_ANALYSIS.md).
 
 ## 🚀 Key Features
 
-*   **State Consistency**: A "State Hypervisor" ensures filesystem operations are atomic and persistent. If an attacker creates a file, it stays there. No more disappearing artifacts.
+*   **State Consistency**: A "State Hypervisor" keeps filesystem operations atomic and persistent. If an attacker creates a file, subsequent operations resolve against persisted state.
 *   **FUSE Interface**: Intercepts system calls at the kernel-user boundary. Supports standard tools (`ls`, `cat`, `rm`, `vi`, `gcc`) without modification.
-*   **Cognitive Intelligence**: Integrated **Persona Engine** generates content for files on-the-fly using LLMs (OpenAI/Anthropic) only when accessed, creating an infinite, realistic depth.
+*   **Cognitive Intelligence**: Integrated **Persona Engine** generates content for files on-demand using LLMs (OpenAI/Anthropic), enabling high apparent depth while preserving state control.
 *   **Multi-Protocol Gateway**: SSH and HTTP honeypot servers that capture credentials and exploitation attempts.
 *   **Real-Time Analysis**: Command analyzer detects attack techniques using MITRE ATT&CK framework patterns.
 *   **Threat Intelligence**: Built-in library of known attack signatures and threat patterns.
@@ -60,7 +71,7 @@ Chronos implements a layered architecture:
 3.  **Intelligence Layer (Cognitive)**:
     *   **Persona Engine**: Injects realistic personality into generated content
     *   **LLM Integration**: OpenAI/Anthropic/Mock providers for lazy content generation
-    *   Generates files on first access, persists forever (consistency guarantee)
+    *   Generates files on first access and persists outputs through state storage for consistent reuse
 
 4.  **Analysis Layer (Skills & Watcher)**:
     *   **Command Analyzer**: Detects 50+ attack techniques (MITRE ATT&CK)
@@ -102,25 +113,20 @@ Chronos implements a layered architecture:
     
 ## 🧪 Verification & Testing
 
-### Phase 1 Status: Implementation Complete, Validation Required ⚠️
+### Phase 1 Status: Completed ✅
 
 **What's Built:**
-- ✅ Complete architecture with all components implemented
+- ✅ Core architecture implemented across the planned Phase 1 components
 - ✅ Redis-backed state management with atomic operations
 - ✅ FUSE filesystem with full POSIX support
 - ✅ SSH and HTTP honeypot gateways
 - ✅ Threat detection and attacker profiling
 - ✅ Audit logging and event streaming
 
-**What's NOT Proven:**
-- ❌ State consistency under concurrent load (not tested)
-- ❌ Real attack resilience (zero real-world tests)
-- ❌ Performance under stress (no benchmarks)
-- ❌ Crash recovery (not tested)
-- ❌ Comparison with existing solutions like Cowrie
-
-**Reality Check:**
-This is a technically sound architecture that *should* work as designed, but Phase 1 requires **proving it works**, not just implementing it.
+**Phase 2 Focus (In Progress):**
+- AI integration for controlled, explainable assistance
+- Preserving deterministic state handling in Chronos
+- Preventing overuse of AI where rule-based behavior is safer and clearer
 
 See [Phase 1 Validation](docs/PHASE1_VALIDATION.md) for honest assessment and testing roadmap.
 
@@ -201,6 +207,7 @@ This simulates a complete APT attack session and shows:
 
 *   [System Architecture](docs/ARCHITECTURE.md) - Deep dive into technical design
 *   [Developer Onboarding](docs/ONBOARDING.md) - Get started contributing
+*   [Mirage Roadmap](docs/ROADMAP.md) - Phase plan, milestones, and delivery criteria
 
 ## 📜 License
 

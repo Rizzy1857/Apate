@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
+    nano \
     iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,8 +21,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create mount point
 RUN mkdir -p /mnt/honeypot
 
-# Copy entrypoint script if needed (we use command in compose for now)
+# Copy application code
 COPY src/ /app/src/
+COPY bin/ /app/bin/
+
+# Make wrapper scripts executable
+RUN chmod +x /app/bin/wget /app/bin/curl && \
+    ln -sf /app/bin/wget /usr/local/bin/wget && \
+    ln -sf /app/bin/curl /usr/local/bin/curl
 
 # Set environment
 ENV PYTHONUNBUFFERED=1

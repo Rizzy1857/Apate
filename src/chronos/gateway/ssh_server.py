@@ -165,16 +165,28 @@ class SSHHoneypot:
     def _execute_command(self, command):
         """Execute command (stub - would integrate with FUSE)"""
         # In production, this would route through the FUSE filesystem
-        if command.startswith("ls"):
+        parts = command.split()
+        cmd = parts[0] if parts else ""
+
+        if cmd == "ls":
             return "bin  boot  dev  etc  home  lib  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var"
-        elif command.startswith("pwd"):
+        elif cmd == "pwd":
             return "/root"
-        elif command.startswith("whoami"):
+        elif cmd == "whoami":
             return "root"
-        elif command.startswith("uname"):
+        elif cmd == "uname":
             return "Linux honeypot 5.15.0-56-generic #62-Ubuntu SMP x86_64 GNU/Linux"
+        elif cmd == "nano":
+            target = parts[1] if len(parts) > 1 else ""
+            if target:
+                return (
+                    f"GNU nano 6.2\n"
+                    f"[ opened {target} ]\n"
+                    "Use Ctrl+X to exit, Ctrl+O to write out"
+                )
+            return "nano: no file specified"
         else:
-            return f"-bash: {command.split()[0]}: command not found"
+            return f"-bash: {cmd}: command not found"
             
     def start(self):
         """Start the SSH honeypot server"""

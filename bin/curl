@@ -1,0 +1,69 @@
+#!/bin/bash
+# Fake curl wrapper for honeypot
+# Simulates downloading files while logging the attempt
+
+# Parse arguments
+URL=""
+OUTPUT_FILE=""
+VERBOSE=false
+METHOD="GET"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        -X)
+            METHOD="$2"
+            shift 2
+            ;;
+        http://*)
+            URL="$1"
+            shift
+            ;;
+        https://*)
+            URL="$1"
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Log the attempt
+if [ "$VERBOSE" = true ]; then
+    echo "*   Trying 192.168.1.100:80..."
+    echo "* Connected to evil.com (192.168.1.100) port 80 (#0)"
+    echo "> $METHOD $URL HTTP/1.1"
+    echo "> Host: evil.com"
+    echo "> User-Agent: curl/7.81.0"
+fi
+
+# Determine output filename
+if [ -z "$OUTPUT_FILE" ]; then
+    OUTPUT_FILE=$(basename "$URL")
+fi
+
+# Create decoy file
+cat > "$OUTPUT_FILE" 2>/dev/null << 'EOF'
+#!/bin/bash
+# This is a honeypot decoy - not a real malware script
+# Downloaded from evil.com via curl simulation
+echo "Decoy script executed"
+EOF
+
+chmod +x "$OUTPUT_FILE" 2>/dev/null
+
+# Simulate response
+echo "< HTTP/1.1 200 OK" >&2
+echo "< Content-Length: 1234" >&2
+echo "< Content-Type: application/x-sh" >&2
+
+# Exit with success
+exit 0
