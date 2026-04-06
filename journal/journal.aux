@@ -1,0 +1,90 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{stoll1988cuckoo,spitzner2003honeypots}
+\citation{provos2003virtual}
+\citation{cowrie2019}
+\citation{mitre2023attack}
+\citation{provos2003virtual}
+\citation{cowrie2019}
+\citation{zhuge2007honeybow}
+\citation{portokalidis2006argos}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:introduction}{{I}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{1}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{II}{1}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Low-Interaction Honeypots}{1}{subsection.2.1}\protected@file@percent }
+\citation{mckee2023chatbots}
+\citation{continella2016shieldfs}
+\citation{redis2023lua}
+\citation{paramiko2024}
+\citation{redis2023lua}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}High-Interaction Honeypots}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}LLM-Assisted Deception}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}FUSE-Based Security Systems}{2}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}System Architecture}{2}{section.3}\protected@file@percent }
+\newlabel{sec:architecture}{{III}{2}{System Architecture}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Layer 1: Multi-Protocol Gateway}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Layer 2: FUSE Interface}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces POSIX Syscall to Chronos Action Mapping}}{2}{table.1}\protected@file@percent }
+\newlabel{tab:syscall-mapping}{{I}{2}{POSIX Syscall to Chronos Action Mapping}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Layer 3: State Hypervisor}{2}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}1}Redis Data Schema}{2}{subsubsection.3.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Redis Data Schema}}{2}{table.2}\protected@file@percent }
+\newlabel{tab:redis-schema}{{II}{2}{Redis Data Schema}{table.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}2}Atomic File Creation}{2}{subsubsection.3.3.2}\protected@file@percent }
+\newlabel{lst:lua}{{1}{2}{Atomic file creation (simplified)}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Atomic file creation (simplified).}{2}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}3}Persistence Layer}{2}{subsubsection.3.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Chronos six-layer architecture. Data flows downward from the attacker through each layer. State truth resides exclusively in Layer~3 (Redis); LLM content generation in Layer~4 is invoked only on a cache miss and persisted permanently.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:architecture}{{1}{3}{Chronos six-layer architecture. Data flows downward from the attacker through each layer. State truth resides exclusively in Layer~3 (Redis); LLM content generation in Layer~4 is invoked only on a cache miss and persisted permanently}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Layer 4: Cognitive Intelligence}{3}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Layer 5: Analysis Stack}{3}{subsection.3.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Lazy content generation workflow. On a cache hit (Yes), content is returned directly from Redis. On a cache miss (No), the Persona Engine generates content via the LLM, which is then stored permanently.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:lazy-gen}{{2}{4}{Lazy content generation workflow. On a cache hit (Yes), content is returned directly from Redis. On a cache miss (No), the Persona Engine generates content via the LLM, which is then stored permanently}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Layer 0: Rust Performance Layer}{4}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Implementation}{4}{section.4}\protected@file@percent }
+\newlabel{sec:implementation}{{IV}{4}{Implementation}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Technology Stack}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Data Models}{4}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Technology Stack Summary}}{4}{table.3}\protected@file@percent }
+\newlabel{tab:techstack}{{III}{4}{Technology Stack Summary}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Deployment Architecture}{4}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Evaluation}{4}{section.5}\protected@file@percent }
+\newlabel{sec:evaluation}{{V}{4}{Evaluation}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Phase 1--2: State and Filesystem Verification}{4}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Phase 3: Intelligence Verification}{4}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Phase 4: Threat Detection Verification}{4}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Real Attack Simulation}{4}{subsection.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Phase 4 Detection Results}}{5}{table.4}\protected@file@percent }
+\newlabel{tab:detection}{{IV}{5}{Phase 4 Detection Results}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Comparative Analysis}{5}{subsection.5.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Comparative Analysis with Existing Approaches}}{5}{table.5}\protected@file@percent }
+\newlabel{tab:comparison}{{V}{5}{Comparative Analysis with Existing Approaches}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Performance Metrics}{5}{subsection.5.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Key performance metrics across system components (log scale). Throughput is measured in atomic file-creation operations per second.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:performance}{{3}{5}{Key performance metrics across system components (log scale). Throughput is measured in atomic file-creation operations per second}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Processing stage distribution. 66\% of requests are handled by the Rust Layer~0 and State Hypervisor without invoking LLM generation, demonstrating the short-circuit routing efficiency.}}{5}{figure.4}\protected@file@percent }
+\newlabel{fig:processing}{{4}{5}{Processing stage distribution. 66\% of requests are handled by the Rust Layer~0 and State Hypervisor without invoking LLM generation, demonstrating the short-circuit routing efficiency}{figure.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{5}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{5}{Discussion}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Strengths}{5}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Limitations}{5}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Future Work}{5}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{5}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{5}{Conclusion}{section.7}{}}
+\bibcite{stoll1988cuckoo}{1}
+\bibcite{spitzner2003honeypots}{2}
+\bibcite{provos2003virtual}{3}
+\bibcite{cowrie2019}{4}
+\bibcite{zhuge2007honeybow}{5}
+\bibcite{portokalidis2006argos}{6}
+\bibcite{mckee2023chatbots}{7}
+\bibcite{continella2016shieldfs}{8}
+\bibcite{mitre2023attack}{9}
+\bibcite{redis2023lua}{10}
+\bibcite{paramiko2024}{11}
+\bibcite{fusepy2023}{12}
+\@writefile{toc}{\contentsline {section}{References}{6}{section*.2}\protected@file@percent }
+\gdef \@abspage@last{6}
