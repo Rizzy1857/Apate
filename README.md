@@ -1,232 +1,107 @@
 # Mirage (Chronos Framework)
 
 > Repository codename: **Apate**
-> 
-> Product / idea name: **Mirage**
-> 
-> Core framework name: **Chronos**
+>
+> Product name: **Mirage**
+>
+> Framework name: **Chronos**
 
-> **Cognitive Deception Infrastructure**  
-> *From Theoretical Specification to Deployable Asset*
+Mirage is a state-consistent honeypot platform built on the Chronos framework. The goal is simple enough to state and demanding enough to deserve the work: preserve believable attacker interaction without letting the environment contradict itself.
 
-## Project Lifecycle
+Chronos combines a FUSE-backed filesystem, Redis-based atomic state, PostgreSQL audit storage, and optional LLM-assisted content generation. The LLM is used for texture, not truth. State remains deterministic; the interesting part is that it stays interesting.
 
-- **Phase 1 (6 months):** Core deception platform engineering and validation — **Completed**.
-- **Phase 2 (6 months):** AI integration hardening — ensuring AI improves realism and analysis without adding unnecessary complexity.
+## Program Phases
 
-Chronos is a high-fidelity honeypot framework designed to reduce **state contradiction** and **consistency issues** seen in both traditional rule-based and LLM-assisted honeypots. It implements a state-consistent **FUSE Filesystem** backed by a **Redis State Hypervisor**, enabling realistic attacker interaction while Chronos tracks and analyzes each action.
+- Phase 1: Core deception platform engineering and validation, completed.
+- Phase 2: AI integration that improves realism and analysis without adding unnecessary complexity, in progress.
 
-### The Problem This Solves
+## What It Does
 
-**Traditional honeypots** suffer from limited interaction - file operations aren't atomic, so attackers detect inconsistencies:
-```
-Attacker: touch /tmp/pwn && ls /tmp
-Honeypot: (file not in listing) → DETECTED AS FAKE
-```
+- Presents a realistic filesystem through a FUSE interface.
+- Persists filesystem state atomically in Redis.
+- Records audit and session data in PostgreSQL.
+- Classifies commands, threats, and attacker behavior.
+- Generates missing file content on demand, then persists it for consistent reuse.
+- Exposes SSH and HTTP entry points for attacker interaction.
+- Uses a Rust layer for high-speed protocol analysis and early threat tagging.
 
-**LLM-based honeypots** maintain conversation context but hallucinate state:
-```
-Command: cd /home/attacker → LLM remembers
-[50 commands later]
-Command: pwd → LLM forgets (context window exceeded) → HALLUCINATION
-```
+For the technical case behind the design, see [Problem Validation Analysis](PROBLEM_VALIDATION_ANALYSIS.md).
 
-**Chronos** provides true atomic state management backed by Redis:
-```
-Command: cd /home/attacker → Stored in Redis
-[50 commands later]
-Command: pwd → Reads from Redis → Consistent with persisted state
-```
-
-For deep analysis, see [Problem Analysis](docs/PROBLEM_ANALYSIS.md).
-
-## 🚀 Key Features
-
-*   **State Consistency**: A "State Hypervisor" keeps filesystem operations atomic and persistent. If an attacker creates a file, subsequent operations resolve against persisted state.
-*   **FUSE Interface**: Intercepts system calls at the kernel-user boundary. Supports standard tools (`ls`, `cat`, `rm`, `vi`, `gcc`) without modification.
-*   **Cognitive Intelligence**: Integrated **Persona Engine** generates content for files on-demand using LLMs (OpenAI/Anthropic), enabling high apparent depth while preserving state control.
-*   **Multi-Protocol Gateway**: SSH and HTTP honeypot servers that capture credentials and exploitation attempts.
-*   **Real-Time Analysis**: Command analyzer detects attack techniques using MITRE ATT&CK framework patterns.
-*   **Threat Intelligence**: Built-in library of known attack signatures and threat patterns.
-*   **Skill Profiling**: Automatically classifies attacker skill level from script kiddie to expert APT.
-*   **Audit Streaming**: Real-time event processing and pattern detection across attack sessions.
-*   **Layer 0 Routing**: High-performance Rust-based traffic analysis for initial threat tagging.
-*   **Forensic Logging**: Complete audit trail in PostgreSQL for incident response and threat hunting.
-
-## 🏗️ Architecture
-
-Chronos implements a layered architecture:
-
-1.  **Gateway Layer (Entry Points)**:
-    *   **SSH Honeypot**: Accepts any credentials, provides interactive shell on port 2222
-    *   **HTTP Honeypot**: Simulates vulnerable web apps, captures exploits on port 8080
-    *   All entry points log to the audit system for analysis
-    
-2.  **Core Layer (State & Logic)**:
-    *   **State Hypervisor**: Ensures filesystem consistency via Redis atomic operations
-    *   **FUSE Interface**: Intercepts kernel VFS calls, translates to database operations
-    *   **Hot State**: Redis 7.0 for sub-millisecond metadata access
-    *   **Cold Storage**: PostgreSQL 15 for forensic audit logs
-
-3.  **Intelligence Layer (Cognitive)**:
-    *   **Persona Engine**: Injects realistic personality into generated content
-    *   **LLM Integration**: OpenAI/Anthropic/Mock providers for lazy content generation
-    *   Generates files on first access and persists outputs through state storage for consistent reuse
-
-4.  **Analysis Layer (Skills & Watcher)**:
-    *   **Command Analyzer**: Detects 50+ attack techniques (MITRE ATT&CK)
-    *   **Threat Library**: Database of known attack signatures and IOCs
-    *   **Skill Detector**: Profiles attacker from script kiddie → expert APT
-    *   **Event Processor**: Real-time pattern detection and correlation
-    *   **Audit Streamer**: Pub-sub event streaming for external SIEM integration
-
-5.  **Layer 0 (Rust Performance)**:
-    *   High-speed protocol classification and noise filtering
-    *   Circuit breakers and adaptive degradation under load
-    *   Direct integration with Python via PyO3
-
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
-*   Docker & Docker Compose
-*   (Optional) OpenAI/Anthropic API Key for intelligence features
 
-### Run the Stack
+- Docker and Docker Compose
+- Optional: an OpenAI or Anthropic API key for content generation features
 
-1.  **Clone & Build**:
-    ```bash
-    git clone https://github.com/Rizzy1857/Apate.git chronos
-    cd chronos
-    docker compose up --build -d
-    ```
-
-2.  **Verify Status**:
-    ```bash
-    docker compose logs -f core-engine
-    ```
-
-3.  **Interact (Simulate Attack)**:
-    Enter the container to experience the FUSE filesystem:
-    ```bash
-    docker exec -it chronos_core /bin/bash
-    cd /mnt/honeypot
-    
-## 🧪 Verification & Testing
-
-### Phase 1 Status: Completed ✅
-
-**What's Built:**
-- ✅ Core architecture implemented across the planned Phase 1 components
-- ✅ Redis-backed state management with atomic operations
-- ✅ FUSE filesystem with full POSIX support
-- ✅ SSH and HTTP honeypot gateways
-- ✅ Threat detection and attacker profiling
-- ✅ Audit logging and event streaming
-
-**Phase 2 Focus (In Progress):**
-- AI integration for controlled, explainable assistance
-- Preserving deterministic state handling in Chronos
-- Preventing overuse of AI where rule-based behavior is safer and clearer
-
-See [Phase 1 Validation](docs/PHASE1_VALIDATION.md) for honest assessment and testing roadmap.
-
-### Run Core Validation
-
-Test fundamental system integrity (no hype):
+### Run the stack
 
 ```bash
-# Start infrastructure
+git clone https://github.com/Rizzy1857/Apate.git chronos
+cd chronos
+docker compose up --build -d
+```
+
+Check the core service logs:
+
+```bash
+docker compose logs -f core-engine
+```
+
+Open the container and explore the mounted filesystem:
+
+```bash
+docker exec -it chronos_core /bin/bash
+cd /mnt/honeypot
+ls -la
+```
+
+## Verification
+
+Run the core validation and verification targets from the repository root:
+
+```bash
 make up
-
-# Run brutal honesty validation
 make validate-core
-
-# Run attack simulation
 make validate-attacks
-```
-
-This tests:
-- Redis connectivity and atomic operations
-- State persistence and consistency
-- Lua script execution
-- Directory simulation
-- Performance baselines
-- Real attack detection (28 commands across 5 scenarios)
-
-### Run Implementation Tests
-
-Run verification tests to confirm component functionality:
-
-```bash
-# Run all verification phases
 make verify
-
-# Or individually
-python3 tests/verification/verify_phase1.py  # Core: State & FUSE
-python3 tests/verification/verify_phase2.py  # Persistence & Lua
-python3 tests/verification/verify_phase3.py  # Intelligence & Persona
-python3 tests/verification/verify_phase4.py  # Gateway, Watcher, Skills
 ```
 
-### Run Demo
-
-Run the interactive demo:
+You can also run the phase scripts directly:
 
 ```bash
-# Standalone demo (no infrastructure needed)
-make demo-standalone
+python3 tests/verification/verify_phase1.py
+python3 tests/verification/verify_phase2.py
+python3 tests/verification/verify_phase3.py
+python3 tests/verification/verify_phase4.py
+```
 
-# Or directly
+For a lighter demonstration, use the standalone demo:
+
+```bash
 python3 tests/integration/demo_standalone.py
 ```
 
-This simulates a complete APT attack session and shows:
-- Real-time command analysis
-- Threat signature matching
-- Attacker skill profiling
-- Attack phase detection
-- Risk scoring and reporting
+## Documentation
 
-## 📊 Component Overview
+- [Architecture](docs/ARCHITECTURE.md)
+- [Developer Onboarding](docs/ONBOARDING.md)
+- [How To Use Chronos](docs/HOW_TO.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Current Status](docs/STATUS.md)
+- [Test Suite Guide](tests/README.md)
 
-| Component | Purpose | Status |
-|-----------|---------|--------|
-| State Hypervisor | Filesystem consistency engine | ✅ Complete |
-| FUSE Interface | Kernel VFS interception | ✅ Complete |
-| Persona Engine | Content generation AI | ✅ Complete |
-| SSH Gateway | Interactive shell honeypot | ✅ Complete |
-| HTTP Gateway | Web app honeypot | ✅ Complete |
-| Command Analyzer | Attack technique detection | ✅ Complete |
-| Threat Library | Signature database (12 threats) | ✅ Complete |
-| Skill Detector | Attacker profiling | ✅ Complete |
-| Event Processor | Pattern correlation | ✅ Complete |
-| Audit Streamer | Real-time event streaming | ✅ Complete |
-| Layer 0 (Rust) | Traffic analysis | ✅ Complete |
-
-## 📚 Documentation
-
-*   [System Architecture](docs/ARCHITECTURE.md) - Deep dive into technical design
-*   [Developer Onboarding](docs/ONBOARDING.md) - Get started contributing
-*   [Mirage Roadmap](docs/ROADMAP.md) - Phase plan, milestones, and delivery criteria
-
-## 📜 License
-
-## 🛠️ Configuration
+## Configuration
 
 Environment variables in `docker-compose.yml`:
 
 | Variable | Description | Default |
-|----------|-------------|---------|
-| `REDIS_HOST` | Hostname of Redis service | `redis-store` |
-| `POSTGRES_HOST` | Hostname of Postgres service | `db-store` |
+|---|---|---|
+| `REDIS_HOST` | Redis service host | `redis-store` |
+| `POSTGRES_HOST` | PostgreSQL service host | `db-store` |
 | `LLM_PROVIDER` | `openai`, `anthropic`, or `mock` | `mock` |
-| `OPENAI_API_KEY` | Key for OpenAI (if used) | - |
+| `OPENAI_API_KEY` | OpenAI API key, if used | unset |
 
-## 📚 Documentation
+## License
 
-*   [System Architecture](docs/ARCHITECTURE.md)
-*   [Developer Guide](docs/DEVELOPMENT.md) (Coming Soon)
-
-## 📜 License
-
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License.

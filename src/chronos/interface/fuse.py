@@ -75,6 +75,8 @@ class ChronosFUSE(Operations):
     def readdir(self, path, fh):
         inode = self._resolve_path(path)
         files = self.redis.zrange(f"fs:dir:{inode}", 0, -1)
+        # Ensure '.' and '..' are not duplicated if they exist in the stored dir set
+        files = [f for f in files if f not in ('.', '..')]
         return ['.', '..'] + files
 
     def mkdir(self, path, mode):

@@ -1,172 +1,144 @@
-# 🎓 Mirage Developer Onboarding (Chronos Framework)
+# Mirage Developer Onboarding
 
-**Naming convention:** Repository codename is **Apate**. Product/idea name is **Mirage**. Framework implementation name is **Chronos**.
+> Repository codename: **Apate**
+>
+> Product name: **Mirage**
+>
+> Framework name: **Chronos**
 
-**Program phases:**
-- **Phase 1 (6 months):** Core systems and validation (complete)
-- **Phase 2 (6 months):** AI integration focused on improving analyst value while avoiding unnecessary complexity
+This guide is the short path into the project. It is written for two jobs: understanding the project quickly and running a clean demo without memorizing the whole codebase.
 
-Welcome to the **Chronos Framework**. This guide will help you build a mental model of how the system works so you can contribute effectively.
+## What Mirage Is
 
----
+Mirage is a state-consistent honeypot platform.
 
-## 0. Five-Minute Explanation (Problem → Solution → Why It Matters) 🧠
+In plain terms:
+- It looks like a real system to an attacker.
+- It keeps filesystem state consistent.
+- It logs activity for later analysis.
+- It can generate file content when a file is missing or empty.
+- It uses LLMs for content, not for state truth.
 
-If you need to explain Chronos in under five minutes to a technical panel, use this:
+## What To Show In A Demo
 
-### The Core Problem
+If you need to explain the project to someone quickly, show these five things:
 
-Most honeypots fail for one reason: **state inconsistency under adversarial interaction**.
+1. The fake system feels real.
+   - Start the stack.
+   - Open the container.
+   - Show that the filesystem responds like a normal Linux environment.
 
-Attackers do not just run one command. They run chains of dependent actions and test whether the environment has memory:
+2. State stays consistent.
+   - Create or modify something.
+   - Show that later reads still match the earlier change.
+   - Point out that the system remembers because state is stored, not guessed.
 
-1. `touch /tmp/.x`
-2. `ls /tmp`
-3. `cat /tmp/.x`
-4. `stat /tmp/.x`
+3. Missing files can still look believable.
+   - Read a file that does not yet have content.
+   - Show that the persona engine generates content.
+   - Read it again and show the same content comes back.
 
-If any step contradicts a prior step, the deception is exposed. Traditional script-based honeypots often return plausible text, but they do not maintain a coherent filesystem state graph over time. LLM-only systems improve linguistic realism, but still break when context windows expire or when state must be updated atomically across concurrent events.
+4. Attacks are observed, not ignored.
+   - Run a few suspicious commands.
+   - Show command analysis, threat tagging, or logs.
+   - Explain that the system tracks behavior rather than just printing responses.
 
-In short: **the bottleneck is not language quality; the bottleneck is transactional truth.**
+5. The project has a layered design.
+   - FUSE handles the filesystem view.
+   - Redis handles live state.
+   - PostgreSQL stores audit history.
+   - Rust handles early protocol analysis.
 
-### The Chronos Solution
+## Easiest Demo Flow
 
-Chronos treats deception as a systems problem, not a prompt problem.
+Use this order if you want the least friction:
 
-- **FUSE-backed interface**: all attacker interactions become real filesystem syscalls.
-- **State Hypervisor (Redis + Lua)**: mutations are handled atomically, persisted, and auditable.
-- **Persona Engine (LLM)**: generates missing content lazily, then commits it to durable state.
-- **Audit-first design**: relevant interactions are captured for threat analysis.
+### 1. Start the stack
 
-The key design move is simple: *generate once, persist, and reuse consistently*. This supports high apparent depth while maintaining internal coherence.
-
-### Why This Is Convincing
-
-Chronos closes the realism gap at the exact layer attackers validate: operational consistency.
-
-- It survives sequential command chaining because state is durable.
-- It survives concurrency because writes are atomic.
-- It scales realism because LLM output is state-committed, not ephemeral.
-- It supports forensics because interactions are logged as structured events.
-
-This means Chronos is not merely a fake shell; it is a **state-consistent adversarial interaction environment**.
-
-### 30-Second Version (for slides)
-
-> Existing honeypots fail when attackers test continuity. Chronos solves continuity at the syscall layer using FUSE + Redis atomic state, then uses LLMs only to fill missing content that is immediately persisted. Result: realistic interaction that remains logically consistent over time, with auditability built in.
-
----
-
-## 1. The Big Picture 🌍
-
-**Chronos is a state-consistent deception engine.**
-
-Unlike traditional honeypots that *pretend* to be a server using static scripts, Chronos *is* a filesystem that generates itself on the fly.
-
-*   **The Problem**: In old honeypots, if an attacker ran `touch /tmp/a` and then `ls /tmp`, the file wouldn't be there because the "commands" were just fake text responses.
-*   **The Solution**: Chronos implements a REAL filesystem (FUSE). When an attacker runs `touch`, we actually create an entry in our database. When they run `ls`, we read from that database. It behaves exactly like Linux because it respects system calls.
-
----
-
-## 2. The Architecture (Simplified) 🏛️
-
-Think of Chronos as a standard web app, but instead of "Users" and "Posts", we store "Inodes" and "Files".
-
-1.  **The Interface (Skin)**: `src/chronos/interface/fuse.py`
-    *   This python script pretends to be a hard drive.
-    *   Linux sends it requests: "Read bytes 0-100 of File X".
-    *   It translates those requests into Database lookups.
-
-2.  **The Brain (Hypervisor)**: `src/chronos/core/state.py`
-    *   The logic layer.
-    *   "Create a file? Okay, let me check if that name is taken, allocate an ID, and save it."
-
-3.  **The Memory (Redis)**: `docker-compose.yml` -> `redis-store`
-    *   The actual database.
-    *   We don't store files on disk! We store them as keys in Redis.
-    *   If you restart the container, Redis keeps the data (Persistence).
-
-4.  **The Imagination (Persona Engine)**: `src/chronos/intelligence/`
-    *   If a file *doesn't* exist (e.g., attacker checks `/etc/secret_password`), we don't say "404 Not Found".
-    *   We ask an LLM: "What would be inside `/etc/secret_password`?"
-    *   We save that result. Now the file exists forever.
-
----
-
-## 3. Directory Map 🗺️
-
-```text
-src/chronos/
-├── core/               # The "Backend" Logic
-│   ├── state.py        # State Hypervisor (The boss)
-│   ├── database.py     # Redis wrapper
-│   └── lua/            # Atomic scripts (prevent race conditions)
-├── interface/          # The "Frontend" (FUSE)
-│   └── fuse.py         # Handles syscalls (read/write/mkdir)
-├── intelligence/       # The "AI"
-│   ├── persona.py      # Manages system personalities
-│   └── llm.py          # Connects to OpenAI/Anthropic
-└── layer0/             # The "Reflexes"
-    └── rust-protocol/  # High-speed packet analysis (Rust)
+```bash
+make up
 ```
 
----
+### 2. Confirm the services are running
 
-## 4. Life of a Command 🔄
-
-### Scenario A: Attacker writes a file
-**Command**: `echo "hacked" > /tmp/pwn`
-
-1.  **OS** calls `create("/tmp/pwn")`.
-2.  **FUSE** tells **State Hypervisor**: "Create this file".
-3.  **Hypervisor** runs a **Lua Script** in Redis:
-    *   Checks if `/tmp` exists.
-    *   Allocates new Inode ID (e.g., `105`).
-    *   Links `pwn` -> Inode `105`.
-4.  **OS** calls `write(inode=105, data="hacked")`.
-5.  **FUSE** saves "hacked" into Redis blob storage.
-
-### Scenario B: Attacker reads a "Ghost" file
-**Command**: `cat /var/log/nginx/access.log` (Does not exist yet)
-
-1.  **OS** calls `read("/var/log/nginx/access.log")`.
-2.  **FUSE** sees the file has **No Content Hash**.
-3.  **FUSE** calls **Persona Engine**.
-4.  **Persona Engine** asks LLM: *"Generate nginx access logs for a Ubuntu server"*.
-5.  **LLM** returns text.
-6.  **FUSE** saves text to Redis.
-7.  **FUSE** returns text to Attacker.
-    *   *Next time they read it, it comes directly from Redis (Fast!).*
-
----
-
-## 5. Developer Cheatsheet ⌨️
-
-**Start everything:**
 ```bash
-make prod
+docker ps --filter "name=chronos"
 ```
 
-**Check logs (is the AI generating?):**
-```bash
-make logs
-```
+### 3. Open the honeypot container
 
-**Enter the matrix (Manual Test):**
 ```bash
-make shell
+docker exec -it chronos_core /bin/bash
 cd /mnt/honeypot
 ```
 
-**Reset the world (Wipe DB):**
+### 4. Show the filesystem
+
 ```bash
-make clean
+ls -la
+cat etc/passwd
 ```
 
----
+### 5. Show a state change
 
-## 6. Pro Tips 💡
+```bash
+touch /tmp/demo-file
+ls /tmp
+```
 
-*   **Logic in Lua**: If you need to change how files are created, edit `src/chronos/core/lua/atomic_create.lua`. We use Lua so operations are atomic (thread-safe).
-*   **Debug Mode**: If `make prod` fails, try `docker compose up --build` (without `-d`) to see startup errors immediately.
-*   **LLM Config**: To use real AI, set `LLM_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in `docker-compose.prod.yml`.
+### 6. Show a generated file
+
+```bash
+cat /etc/anything-that-does-not-exist-yet
+```
+
+### 7. Show analysis or logs
+
+Back on the host:
+
+```bash
+docker compose logs -f core-engine
+```
+
+## Simple Explanation Script
+
+If someone asks what the project does, say this:
+
+> Mirage is a honeypot that keeps state consistent. It behaves like a real filesystem, stores truth in Redis, keeps audit history in PostgreSQL, and uses AI only to fill in missing content. The point is to make attacker interaction believable without letting the system contradict itself.
+
+## What To Say About The Architecture
+
+Keep it short:
+
+- FUSE gives the attacker a real filesystem interface.
+- Redis and Lua keep state atomic.
+- PostgreSQL keeps the audit trail.
+- The persona engine generates content when needed.
+- Rust handles fast protocol analysis.
+
+That is enough for most demos. The project has more moving parts, but those are the parts that matter first.
+
+## Useful Commands
+
+```bash
+make up
+make validate-core
+make validate-attacks
+make verify
+python3 tests/integration/demo_standalone.py
+```
+
+## Working Notes
+
+- Keep the demo focused on state consistency and observability.
+- Avoid diving into too many internal files unless asked.
+- If the audience wants more detail, move from the demo flow to the architecture guide.
+- If something fails during the demo, show the logs and keep going. A controlled failure is still a useful result.
+
+## Where To Read Next
+
+- [How To Use Chronos](HOW_TO.md)
+- [Architecture](ARCHITECTURE.md)
+- [Current Status](STATUS.md)
+- [Roadmap](ROADMAP.md)
+- [Test Suite Guide](../tests/README.md)

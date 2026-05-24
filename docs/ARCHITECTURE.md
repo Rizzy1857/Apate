@@ -1,196 +1,84 @@
-# Mirage
+# Mirage Architecture
 
-> **Technical Specification**: Version 1.0 (Feb 2026)
+> Repository codename: **Apate**
+>
+> Product name: **Mirage**
+>
+> Framework name: **Chronos**
 
-**Naming convention:** Repository codename is **Apate**, while the product idea is **Mirage** and the implementation framework is **Chronos**.
+Chronos is the implementation framework behind Mirage. It is built to keep attacker interaction coherent over time, even when the interaction becomes messy, concurrent, or suspicious in exactly the way real attackers prefer.
 
-**Program phases:**
-- **Phase 1 (6 months):** Core architecture and validation (completed)
-- **Phase 2 (6 months):** AI integration to improve realism/analysis without introducing unnecessary complexity
+The architecture follows one rule above all others: state must stay truthful. LLMs may help with content, but they never own the truth of the filesystem.
 
-This document provides a deep dive into the internal architecture of the Chronos Framework. It details the interaction between the **FUSE Interface**, **State Hypervisor**, and **Cognitive Intelligence** layers.
+## System Layers
 
-**For a comprehensive analysis of the state hallucination problem and how Chronos solves it**, see [Problem Analysis](PROBLEM_ANALYSIS.md).
+1. Gateway layer
+   - SSH and HTTP entry points accept attacker traffic.
+   - Requests are logged and passed into the analysis pipeline.
 
----
+2. Interface layer
+   - The FUSE filesystem turns system calls into filesystem operations.
+   - Standard tools such as `ls`, `cat`, `rm`, and `vi` work without special handling.
 
-## 🏗️ System Components
+3. Core layer
+   - The state hypervisor owns inode allocation, path resolution, and mutation logic.
+   - Redis stores live state and executes atomic Lua scripts.
+   - PostgreSQL stores audit and session history.
 
-The architecture follows a strict separation of concerns (top to bottom):
+4. Intelligence layer
+   - Persona generation fills in missing file content on demand.
+   - The generated output is persisted so later reads stay consistent.
+   - The LLM is used as a content source, not a state engine.
 
-1.  **Interface Layer (FUSE)**: The "skin" of the honeypot. Purely reactive.
-2.  **Gateway Layer (SSH/HTTP)**: Entry points for attacker interaction.
-3.  **Core Layer (Hypervisor)**: The "brain". Enforces logic and consistency.
-4.  **Intelligence Layer (Cognitive)**: The "imagination". Generates content on demand.
-5.  **Data Layer (Persistence)**: The "memory". Atomic storage and audit logs.
-6.  **Layer 0 (Rust)**: High-performance traffic analysis and threat detection.
+5. Analysis layer
+   - Command analysis classifies attack techniques.
+   - Threat signatures and skill profiling feed session scoring.
+   - Event processing streams observations for monitoring and correlation.
+
+6. Layer 0
+   - A Rust subsystem handles early protocol analysis and filtering.
+   - It gives the Python layers less noise to sort through, which is a kindness worth preserving.
+
+## High-Level Flow
 
 ```mermaid
 graph TD
-    subgraph "Attacker Interaction - TOP"
-        Shell[SSH/HTTP Clients] -->|Commands/Requests| Gateway[Gateway Layer]
-        Gateway -->|Syscalls| Fuse[FUSE Interface]
-    end
-
-    subgraph "Chronos Core"
-        Fuse -->|Resolves Path| Hypervisor[State Hypervisor]
-        Hypervisor -->|Atomic Ops| Lua[Redis Lua Scripts]
-        
-        Fuse -->|Read Content| Cache{Has Content?}
-        Cache -->|Yes| Blob[Blob Store]
-        Cache -->|No| Persona[Persona Engine]
-        
-        Persona -->|Prompt| LLM[LLM Provider]
-        LLM -->|Generated Text| Blob
-    end
-
-    subgraph "Persistence"
-        Lua -->|Commit| Redis[(Redis DB)]
-        Hypervisor -->|Audit| Postgres[(PostgreSQL)]
-    end
-
-    subgraph "Layer 0 - BOTTOM"
-        Gateway -->|Traffic| Layer0[Rust Protocol Analysis]
-        Layer0 -->|Threats| Skills[Threat Detection]
-        Skills -->|Risk Scores| Postgres
-    end
+    A[Attacker] --> B[SSH / HTTP Gateway]
+    B --> C[FUSE Interface]
+    C --> D[State Hypervisor]
+    D --> E[Redis + Lua]
+    D --> F[PostgreSQL Audit Store]
+    C --> G[Persona Engine]
+    G --> H[LLM Provider]
+    H --> I[Persisted Blob Store]
+    B --> J[Layer 0 Rust Analysis]
+    J --> K[Threat / Risk Signals]
+    K --> F
 ```
 
-**Figure A1.** Mirage high-level architecture and data flow (Chronos framework).
+## State Model
 
----
+Chronos simulates a real filesystem, so hierarchy is encoded explicitly.
 
-## 1. The State Hypervisor
+- `fs:inode:<id>` stores inode metadata.
+- `fs:dir:<id>` stores directory entries.
+- `fs:blob:<hash>` stores file content.
+- `fs:next_inode` allocates identifiers atomically.
 
-The **State Hypervisor** (`src/chronos/core/state.py`) is the guardian of consistency. It abstracts low-level Redis operations into high-level filesystem verbs (`create_file`, `link`, `mkdir`).
+This separation lets the system resolve paths, persist mutations, and reuse generated content without asking the LLM to remember what it never owned.
 
-### The "Hallucination" Problem
+## Design Principles
 
-**Traditional honeypots** (Honeyd, Cowrie) suffer from:
-- Limited interaction (only scripted commands work)
-- State inconsistency (create file → disappears on ls)
-- Easily detectable by attackers
+- Prefer deterministic state transitions over clever reconstruction.
+- Keep content generation lazy and cached.
+- Make every mutation auditable.
+- Fail visibly, not theatrically.
+- Preserve realism where attackers check it: continuity, timing, and filesystem truth.
 
-**LLM-based honeypots** suffer from:
-- **Memory window limits**: After N commands, LLM forgets earlier actions
-- **State contradictions**: `cd /home` then later `pwd` returns `/root` (hallucination)
-- **Permission inconsistencies**: `whoami` returns `root` but `touch /root/file` fails
-- **No persistent state tracking**: Each response independently generated
+## Related Documents
 
-**Chronos solves this by**:
-1. Using FUSE to implement a real POSIX filesystem
-2. Using Redis to atomically persist ALL state changes
-3. Using LLMs ONLY for content generation (NOT state management)
-4. Using Lua scripts to ensure atomic transactions
-
-**Example**:
-```
-Attacker: touch /tmp/pwn && cd /tmp && ls
-Chronos:
-1. FUSE intercepts syscalls
-2. State Hypervisor creates inode in Redis (ATOMIC)
-3. LLM is excluded from state truth (used only for optional content generation)
-4. ls reads directly from Redis
-→ File presence is determined by persisted state, reducing contradiction risk
-```
-
-### Redis Data Schema
-We use a hybrid schema optimized for O(1) lookups and atomic updates.
-
-| Key | Type | Purpose | Example |
-|-----|------|---------|---------|
-| `fs:inode:<id>` | **Hash** | POSIX Metadata | `{mode: 33188, uid: 0, size: 1024}` |
-| `fs:dir:<id>` | **Sorted Set** | Directory Entries | `Score: <inode>`, `Member: <filename>` |
-| `fs:blob:<hash>` | **String** | File Content (CAS) | `sha256_hash` -> `binary_content` |
-| `fs:next_inode` | **Counter** | Atomic Allocator | `1024` |
-
-### Atomic Operations (Lua)
-To prevent race conditions (e.g., two attackers creating the same file simultaneously), we use Redis Lua scripts. These execute atomically on the Redis server.
-
-**Example: `atomic_create.lua` logic**
-1.  Check `fs:dir:<parent>` for filename existence. (Abort if exists)
-2.  `INCR fs:next_inode` -> Get new ID.
-3.  `HSET fs:inode:<new_id>` -> Set default metadata (0644, root:root).
-4.  `ZADD fs:dir:<parent>` -> Link new inode to parent directory.
-5.  All happens in a single transaction block.
-
----
-
-## 2. FUSE Interface Implementation
-
-Chronos implements a userspace filesystem using `fusepy`. This allows us to intercept system calls at the kernel boundary.
-
-### Syscall Mapping
-
-| POSIX Syscall | FUSE Method | Chronos Action |
-|---------------|-------------|----------------|
-| `getattr(path)` | `getattr` | Resolve path -> `HGETALL fs:inode:<id>` |
-| `readdir(path)` | `readdir` | Resolve path -> `ZRANGE fs:dir:<id>` |
-| `open(path)` | `open` | Allocate File Descriptor (FD) in memory map |
-| `read(fd)` | `read` | Get Inode from FD -> Get Content Hash -> `GET fs:blob:<hash>` |
-| `write(fd)` | `write` | update buffer -> Calc SHA256 -> `SET fs:blob:<new>` -> Update Inode |
-
-### Path Resolution
-Since Redis is a flat key-value store, we must simulate hierarchy.
-*   **Resolution**: Recursive lookup.
-    *   Path: `/etc/passwd`
-    *   Root Inode: `1`
-    *   `ZSCORE fs:dir:1 "etc"` -> Returns Inode `2`
-    *   `ZSCORE fs:dir:2 "passwd"` -> Returns Inode `3`
-    *   Return Inode `3`.
-
----
-
-## 3. Cognitive Intelligence (Lazy Generation)
-
-Chronos introduces "Lazy Generation" to populate the filesystem dynamically.
-
-### Workflow
-1.  **Attacker**: `cat /etc/secret_config.conf`
-2.  **FUSE**: Resolves path to Inode `X`.
-3.  **Core**: Checks Inode `X`.
-    *   `content_hash`: `NULL` (Ghost File)
-4.  **Persona Engine**:
-    *   Builds Context: `{"filename": "secret_config.conf", "path": "/etc", "persona": "Database Server"}`
-    *   Prompts LLM: *"You are a Database Server. Generate a realistic config file for..."*
-5.  **LLM**: Returns valid configuration text.
-6.  **Core**:
-    *   Saves text to `fs:blob:<new_hash>`
-    *   Updates Inode `X` with `content_hash`
-    *   **Crucial**: The file is now "solid". Subsequent reads come from Redis, not LLM.
-7.  **FUSE**: Returns content to attacker.
-
-This design improves **consistency** (stable subsequent reads) and supports **high apparent depth** through on-demand generation.
-
----
-
-## 4. Layer 0 Integration (Rust)
-
-While the Python/FUSE layer handles logic, high-volume traffic analysis happens in Rust (`src/chronos/layer0`).
-
-*   **Role**: Pre-flight analysis of payloads.
-*   **Mechanism**:
-    *   Protocol Buffering
-    *   Regex/Heuristic matching for standard exploits (SQLi, XSS, Command Injection)
-    *   Feeds directly into the Risk Engine (Future Phase).
-
----
-
-## 5. Security & Isolation
-
-### Containerization
-Chronos runs inside a Docker container with specific capabilities:
-*   `CAP_SYS_ADMIN`: Required for FUSE mount.
-*   `/dev/fuse`: Device mapping.
-
-### Isolation Strategy
-*   **Network**: The honeypot runs on an isolated Docker network (`chronos-net`).
-*   **Persistence**: Redis/Postgres verify the only "state" that persists. Destroying the `core-engine` container resets the interface but preserves the data logic if volumes are kept.
-
----
-
-## 6. Future Roadmap
-
-1.  **Network Topology Simulation**: Simulating multiple hosts (lateral movement targets).
-2.  **Active Countermeasures**: Slowing down `read()` calls based on Attacker Risk Score.
-3.  **Visual Dashboard**: Web UI for the PostgreSQL audit logs.
+- [Problem Validation Analysis](../PROBLEM_VALIDATION_ANALYSIS.md)
+- [Developer Onboarding](ONBOARDING.md)
+- [How To Use Chronos](HOW_TO.md)
+- [Roadmap](ROADMAP.md)
+- [Current Status](STATUS.md)
