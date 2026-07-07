@@ -1,84 +1,100 @@
+"""
+SSH Honeypot Server
+Accepts SSH connections and provides a FUSE-backed shell environment
+"""
 import os
+import sys
 import socket
 import threading
 import paramiko
 from paramiko import ServerInterface
 from paramiko.common import AUTH_SUCCESSFUL, OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from chronos.core.logging_config import setup_logging
+import logging
+from io import StringIO
 
-logger = setup_logging(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-class SSHServer(ServerInterface):
+class SSHServer(paramiko.ServerInterface):
     """SSH Server Interface for Honeypot"""
-
+    
     def __init__(self, audit_callback=None):
         self.event = threading.Event()
         self.audit_callback = audit_callback
-
+        
     def check_channel_request(self, kind, chanid):
-        return OPEN_SUCCEEDED if kind == "session" else OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-
+        if kind == "session":
+            return OPEN_SUCCEEDED
+        return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+        
     def check_auth_password(self, username, password):
+        """Accept any credentials (honeypot behavior)"""
         if self.audit_callback:
             self.audit_callback("ssh_login", {
                 "username": username,
                 "password": password,
                 "method": "password"
             })
-        logger.info(f"Login: {username}")
+        logger.info(f"[SSH] Login attempt: {username}:{password}")
         return AUTH_SUCCESSFUL
-
+        
     def check_auth_publickey(self, username, key):
+        """Accept any public key"""
         if self.audit_callback:
             self.audit_callback("ssh_login", {
                 "username": username,
                 "key_type": key.get_name(),
                 "method": "publickey"
             })
-        logger.info(f"Key auth: {username}")
+        logger.info(f"[SSH] Key auth: {username}")
         return AUTH_SUCCESSFUL
-
+        
     def get_allowed_auths(self, username):
         return "password,publickey"
-
+        
     def check_channel_shell_request(self, channel):
         self.event.set()
         return True
-
+        
     def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
         return True
-
+        
     def check_channel_exec_request(self, channel, command):
+        """Log command execution attempts"""
         if self.audit_callback:
             self.audit_callback("ssh_exec", {"command": command.decode('utf-8')})
-        logger.info(f"Exec: {command}")
+        logger.info(f"[SSH] Exec: {command}")
         return True
 
 
 class SSHHoneypot:
-    """SSH Honeypot Server"""
-
+    """Main SSH Honeypot Server"""
+    
     def __init__(self, host="0.0.0.0", port=2222, hostkey_path=None):
         self.host = host
         self.port = port
         self.hostkey_path = hostkey_path or self._generate_hostkey()
         self.running = False
-
+        
     def _generate_hostkey(self):
+        """Generate or load SSH host key"""
         key_path = "/tmp/chronos_ssh_host_key"
         if not os.path.exists(key_path):
-            logger.info("Generating host key...")
+            logger.info("[SSH] Generating host key...")
             key = paramiko.RSAKey.generate(2048)
             key.write_private_key_file(key_path)
         return key_path
-
+        
     def audit_log(self, event_type, data):
+        """Audit logging callback"""
+        # This would integrate with PostgreSQL audit system
         logger.info(f"[AUDIT] {event_type}: {data}")
-
+        
     def handle_client(self, client_socket, addr):
-        logger.info(f"Connection from {addr}")
-
+        """Handle individual SSH client connection"""
+        logger.info(f"[SSH] Connection from {addr}")
+        
         try:
             transport = paramiko.Transport(client_socket)
             transport.add_server_key(paramiko.RSAKey(filename=self.hostkey_path))

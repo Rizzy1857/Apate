@@ -1,61 +1,46 @@
 import sys
 import os
-import threading
 import signal
-import argparse
 from fuse import FUSE
 from prometheus_client import start_http_server
 from chronos.core.state import StateHypervisor
 from chronos.interface.fuse import ChronosFUSE
-from chronos.gateway.ssh_server import SSHHoneypot
-
 
 def signal_handler(sig, frame):
-    print("\n[!] Received shutdown signal...")
+    print("\n[!] Received shutdown signal, unmounting...")
     sys.exit(0)
 
-
-def start_ssh_server():
-    print("[*] Starting SSH Honeypot on port 2222...")
-    honeypot = SSHHoneypot(host="0.0.0.0", port=2222)
-    try:
-        honeypot.start()
-    except Exception as e:
-        print(f"[!] SSH server error: {e}")
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Chronos Honeypot Framework")
-    parser.add_argument("mount_point", nargs="?", default="/mnt/honeypot",
-                       help="FUSE mount point")
-    parser.add_argument("--gateway", choices=["none", "ssh"], default="none",
-                       help="Enable gateway services")
-    args = parser.parse_args()
+    if len(sys.argv) < 2:
+        mount_point = "/mnt/honeypot"
+    else:
+        mount_point = sys.argv[1]
 
-    print(f"[*] Starting Chronos...")
-    print(f"[*] Mount point: {args.mount_point}")
-    if args.gateway:
-        print(f"[*] Gateway mode: {args.gateway}")
+    print(f"[*] Starting Chronos Core...")
+    print(f"[*] Mount point: {mount_point}")
 
+    # 1. Initialize State
     hv = StateHypervisor()
+    hv.initialize_filesystem()
+    print("[+] State initialized.")
+
+    # 2. Register Signal Handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    # 3. Start Metrics Server
     print("[*] Starting Metrics Server on port 8000...")
     start_http_server(8000)
 
-    if args.gateway == "ssh":
-        ssh_thread = threading.Thread(target=start_ssh_server, daemon=True)
-        ssh_thread.start()
-
-    print("[*] Mounting FUSE filesystem...")
+    # 4. Mount FUSE
+    print("[*] Mounting FUSE filesystem (foreground)...")
     try:
-        fs = ChronosFUSE(hv)
-        FUSE(fs, args.mount_point, nothreads=False, foreground=True, allow_other=True)
+        # allow_other is crucial for Docker if accessed from host or other users
+        # foreground=True simplifies debugging and signal handling
+        FUSE(ChronosFUSE(mount_point), mount_point, foreground=True, allow_other=True)
     except Exception as e:
         print(f"[!] FUSE Error: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

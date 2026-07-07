@@ -140,18 +140,18 @@ AI should **complement** Mirage operations, not complicate Chronos or create "AI
 ### Workstream 2: Deterministic + AI Coupling
 
 - Ensure all stateful actions remain owned by deterministic engine paths
-- Enforce write-path invariants through tests
-- Add fallback behavior when AI provider is unavailable
+- Ground all AI generations against a structured `MachineState` (relational facts)
+- Add fallback behavior when the local Inference Runtime is overloaded or unavailable
 
 ### Workstream 3: Explainability and Analyst Utility
 
 - Standardize explanation templates for risk scores and threat labels
-- Surface provenance (rule hit vs model suggestion)
+- Surface provenance (rule hit vs model suggestion, generation parameters)
 - Keep outputs concise, evidence-linked, and reviewable
 
 ### Workstream 4: Quality Gates and Regression Controls
 
-- Add AI regression suite (hallucination checks, consistency checks)
+- Add AI regression suite (semantic consistency checks against `MachineState`)
 - Add anti-slop gate for repetitive/low-signal AI output
 - Add acceptance thresholds for precision/utility before rollout
 

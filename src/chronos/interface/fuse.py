@@ -4,15 +4,19 @@ import stat
 import time
 import hashlib
 from fuse import FUSE, FuseOSError, Operations
+from chronos.core.state import StateHypervisor
 from chronos.intelligence.llm import get_provider
 from chronos.intelligence.persona import PersonaEngine
 
 class ChronosFUSE(Operations):
     def __init__(self, root):
-        self.hv = root
+        self.root = root
+        self.hv = StateHypervisor()
         self.redis = self.hv.redis
-        self._provider = None
-        self._persona_engine = None
+        
+        # Initialize Intelligence
+        self.provider = get_provider()
+        self.persona_engine = PersonaEngine(self.provider)
         
         self.fd_table = {}
         self.next_fd = 10
@@ -46,12 +50,6 @@ class ChronosFUSE(Operations):
         if not meta:
             raise FuseOSError(errno.ENOENT)
         return meta
-
-    def _get_persona_engine(self):
-        if self._persona_engine is None:
-            self._provider = get_provider()
-            self._persona_engine = PersonaEngine(self._provider)
-        return self._persona_engine
 
     # Filesystem Methods
     # ==================
@@ -149,9 +147,10 @@ class ChronosFUSE(Operations):
             # In production, we'd check a 'dynamic' flag or file extension
             
             try:
+                # Generate content
                 print(f"[*] Generating content for {path}...")
                 filename = os.path.basename(path)
-                content_str = self._get_persona_engine().generate_content(filename, f"File at {path}")
+                content_str = self.persona_engine.generate_content(filename, f"File at {path}")
                 content = content_str.encode('utf-8')
                 
                 # Persist it basically like a write
