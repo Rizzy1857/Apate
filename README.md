@@ -211,22 +211,4 @@ This simulates a complete APT attack session and shows:
 
 ## 📜 License
 
-## 🛠️ Configuration
-
-Environment variables in `docker-compose.yml`:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `REDIS_HOST` | Hostname of Redis service | `redis-store` |
-| `POSTGRES_HOST` | Hostname of Postgres service | `db-store` |
-| `LLM_PROVIDER` | `openai`, `anthropic`, or `mock` | `mock` |
-| `OPENAI_API_KEY` | Key for OpenAI (if used) | - |
-
-## 📚 Documentation
-
-*   [System Architecture](docs/ARCHITECTURE.md)
-*   [Developer Guide](docs/DEVELOPMENT.md) (Coming Soon)
-
-## 📜 License
-
 MIT License. See [LICENSE](LICENSE) for details.
