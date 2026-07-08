@@ -208,10 +208,10 @@ All tests use dependencies from `requirements.txt`:
 
 | Test Category | Status | Score |
 |--------------|--------|-------|
-| Core Infrastructure | ✅ PASS | 8/8 (100%) |
-| Implementation Tests | ✅ PASS | 4/4 (100%) |
-| Attack Simulation | ✅ PASS | 22/28 (78.6%) |
-| Performance | ✅ EXCELLENT | 0.04ms avg |
+| Core Infrastructure |  PASS | 8/8 (100%) |
+| Implementation Tests |  PASS | 4/4 (100%) |
+| Attack Simulation |  PASS | 22/28 (78.6%) |
+| Performance |  EXCELLENT | 0.04ms avg |
 
 **Overall Phase 1 Score:** 4.5/7 (64%)
 

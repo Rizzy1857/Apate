@@ -1,7 +1,7 @@
 # Mirage (Chronos Framework) — Implementation Status
 
 **Date:** July 2026  
-**Status:** ✅ Phase 1 Complete | 🔄 Phase 2 In Progress (M2.A–M2.E complete)
+**Status:**  Phase 1 Complete |  Phase 2 In Progress (M2.A–M2.E complete)
 
 ---
 
@@ -16,7 +16,7 @@
 
 ---
 
-## ✅ Completed Components
+##  Completed Components
 
 ### Phase 1: Foundation (State Management)
 - **State Hypervisor** (`src/chronos/core/state.py`)
@@ -90,30 +90,30 @@
 
 ---
 
-## 🔄 Phase 2: Ubuntu-Only AI Integration (In Progress)
+##  Phase 2: Ubuntu-Only AI Integration (In Progress)
 
 ### Completed Milestones
 
-#### M2.A — Ubuntu Profile & MachineState ✅
+#### M2.A — Ubuntu Profile & MachineState 
 - Removed multi-persona YAML system
 - Created `config/ubuntu.yaml` — single Ubuntu machine definition (packages, services, users, kernel)
 - Created `src/chronos/intelligence/ubuntu_profile.py` — typed accessors + Redis MachineState builder
 - Role is implied by installed packages, never declared as a persona type
 
-#### M2.B — Artifact Policy Engine ✅
+#### M2.B — Artifact Policy Engine 
 - Created `config/generation_policy.yaml` — file-class-based probability distributions, constraints, model routing
 - Created `src/chronos/intelligence/artifact_policy.py` — resolves policy per file before generation
 - File classes: `credential_file`, `config_file`, `log_file`, `history_file`, `notes_file`, `script_file`, `temp_file`
 - Categories: `valid`, `empty`, `abandoned`, `corrupted`, `deprecated`, `active`, `archived`, …
 - `empty` category skips AI entirely and returns `b''` immediately
 
-#### M2.C — Prompt Builder ✅
+#### M2.C — Prompt Builder 
 - Created `src/chronos/intelligence/prompt_builder.py`
 - Constraint-first prompts: AI receives hard limits, relevant MachineState subgraph, category instructions
 - Sanitizes filenames/paths before interpolation (prompt-injection hardening)
 - AI cannot invent facts not present in the Constraints block
 
-#### M2.D — Non-Blocking Generation ✅
+#### M2.D — Non-Blocking Generation 
 - Created `src/chronos/intelligence/orchestrator.py`
 - ThreadPoolExecutor background pool, Redis dedup lock (`fs:generating:<inode>` TTL 30s)
 - Adaptive timeout: P95 latency per model + 2.0s safety margin
@@ -122,7 +122,7 @@
 - FUSE fd-table extended to `{session_id, inode, open_time, flags, path}`
 - `create()` fires background generation; `readdir()` triggers bounded prewarm
 
-#### M2.E — Semantic Validator ✅
+#### M2.E — Semantic Validator 
 - Created `src/chronos/intelligence/validator.py`
 - Tier 1: Refusal boilerplate detection (markdown fences, "As an AI…", "Here is…")
 - Tier 2: Ubuntu convention checks (no Windows, PowerShell, yum, dnf, zypper)
@@ -139,26 +139,26 @@
 
 ---
 
-## 📊 Test Coverage
+##  Test Coverage
 
 ### Verification Scripts (`tests/verification/`)
-- ✅ `verify_phase1.py` — State Hypervisor & Database
-- ✅ `verify_phase2.py` — FUSE Interface
-- ✅ `verify_phase3.py` — Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
-- ✅ `verify_phase4.py` — Gateway, Watcher, Skills (4/4 tests passing)
+-  `verify_phase1.py` — State Hypervisor & Database
+-  `verify_phase2.py` — FUSE Interface
+-  `verify_phase3.py` — Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
+-  `verify_phase4.py` — Gateway, Watcher, Skills (4/4 tests passing)
 
 ### Validation Scripts (`tests/validation/`)
-- ✅ `validate_core.py` — Core infrastructure integrity (8/8 tests passing)
-- ✅ `test_real_attack.py` — Real attack simulation (78.6% detection rate)
+-  `validate_core.py` — Core infrastructure integrity (8/8 tests passing)
+-  `test_real_attack.py` — Real attack simulation (78.6% detection rate)
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Apate/
 ├── src/chronos/
-│   ├── core/              ✅ State management, database, audit logging
+│   ├── core/               State management, database, audit logging
 │   │   ├── database.py
 │   │   ├── main.py
 │   │   ├── models.py
@@ -167,10 +167,10 @@ Apate/
 │   │   └── lua/
 │   │       └── atomic_create.lua
 │   │
-│   ├── interface/         ✅ FUSE filesystem (Phase 2 updated)
+│   ├── interface/          FUSE filesystem (Phase 2 updated)
 │   │   └── fuse.py
 │   │
-│   ├── intelligence/      ✅ Ubuntu-only AI generation pipeline
+│   ├── intelligence/       Ubuntu-only AI generation pipeline
 │   │   ├── ubuntu_profile.py    ← loads config/ubuntu.yaml
 │   │   ├── artifact_policy.py   ← file-class policy resolution
 │   │   ├── prompt_builder.py    ← constraint-first prompts
@@ -178,20 +178,20 @@ Apate/
 │   │   ├── orchestrator.py      ← non-blocking background generation
 │   │   └── inference.py         ← local Ollama client
 │   │
-│   ├── gateway/           ✅ SSH/HTTP entry points
+│   ├── gateway/            SSH/HTTP entry points
 │   │   ├── ssh_server.py        ← session_id injection (Phase 2)
 │   │   └── http_server.py
 │   │
-│   ├── watcher/           ✅ Audit log monitoring
+│   ├── watcher/            Audit log monitoring
 │   │   ├── log_streamer.py
 │   │   └── event_processor.py
 │   │
-│   ├── skills/            ✅ Threat detection (monitoring, not generation)
+│   ├── skills/             Threat detection (monitoring, not generation)
 │   │   ├── command_analyzer.py
 │   │   ├── threat_library.py
 │   │   └── skill_detector.py
 │   │
-│   └── layer0/            ✅ Rust performance layer
+│   └── layer0/             Rust performance layer
 │
 ├── config/
 │   ├── ubuntu.yaml              ← Ubuntu machine definition (state)
@@ -220,7 +220,7 @@ Apate/
 
 ---
 
-## 🔧 Dependencies
+##  Dependencies
 
 ### Python (requirements.txt)
 - fusepy==3.0.1 (FUSE interface)
@@ -245,7 +245,7 @@ Apate/
 
 ---
 
-## 🛠️ Hardware Requirements
+##  Hardware Requirements
 
 - **CPU**: 4+ cores recommended (Ollama inference)
 - **Memory**: 8GB minimum (16GB recommended for llama3:8b)

@@ -51,7 +51,7 @@ Command: cat /etc/ghost.conf again  → Reads from Redis cache (consistent)
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
 *   **Ubuntu-Only Emulation**: Emulates a single Ubuntu server with configurable packages, services, users, and kernel. Role is implied by installed software.
 *   **State Consistency**: Redis State Hypervisor keeps filesystem operations atomic and persistent. State truth never comes from AI.
@@ -67,7 +67,7 @@ Command: cat /etc/ghost.conf again  → Reads from Redis cache (consistent)
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 SSH Gateway
@@ -97,7 +97,7 @@ These two files are deliberately kept separate (state vs. behavior).
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### Prerequisites
 *   Docker & Docker Compose
@@ -125,7 +125,7 @@ ssh -p 2222 ubuntu@localhost    # any password accepted
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Validation (no infrastructure needed)
 
@@ -151,30 +151,30 @@ PYTHONPATH=src python3 tests/verification/verify_phase4.py  # Gateway, Watcher, 
 
 ---
 
-## 📊 Component Overview
+##  Component Overview
 
 | Component | Purpose | Status |
 |-----------|---------|--------|
-| State Hypervisor | Redis atomic filesystem state | ✅ Complete |
-| FUSE Interface | Kernel VFS interception + non-blocking AI integration | ✅ Phase 2 |
-| UbuntuProfile | Single Ubuntu machine definition from `ubuntu.yaml` | ✅ Phase 2 |
-| ArtifactPolicyEngine | File-class policy resolution (category + constraints) | ✅ Phase 2 |
-| PromptBuilder | Constraint-first prompt construction | ✅ Phase 2 |
-| SemanticValidator | 4-tier validation against MachineState | ✅ Phase 2 |
-| GenerationOrchestrator | Non-blocking background generation pool | ✅ Phase 2 |
-| InferenceRuntime | Local Ollama HTTP client | ✅ Phase 2 |
-| SSH Gateway | Session-aware interactive shell (session_id injected) | ✅ Phase 2 |
-| HTTP Gateway | Web application emulation | ✅ Complete |
-| Command Analyzer | MITRE ATT&CK technique detection | ✅ Complete |
-| Threat Library | Known attack signature database | ✅ Complete |
-| Skill Detector | Attacker behavioral profiling (monitoring only) | ✅ Complete |
-| Event Processor | Pattern correlation | ✅ Complete |
-| Audit Streamer | Real-time event streaming | ✅ Complete |
-| Layer 0 (Rust) | Traffic analysis | ✅ Complete |
+| State Hypervisor | Redis atomic filesystem state |  Complete |
+| FUSE Interface | Kernel VFS interception + non-blocking AI integration |  Phase 2 |
+| UbuntuProfile | Single Ubuntu machine definition from `ubuntu.yaml` |  Phase 2 |
+| ArtifactPolicyEngine | File-class policy resolution (category + constraints) |  Phase 2 |
+| PromptBuilder | Constraint-first prompt construction |  Phase 2 |
+| SemanticValidator | 4-tier validation against MachineState |  Phase 2 |
+| GenerationOrchestrator | Non-blocking background generation pool |  Phase 2 |
+| InferenceRuntime | Local Ollama HTTP client |  Phase 2 |
+| SSH Gateway | Session-aware interactive shell (session_id injected) |  Phase 2 |
+| HTTP Gateway | Web application emulation |  Complete |
+| Command Analyzer | MITRE ATT&CK technique detection |  Complete |
+| Threat Library | Known attack signature database |  Complete |
+| Skill Detector | Attacker behavioral profiling (monitoring only) |  Complete |
+| Event Processor | Pattern correlation |  Complete |
+| Audit Streamer | Real-time event streaming |  Complete |
+| Layer 0 (Rust) | Traffic analysis |  Complete |
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 *   [System Architecture](docs/ARCHITECTURE.md)
 *   [AI Architecture](docs/AI_ARCHITECTURE.md)
@@ -182,6 +182,6 @@ PYTHONPATH=src python3 tests/verification/verify_phase4.py  # Gateway, Watcher, 
 *   [Mirage Roadmap](docs/ROADMAP.md) - Phase plan, milestones, and delivery criteria
 *   [Developer Onboarding](docs/ONBOARDING.md)
 
-## 📜 License
+##  License
 
 MIT License. See [LICENSE](LICENSE) for details.

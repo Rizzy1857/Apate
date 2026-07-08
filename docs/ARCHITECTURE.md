@@ -14,7 +14,7 @@ This document provides a deep dive into the internal architecture of the Chronos
 
 ---
 
-## 🏗️ System Components
+##  System Components
 
 The architecture follows a strict separation of concerns (top to bottom):
 

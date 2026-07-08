@@ -1,4 +1,4 @@
-# 🎓 Mirage Developer Onboarding (Chronos Framework)
+#  Mirage Developer Onboarding (Chronos Framework)
 
 **Naming convention:** Repository codename is **Apate**. Product/idea name is **Mirage**. Framework implementation name is **Chronos**.
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 0. Five-Minute Explanation (Problem → Solution → Why It Matters) 🧠
+## 0. Five-Minute Explanation (Problem → Solution → Why It Matters) 
 
 ### The Core Problem
 
@@ -42,7 +42,7 @@ The key design move: *generate once, constrain strictly, persist, and reuse cons
 
 ---
 
-## 1. The Big Picture 🌍
+## 1. The Big Picture 
 
 **Chronos emulates exactly one system: an Ubuntu server.**
 
@@ -59,7 +59,7 @@ State and behavior are deliberately kept separate.
 
 ---
 
-## 2. The Architecture 🏛️
+## 2. The Architecture 
 
 ```
 SSH Gateway
@@ -85,7 +85,7 @@ State Hypervisor  (src/chronos/core/state.py)
 
 ---
 
-## 3. Directory Map 🗺️
+## 3. Directory Map 
 
 ```text
 src/chronos/
@@ -124,7 +124,7 @@ src/chronos/
 
 ---
 
-## 4. Life of a Command 🔄
+## 4. Life of a Command 
 
 ### Scenario A: Attacker writes a file
 
@@ -152,7 +152,7 @@ src/chronos/
 
 ---
 
-## 5. Developer Cheatsheet ⌨️
+## 5. Developer Cheatsheet 
 
 **Start the stack:**
 ```bash
@@ -191,7 +191,7 @@ $EDITOR config/generation_policy.yaml
 
 ---
 
-## 6. Pro Tips 💡
+## 6. Pro Tips 
 
 - **State in Lua**: File creation atomicity lives in `src/chronos/core/lua/atomic_create.lua`. Never bypass it.
 - **No cloud LLMs**: All inference goes to Ollama on `chronos-net`. There are no OpenAI/Anthropic API keys in this stack.

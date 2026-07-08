@@ -42,7 +42,7 @@ The following concepts from the original roadmap have been **deliberately remove
 
 ## 2. Milestones
 
-### M2.A — Ubuntu Profile & MachineState ✅ Complete
+### M2.A — Ubuntu Profile & MachineState  Complete
 
 **Goal:** Replace multi-persona system with a single Ubuntu machine definition.
 
@@ -56,7 +56,7 @@ The following concepts from the original roadmap have been **deliberately remove
 
 ---
 
-### M2.B — Artifact Policy Engine ✅ Complete
+### M2.B — Artifact Policy Engine  Complete
 
 **Goal:** Every file gets a realistic policy category *before* AI generation.
 
@@ -71,7 +71,7 @@ The following concepts from the original roadmap have been **deliberately remove
 
 ---
 
-### M2.C — Prompt Builder ✅ Complete
+### M2.C — Prompt Builder  Complete
 
 **Goal:** AI receives constraints, not creative latitude.
 
@@ -86,7 +86,7 @@ The following concepts from the original roadmap have been **deliberately remove
 
 ---
 
-### M2.D — Non-Blocking Generation & Adaptive Timeouts ✅ Complete
+### M2.D — Non-Blocking Generation & Adaptive Timeouts  Complete
 
 **Goal:** Remove synchronous LLM call from FUSE `read()` hot path.
 
@@ -107,7 +107,7 @@ The following concepts from the original roadmap have been **deliberately remove
 
 ---
 
-### M2.E — Semantic Validator ✅ Complete
+### M2.E — Semantic Validator  Complete
 
 **Goal:** Reject generated content that contradicts MachineState or violates Ubuntu conventions.
 
@@ -186,11 +186,11 @@ The following concepts from the original roadmap have been **deliberately remove
 ## 3. Delivery Sequence
 
 ```
-M2.A Ubuntu Profile & MachineState        ✅ Done
-M2.B Artifact Policy Engine               ✅ Done
-M2.C Prompt Builder                       ✅ Done
-M2.D Non-Blocking Orchestrator            ✅ Done
-M2.E Semantic Validator                   ✅ Done
+M2.A Ubuntu Profile & MachineState         Done
+M2.B Artifact Policy Engine                Done
+M2.C Prompt Builder                        Done
+M2.D Non-Blocking Orchestrator             Done
+M2.E Semantic Validator                    Done
 ─────────────────────────────────────────────────
 M2.F Evidence Collector                   ← Next
 M2.G Policy Engine & A/B Testing

@@ -145,9 +145,9 @@ cat etc/passwd
 Command: "find / -perm -4000 2>/dev/null"
 
 Analysis:
-  ✓ Contains "find" → reconnaissance
-  ✓ Searches for SUID binaries (-perm -4000) → privilege escalation
-  ✓ Redirects errors (2>/dev/null) → covering tracks
+   Contains "find" → reconnaissance
+   Searches for SUID binaries (-perm -4000) → privilege escalation
+   Redirects errors (2>/dev/null) → covering tracks
   
 Result: MEDIUM RISK - privilege_escalation.suid_search
 ```
