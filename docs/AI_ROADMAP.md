@@ -1,13 +1,13 @@
-# Chronos AI Integration Roadmap
+# Chronos AI Integration Roadmap (Revised)
 
-**Scope:** Phase 2 of Mirage/Chronos — AI integration that improves realism and
-analyst value without introducing unnecessary complexity or compromising the
-state-consistency guarantees established in Phase 1.
+**Scope:** Phase 2 of Mirage/Chronos — AI integration that makes one Ubuntu server
+exceptionally believable. AI generates plausible artifacts under strict constraints.
+It never owns state truth, never learns autonomously, and degrades gracefully.
 
-**Governing principle (from `docs/ROADMAP.md`):** AI must complement
-deterministic behavior. It never owns state truth, never mutates the atomic
-write path, and must degrade gracefully to deterministic fallbacks when
-unavailable, slow, or low-confidence.
+**Governing principle:**
+> Chronos is not an AI-powered operating system. It is a deterministic Ubuntu honeypot
+> that uses AI only to generate plausible artifacts under strict constraints. The system
+> improves through evidence-based policy updates, not autonomous AI learning.
 
 **Related documents:**
 - `AI_ARCHITECTURE.md` — components, data flow, deployment topology
@@ -15,217 +15,216 @@ unavailable, slow, or low-confidence.
 
 ---
 
-## 0. Current State (Baseline)
+## 0. What Was Removed
 
-| Component | File | Status |
-|---|---|---|
-| `LLMProvider` ABC | `src/chronos/intelligence/llm.py` | Over-abstracted (Mock / OpenAI / Anthropic implemented) |
-| `PersonaEngine` | `src/chronos/intelligence/persona.py` | Hardcoded persona dict, no session memory |
-| Lazy generation | `src/chronos/interface/fuse.py::read()` | Synchronous, blocking, no timeout |
-| Skill/risk scoring | `src/chronos/skills/skill_detector.py` | Computed but not fed back into generation |
-| SSH command execution | `src/chronos/gateway/ssh_server.py::_execute_command()` | Static stub, **not routed through FUSE** |
+The following concepts from the original roadmap have been **deliberately removed**:
 
-This baseline is functionally correct but has structural gaps that Phase 2
-must close: no config-driven personas, lack of a coherent `MachineState`,
-no output validation against that state, no latency/failure handling, and
-no cost/fidelity coupling to attacker skill level.
+| Removed | Reason |
+|---|---|
+| Multiple persona YAML files (ubuntu_server, vulnerable_db, iot_device, …) | Ubuntu only. Role implied by installed packages. |
+| `LLMProvider` ABC (OpenAI / Anthropic / Mock) | Local Ollama only. Air-gapped stack. |
+| Skill-Coupled Fidelity (M2.7) | Attacker skill influences monitoring, not generation |
+| Generic "device" or "machine type" concept | Ubuntu machine type only |
+| AI learning / feedback into model weights | Policy engine only — model never changes |
+| Cloud API keys of any kind | Not applicable |
 
 ---
 
-## 1. Guardrails (must hold across every milestone)
+## 1. Guardrails (non-negotiable across all milestones)
 
-These are non-negotiable constraints carried over from Phase 1, restated for
-the AI workstream specifically:
-
-1. **State truth never comes from AI.** Filesystem existence, permissions,
-   directory structure, and session state remain 100% Redis/Lua. AI only
-   produces file *content*, once, then it's frozen into the blob store.
-2. **No AI call blocks a syscall indefinitely.** Every generation path has a
-   hard timeout and a deterministic fallback (see `AI_LOGIC.md §2`).
-3. **All generated content is provenance-tagged.** Every blob has metadata
-   recording which persona, model, parameters, and prompt version produced it.
-4. **AI fallback path must never look like an AI fallback.** Timeouts,
-   failures, and stubs return POSIX-realistic errors/content, not "AI is
-   unavailable" style messages.
-5. **No AI-authored PR merges without an explainability + regression check**
-   (per Workstream 4 in `docs/ROADMAP.md`).
+1. **State truth never comes from AI.** Filesystem existence, permissions, directory structure, and session state remain 100% Redis/Lua. AI only produces file *content*, once, then it's frozen.
+2. **No AI call blocks a syscall indefinitely.** Every generation path has an adaptive timeout and a deterministic fallback.
+3. **All generated content is provenance-tagged.** Every blob has metadata: ubuntu_version, kernel_version, model, prompt_version, entropy_category, generated_at, validated.
+4. **AI fallback must never look like an AI fallback.** Timeouts return POSIX-realistic errors (EAGAIN, ETIMEDOUT, EIO). Fallbacks return realistic minimal static content.
+5. **AI restricted to Ubuntu artifacts only.** If content would not plausibly exist on Ubuntu 24.04, the Semantic Validator rejects it.
 
 ---
 
 ## 2. Milestones
 
-### M2.1 — Persona Configuration & Local Inference Runtime (Weeks 1–3)
+### M2.A — Ubuntu Profile & MachineState ✅ Complete
 
-**Goal:** Get personas out of code and simplify to a robust, air-gapped local inference runtime.
+**Goal:** Replace multi-persona system with a single Ubuntu machine definition.
 
-- [ ] Externalize `PersonaEngine._load_personas()` into `config/personas/*.yaml`
-- [ ] Replace `LLMProvider` abstractions with a unified `Inference Runtime` targeting Ollama.
-- [ ] Add `ollama` service to `docker-compose.yml` / `docker-compose.prod.yml`
-      on `chronos-net` (no public egress required, removing cloud APIs).
-- [ ] Implement `Model Router` to route tasks to different local models (e.g., small models for configs, larger for SQL dumps).
-- [ ] Keep frequently used models resident in memory to eliminate load delays.
+**Completed:**
+- Removed `config/personas/*.yaml` entirely
+- Created `config/ubuntu.yaml` — packages, services, users, kernel, ports, cron, filesystem layout
+- Created `src/chronos/intelligence/ubuntu_profile.py` — typed accessors + Redis MachineState builder per session
+- Role is inferred from `installed_packages` + `running_services`, never declared
 
-**Exit criteria:** Personas editable via YAML; all inference routed locally through Ollama with task-specific model routing; zero regressions in `verify_phase3.py`.
-
----
-
-### M2.2 — Non-Blocking Generation Path & Adaptive Timeouts (Weeks 3–6)
-
-**Goal:** Remove the synchronous LLM call from the FUSE `read()` hot path and handle varying model latencies.
-
-- [ ] Implement background generation pool + Redis-backed dedup lock
-- [ ] Implement **Adaptive Timeouts** (P95 latency + safety margin) instead of a fixed 5s limit.
-- [ ] Add per-session inference budgets (quotas) to prevent resource exhaustion from mass-file reads (e.g., `find /`).
-- [ ] Background generation continues after timeout and persists on completion.
-- [ ] Add generation latency histogram to Prometheus.
-
-**Exit criteria:** `read()` on a cache-miss never blocks longer than the adaptive timeout; retried reads after a timeout return correct cached content; inference quotas enforced.
+**Exit criteria met:** Single ubuntu.yaml drives all MachineState; zero multi-persona code remains.
 
 ---
 
-### M2.3 — SSH Gateway Integration Closure (Weeks 5–8, overlaps M2.2)
+### M2.B — Artifact Policy Engine ✅ Complete
 
-**Goal:** Route SSH shell commands through FUSE so the primary attack surface exercises the AI pipeline immediately.
+**Goal:** Every file gets a realistic policy category *before* AI generation.
 
-- [ ] Route SSH shell commands through `ChronosFUSE` instead of the hardcoded `if/elif` stub.
-- [ ] Re-run `test_real_attack.py` and `demo_standalone.py` against the SSH path.
-- [ ] Confirm timeout/fallback (M2.2) behave identically over an SSH session as over a local mount.
+**Completed:**
+- Created `config/generation_policy.yaml` — file-class-based probability distributions, constraint tables, model routing, prewarm priorities, inference quotas
+- Created `src/chronos/intelligence/artifact_policy.py` — `ArtifactPolicyEngine` + `infer_file_class()`
+- File classes: `credential_file`, `config_file`, `log_file`, `history_file`, `notes_file`, `script_file`, `temp_file`
+- `empty` category short-circuits before any AI call (returns `b''` immediately)
+- Attacker skill level does NOT influence model routing — reproducibility over fidelity tuning
 
-**Exit criteria:** A full SSH session exercises the entire AI pipeline, validating the core loop before adding further complexity.
-
----
-
-### M2.4 — MachineState & Relational World Facts (Weeks 6–9)
-
-**Goal:** Eliminate cross-file contradiction by introducing a canonical `MachineState` (Knowledge Graph).
-
-- [ ] Replace flat session facts with a relational `MachineState` object (Installed Packages, Running Services, Kernel, Hostname, Users, Ports, Cron Jobs).
-- [ ] Thread `MachineState` into every `generate_content()` call via a **Prompt Builder** to optimize context window budgets.
-- [ ] Add a regression test that generates multiple dependent files (e.g., Apache config, ports, logs) and asserts they agree with the `MachineState`.
-
-**Exit criteria:** Ghost files generated in the same session never disagree on injected world facts.
+**Exit criteria met:** Every file resolves a class + category + model + constraints before generation begins.
 
 ---
 
-### M2.5 — Predictive Generation & Task Routing (Weeks 8–11)
+### M2.C — Prompt Builder ✅ Complete
 
-**Goal:** Shift generation earlier so attackers rarely observe a cache-miss, while prioritizing high-value reads.
+**Goal:** AI receives constraints, not creative latitude.
 
-- [ ] Trigger background generation on `create()`.
-- [ ] Trigger prewarming for up to N un-generated children on `readdir()`.
-- [ ] Optimize prewarming based on **Likely Reads** and **Frequently Accessed** files instead of simple FIFO.
-- [ ] Add prewarm hit-rate metric.
+**Completed:**
+- Created `src/chronos/intelligence/prompt_builder.py`
+- Injects only the *relevant subgraph* of MachineState per file class (e.g., nginx.conf gets nginx_version + open_ports, not cron_jobs)
+- Hard line-length constraint embedded in every prompt
+- Filename/path sanitized before interpolation (prompt-injection hardening)
+- System prompt scopes model to Ubuntu {version} only; explicitly excludes other OS
 
-**Exit criteria:** Prewarm hit-rate tracked in Grafana; priority-based prewarming prevents compute waste on huge directories.
-
----
-
-### M2.6 — Semantic Output Validation / Anti-Slop Gate (Weeks 9–11)
-
-**Goal:** Reject generated content that doesn't semantically align with the system's `MachineState`.
-
-- [ ] Define per-content-type validators that cross-reference against `MachineState` (e.g., Apache config must reference existing modules).
-- [ ] Reject → retry once → fall back to static template on second failure.
-- [ ] Log validation failures with reason.
-
-**Exit criteria:** Validation gate active on 100% of generation paths with semantic checks passing/failing appropriately.
+**Exit criteria met:** Prompt always contains CONSTRAINTS, MACHINE STATE, and OUTPUT blocks; cannot generate content for non-Ubuntu systems.
 
 ---
 
-### M2.7 — Skill-Coupled Fidelity (Weeks 10–12)
+### M2.D — Non-Blocking Generation & Adaptive Timeouts ✅ Complete
 
-**Goal:** Feed `SkillDetector` output back into generation decisions.
+**Goal:** Remove synchronous LLM call from FUSE `read()` hot path.
 
-- [ ] Define fidelity tiers mapped to skill level thresholds.
-- [ ] Escalate tier as technique diversity / risk score crosses thresholds (never backward).
+**Completed:**
+- Created `src/chronos/intelligence/orchestrator.py` — `GenerationOrchestrator`
+- `ThreadPoolExecutor` background pool (8 workers)
+- Redis dedup lock `fs:generating:<inode>` (TTL 30s)
+- Adaptive timeout: P95(model latency) + 2.0s safety margin, rolling 50-sample window
+- Per-session inference quota: token bucket in Redis, keyed by `session_id` (not PID)
+- Timeout → randomized `EAGAIN / ETIMEDOUT / EIO`; generation continues in background
+- FUSE fd-table extended: `{session_id, inode, open_time, flags, path}`
+- SSH gateway injects `session_id` via `threading.local` — no `/proc` lookups
+- `create()` fires background generation (HIGH priority)
+- `readdir()` triggers bounded prewarm for ungenerated children (MEDIUM priority, limit 5)
+- Prometheus metrics: `chronos_generation_latency_seconds`, quota exhaustion counter, timeout counter
 
-**Exit criteria:** Fidelity tier visible per session in audit logs; A/B comparison of inference cost between tiered and untiered generation.
-
----
-
-### M2.8 — Storage Lifecycle Management (Weeks 11–13)
-
-**Goal:** Prevent unbounded storage growth from millions of generated blobs.
-
-- [ ] Implement storage tiers: Hot (memory/cache) → Warm (Redis) → Cold (Disk) → Archive → Delete.
-- [ ] Automatically age-out and transition blobs based on access patterns and session expiration.
-- [ ] Separate Versioning for Dynamic Files (logs, histories) vs. static configs.
-
-**Exit criteria:** Storage usage remains bounded over long-running deployments.
+**Exit criteria met:** `read()` never blocks longer than adaptive timeout; retry serves cached content; quotas enforced per session.
 
 ---
 
-### M2.9 — Provenance & Explainability (Weeks 12–14)
+### M2.E — Semantic Validator ✅ Complete
 
-**Goal:** Every generated blob is auditable for consistent regeneration.
+**Goal:** Reject generated content that contradicts MachineState or violates Ubuntu conventions.
 
-- [ ] Add `fs:blob_meta:<hash>` hash: persona, model, prompt, seed, generation parameters (temp, top p), generated_at, fidelity tier.
-- [ ] Surface provenance in `AuditLogStreamer` events.
+**Completed:**
+- Created `src/chronos/intelligence/validator.py` — `SemanticValidator`
+- Tier 1: Refusal boilerplate (markdown fences, "As an AI…", "Here is…", "I cannot…")
+- Tier 2: Ubuntu convention checks (Windows, PowerShell, yum, dnf, zypper)
+- Tier 3: MachineState contradiction detection (package references for uninstalled software)
+- Tier 4: Information density limits (max_lines enforcement)
+- Retry once on REJECT; fall back to static minimal template on second failure
 
-**Exit criteria:** Full generation parameters are retrievable for consistent offline regeneration.
-
----
-
-### M2.10 — Resilience: LLM Circuit Breaker (Weeks 13–15)
-
-**Goal:** Degrade gracefully under inference load.
-
-- [ ] Track LLM latency/failure rate.
-- [ ] On repeated failures, auto-degrade to static templates.
-- [ ] Time-based backoff recovery.
-
-**Exit criteria:** Simulated provider outage results in functional generation with no FUSE-level errors.
+**Exit criteria met:** 100% of generation paths pass through validator; mysql/apache2 contradictions rejected; Windows content rejected.
 
 ---
 
-## 3. Delivery Timeline
+### M2.F — Evidence Collector (Next)
 
-```mermaid
-gantt
-    title Chronos AI Integration (Phase 2 detail)
-    dateFormat  YYYY-MM-DD
-    axisFormat  W%W
+**Goal:** Produce deterministic, per-session telemetry with zero AI involvement.
 
-    section Foundation
-    M2.1 Local Inference Runtime              :m21, 2026-07-13, 21d
-    M2.2 Non-blocking & Adaptive Timeouts     :m22, after m21, 21d
-    M2.3 SSH Gateway Integration Closure      :m23, after m21, 21d
-    section Consistency & State
-    M2.4 MachineState & World Facts           :m24, after m23, 21d
-    M2.5 Predictive Gen & Routing             :m25, after m24, 21d
-    M2.6 Semantic Output Validation           :m26, 2026-09-07, 14d
-    section Intelligence & Storage
-    M2.7 Skill-coupled fidelity               :m27, after m26, 14d
-    M2.8 Storage Lifecycle Management         :m28, after m26, 14d
-    M2.9 Provenance & Explainability          :m29, 2026-09-21, 14d
-    M2.10 LLM circuit breaker                 :m210, after m29, 14d
+**Plan:**
+- Create `src/chronos/watcher/evidence_collector.py`
+- Hook into existing `AuditLogStreamer` event pipeline
+- Track: session_id, duration, commands[], visited_files[], traversal_graph, detection_status, detection_confidence, exit_reason, first_suspicious_command, last_successful_interaction
+- All fields are deterministic facts — no AI involved
+- Flush complete record to PostgreSQL on session close
+
+---
+
+### M2.G — Policy Engine & A/B Testing
+
+**Goal:** Evidence drives policy updates, not intuition. Model never changes.
+
+**Plan:**
+- Create `src/chronos/policy/policy_engine.py` — aggregates evidence buckets; surfaces candidate policy updates when N independent sessions exhibit the same pattern
+- Create `src/chronos/policy/ab_comparator.py` — compares MTTD, median TTD, detection reason, traversal depth between policy versions
+- Candidate policies written as staged files, never hot-deployed automatically
+- MTTD tracked together with: median TTD, detection reason, detection command, files inspected before detection, traversal depth
+
+---
+
+### M2.H — Provenance & SSH FUSE Routing
+
+**Goal:** Every blob is auditable; SSH exercises the full FUSE pipeline.
+
+**Plan:**
+- `fs:blob_meta:<hash>` fields: ubuntu_version, kernel_version, model, file_class, category, validation_strictness, generated_at, validated
+- Route SSH command execution fully through `ChronosFUSE` (replacing stub)
+- Surface provenance in `AuditLogStreamer` events
+
+---
+
+### M2.I — Storage Lifecycle
+
+**Goal:** Prevent unbounded blob growth over long deployments.
+
+**Plan:**
+- Hot (Redis memory) → Warm (Redis persist) → Cold (PostgreSQL) → Archive/Delete
+- Blobs aged out on session expiry
+- Dynamic files (logs, histories) stored as appendable versioned blobs
+- Config files frozen after first generation
+
+---
+
+### M2.J — LLM Circuit Breaker
+
+**Goal:** Degrade gracefully under Ollama failures.
+
+**Plan:**
+- Track per-model failure rate and latency percentile
+- Auto-degrade to static templates after N consecutive failures
+- Time-based backoff recovery with exponential delay
+- No FUSE-level errors visible to attacker during degradation
+
+---
+
+## 3. Delivery Sequence
+
+```
+M2.A Ubuntu Profile & MachineState        ✅ Done
+M2.B Artifact Policy Engine               ✅ Done
+M2.C Prompt Builder                       ✅ Done
+M2.D Non-Blocking Orchestrator            ✅ Done
+M2.E Semantic Validator                   ✅ Done
+─────────────────────────────────────────────────
+M2.F Evidence Collector                   ← Next
+M2.G Policy Engine & A/B Testing
+M2.H Provenance & SSH FUSE Routing
+M2.I Storage Lifecycle
+M2.J Circuit Breaker
 ```
 
 ---
 
-## 4. Metrics to Track (extends `docs/ROADMAP.md §Metrics`)
+## 4. Metrics to Track
 
 | Metric | Source | Target |
 |---|---|---|
-| Generation timeout rate | M2.2 | < 5% of cache-misses under normal load |
-| Inference Quota Hits | M2.2 | Track sessions hitting limit |
-| SSH-path AI parity | M2.3 | 100% of FUSE test cases pass over SSH |
-| Fact-contradiction incidents | M2.4 regression test | 0 |
-| Prewarm hit-rate | M2.5 | > 60% of reads served pre-generated |
-| Semantic Rejection Rate | M2.6 | Tracked (signal of bad MachineState alignment) |
-| Provenance coverage | M2.9 | 100% of generated blobs |
-| Storage eviction rate | M2.8 | Equal to ingestion rate at capacity |
+| Generation timeout rate | Orchestrator | < 5% of cache-misses |
+| Inference quota exhaustion rate | Orchestrator | Track per session |
+| Validator rejection rate | Validator | Track (signal of model drift) |
+| Prewarm hit-rate | FUSE readdir() | > 60% of reads served pre-generated |
+| MTTD (Mean Time To Detection) | Evidence Collector | Improve with each policy update |
+| Provenance coverage | Orchestrator | 100% of generated blobs |
+| Storage eviction rate | Storage lifecycle | Equal to ingestion rate at capacity |
 
 ---
 
-## 5. Open Decisions (need a call before M2.1 starts)
+## 5. Removed Open Decisions (resolved)
 
-1. **Ollama hosting**: shared GPU host vs. CPU-only container? This impacts the baseline for adaptive timeouts.
-2. **Cold Storage DB**: Confirm implementation detail for the Storage Lifecycle (M2.8) — e.g. PostgreSQL vs local disk.
-3. **Validation gate strictness (M2.6)**: hard reject-and-template-fallback, or log-and-serve-anyway with a lower confidence flag? 
-4. **MachineState Complexity**: How deep should the relational graph go in M2.4 before we consider it "complete"?
+| Decision | Resolution |
+|---|---|
+| Cloud vs. local inference | **Local Ollama only.** No cloud providers. |
+| Multi-persona vs. single profile | **Single `ubuntu.yaml`.** Role from packages. |
+| Skill-coupled fidelity | **Removed.** Skill → monitoring only. |
+| Entropy probabilities location | **`generation_policy.yaml`** (behavior separate from state). |
+| FUSE session identity | **Option A: fd-table + threading.local.** No /proc. |
 
 ---
 
-*This roadmap extends, and does not replace, `docs/ROADMAP.md`. Any change
-here should be reflected there if it affects Phase 2 exit criteria.*
+*Last updated: July 2026. This roadmap reflects the revised architecture after the design review.*

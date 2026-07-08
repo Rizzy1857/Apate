@@ -1,16 +1,29 @@
 """
 SSH Honeypot Server
-Accepts SSH connections and provides a FUSE-backed shell environment
+Accepts SSH connections and provides a FUSE-backed shell environment.
+
+Phase 2 addition: session_id is generated per-connection and injected into
+fuse_context (threading.local) before every FUSE-touching operation.
+This makes every read()/write()/open() session-aware without /proc lookups.
 """
 import os
 import sys
 import socket
 import threading
+import uuid
 import paramiko
 from paramiko import ServerInterface
 from paramiko.common import AUTH_SUCCESSFUL, OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 import logging
 from io import StringIO
+
+from chronos.interface.fuse import fuse_context
+
+try:
+    from chronos.intelligence.ubuntu_profile import UbuntuProfile as _UbuntuProfile
+    _profile = _UbuntuProfile()
+except Exception:
+    _profile = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,8 +105,15 @@ class SSHHoneypot:
         logger.info(f"[AUDIT] {event_type}: {data}")
         
     def handle_client(self, client_socket, addr):
-        """Handle individual SSH client connection"""
+        """Handle individual SSH client connection."""
         logger.info(f"[SSH] Connection from {addr}")
+
+        # Generate a unique session identity for this connection.
+        # This is injected into fuse_context so every FUSE syscall knows which
+        # session it belongs to — no /proc lookups, no PID heuristics.
+        session_id = str(uuid.uuid4())
+        fuse_context.session_id = session_id
+        logger.info(f"[SSH] Session assigned: {session_id} from {addr}")
         
         try:
             transport = paramiko.Transport(client_socket)
@@ -113,12 +133,17 @@ class SSHHoneypot:
                 logger.warning("[SSH] Client never requested shell")
                 return
                 
-            # Send welcome banner
-            channel.send(b"Welcome to Ubuntu 22.04 LTS (GNU/Linux 5.15.0-56-generic x86_64)\r\n\r\n")
+            # Send welcome banner derived from the Ubuntu profile
+            ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
+            kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"
+            hostname = _profile.hostname if _profile else "ubuntu"
+            primary_user = _profile.primary_user if _profile else "ubuntu"
+
+            channel.send(f"Welcome to Ubuntu {ubuntu_version} LTS (GNU/Linux {kernel_version} x86_64)\r\n\r\n".encode())
             channel.send(b"The programs included with the Ubuntu system are free software;\r\n")
             channel.send(b"the exact distribution terms for each program are described in the\r\n")
             channel.send(b"individual files in /usr/share/doc/*/copyright.\r\n\r\n")
-            channel.send(b"root@honeypot:~# ")
+            channel.send(f"{primary_user}@{hostname}:~$ ".encode())
             
             # Simple command loop (in production, this would integrate with FUSE)
             command_buffer = ""
@@ -129,21 +154,23 @@ class SSHHoneypot:
                     
                 char = data.decode('utf-8', errors='ignore')
                 
-                if char == '\r' or char == '\n':
+                if char == "\r" or char == "\n":
                     if command_buffer.strip():
-                        self.audit_log("ssh_command", {"command": command_buffer.strip()})
-                        logger.info(f"[SSH] Command: {command_buffer.strip()}")
-                        
-                        # Simple echo for now (would integrate with FUSE shell)
+                        # Set session context before any potential FUSE operations
+                        fuse_context.session_id = session_id
+                        self.audit_log("ssh_command", {
+                            "command": command_buffer.strip(),
+                            "session_id": session_id,
+                        })
+                        logger.info(f"[SSH] [{session_id[:8]}] Command: {command_buffer.strip()}")
                         response = self._execute_command(command_buffer.strip())
                         channel.send(response.encode() + b"\r\n")
-                    
                     command_buffer = ""
-                    channel.send(b"root@honeypot:~# ")
+                    channel.send(f"{primary_user}@{hostname}:~$ ".encode())
                 elif char == '\x03':  # Ctrl+C
                     channel.send(b"^C\r\n")
                     command_buffer = ""
-                    channel.send(b"root@honeypot:~# ")
+                    channel.send(f"{primary_user}@{hostname}:~$ ".encode())
                 elif char == '\x7f':  # Backspace
                     if command_buffer:
                         command_buffer = command_buffer[:-1]
@@ -163,28 +190,28 @@ class SSHHoneypot:
             logger.info(f"[SSH] Connection closed: {addr}")
             
     def _execute_command(self, command):
-        """Execute command (stub - would integrate with FUSE)"""
-        # In production, this would route through the FUSE filesystem
+        """
+        Execute command stub — to be fully replaced by FUSE routing in M2.H.
+        Currently returns realistic Ubuntu 24.04 responses derived from ubuntu.yaml.
+        """
         parts = command.split()
         cmd = parts[0] if parts else ""
+
+        hostname = _profile.hostname if _profile else "ubuntu"
+        ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
+        kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"
+        primary_user = _profile.primary_user if _profile else "ubuntu"
 
         if cmd == "ls":
             return "bin  boot  dev  etc  home  lib  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var"
         elif cmd == "pwd":
-            return "/root"
+            return f"/home/{primary_user}"
         elif cmd == "whoami":
-            return "root"
-        elif cmd == "uname":
-            return "Linux honeypot 5.15.0-56-generic #62-Ubuntu SMP x86_64 GNU/Linux"
-        elif cmd == "nano":
-            target = parts[1] if len(parts) > 1 else ""
-            if target:
-                return (
-                    f"GNU nano 6.2\n"
-                    f"[ opened {target} ]\n"
-                    "Use Ctrl+X to exit, Ctrl+O to write out"
-                )
-            return "nano: no file specified"
+            return primary_user
+        elif cmd in ("uname", "uname -a"):
+            return f"Linux {hostname} {kernel_version} #62-Ubuntu SMP x86_64 GNU/Linux"
+        elif cmd == "hostname":
+            return hostname
         else:
             return f"-bash: {cmd}: command not found"
             

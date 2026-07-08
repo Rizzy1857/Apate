@@ -4,15 +4,11 @@
 
 **Program phases:**
 - **Phase 1 (6 months):** Core systems and validation (complete)
-- **Phase 2 (6 months):** AI integration focused on improving analyst value while avoiding unnecessary complexity
-
-Welcome to the **Chronos Framework**. This guide will help you build a mental model of how the system works so you can contribute effectively.
+- **Phase 2 (6 months):** Ubuntu-only AI artifact generation under strict constraints
 
 ---
 
 ## 0. Five-Minute Explanation (Problem → Solution → Why It Matters) 🧠
-
-If you need to explain Chronos in under five minutes to a technical panel, use this:
 
 ### The Core Problem
 
@@ -25,9 +21,9 @@ Attackers do not just run one command. They run chains of dependent actions and 
 3. `cat /tmp/.x`
 4. `stat /tmp/.x`
 
-If any step contradicts a prior step, the deception is exposed. Traditional script-based honeypots often return plausible text, but they do not maintain a coherent filesystem state graph over time. LLM-only systems improve linguistic realism, but still break when context windows expire or when state must be updated atomically across concurrent events.
+If any step contradicts a prior step, the deception is exposed. Traditional script-based honeypots often return plausible text, but they do not maintain a coherent filesystem state graph. LLM-only systems improve linguistic realism, but hallucinate state when context windows expire.
 
-In short: **the bottleneck is not language quality; the bottleneck is transactional truth.**
+**The bottleneck is not language quality — it is transactional truth.**
 
 ### The Chronos Solution
 
@@ -35,61 +31,57 @@ Chronos treats deception as a systems problem, not a prompt problem.
 
 - **FUSE-backed interface**: all attacker interactions become real filesystem syscalls.
 - **State Hypervisor (Redis + Lua)**: mutations are handled atomically, persisted, and auditable.
-- **Persona Engine (LLM)**: generates missing content lazily, then commits it to durable state.
-- **Audit-first design**: relevant interactions are captured for threat analysis.
+- **Artifact Generation (Ollama)**: missing file content is generated locally under strict Ubuntu constraints, then committed to Redis — never re-generated.
+- **Audit-first design**: all interactions are captured as structured session events.
 
-The key design move is simple: *generate once, persist, and reuse consistently*. This supports high apparent depth while maintaining internal coherence.
-
-### Why This Is Convincing
-
-Chronos closes the realism gap at the exact layer attackers validate: operational consistency.
-
-- It survives sequential command chaining because state is durable.
-- It survives concurrency because writes are atomic.
-- It scales realism because LLM output is state-committed, not ephemeral.
-- It supports forensics because interactions are logged as structured events.
-
-This means Chronos is not merely a fake shell; it is a **state-consistent adversarial interaction environment**.
+The key design move: *generate once, constrain strictly, persist, and reuse consistently.*
 
 ### 30-Second Version (for slides)
 
-> Existing honeypots fail when attackers test continuity. Chronos solves continuity at the syscall layer using FUSE + Redis atomic state, then uses LLMs only to fill missing content that is immediately persisted. Result: realistic interaction that remains logically consistent over time, with auditability built in.
+> Existing honeypots fail when attackers test continuity. Chronos solves continuity at the syscall layer using FUSE + Redis atomic state, then uses a local LLM only to fill missing Ubuntu file content that is immediately persisted. Result: a consistent Ubuntu environment that is easy to validate and hard for attackers to identify as synthetic.
 
 ---
 
 ## 1. The Big Picture 🌍
 
-**Chronos is a state-consistent deception engine.**
+**Chronos emulates exactly one system: an Ubuntu server.**
 
-Unlike traditional honeypots that *pretend* to be a server using static scripts, Chronos *is* a filesystem that generates itself on the fly.
+The machine type (web server, database host, development box) is not declared as a "persona" — it is implied by which packages are installed and which services are running. This is defined in `config/ubuntu.yaml`.
 
-*   **The Problem**: In old honeypots, if an attacker ran `touch /tmp/a` and then `ls /tmp`, the file wouldn't be there because the "commands" were just fake text responses.
-*   **The Solution**: Chronos implements a REAL filesystem (FUSE). When an attacker runs `touch`, we actually create an entry in our database. When they run `ls`, we read from that database. It behaves exactly like Linux because it respects system calls.
+Two config files drive the entire AI layer:
+
+| File | Defines |
+|---|---|
+| `config/ubuntu.yaml` | What the machine **is** (state) — packages, services, users, kernel |
+| `config/generation_policy.yaml` | How artifacts are **generated** (behavior) — categories, constraints, model routing |
+
+State and behavior are deliberately kept separate.
 
 ---
 
-## 2. The Architecture (Simplified) 🏛️
+## 2. The Architecture 🏛️
 
-Think of Chronos as a standard web app, but instead of "Users" and "Posts", we store "Inodes" and "Files".
-
-1.  **The Interface (Skin)**: `src/chronos/interface/fuse.py`
-    *   This python script pretends to be a hard drive.
-    *   Linux sends it requests: "Read bytes 0-100 of File X".
-    *   It translates those requests into Database lookups.
-
-2.  **The Brain (Hypervisor)**: `src/chronos/core/state.py`
-    *   The logic layer.
-    *   "Create a file? Okay, let me check if that name is taken, allocate an ID, and save it."
-
-3.  **The Memory (Redis)**: `docker-compose.yml` -> `redis-store`
-    *   The actual database.
-    *   We don't store files on disk! We store them as keys in Redis.
-    *   If you restart the container, Redis keeps the data (Persistence).
-
-4.  **The Imagination (Persona Engine)**: `src/chronos/intelligence/`
-    *   If a file *doesn't* exist (e.g., attacker checks `/etc/secret_password`), we don't say "404 Not Found".
-    *   We ask an LLM: "What would be inside `/etc/secret_password`?"
-    *   We save that result. Now the file exists forever.
+```
+SSH Gateway
+    │  generates session_id → injects into threading.local
+    ▼
+ChronosFUSE  (src/chronos/interface/fuse.py)
+    │  every syscall is session-aware via fd-table[fd].session_id
+    ▼
+State Hypervisor  (src/chronos/core/state.py)
+    │  Redis + atomic Lua scripts — sole source of filesystem truth
+    │
+    ├── cache hit  → return blob immediately (fast path)
+    │
+    └── cache miss → GenerationOrchestrator
+                          │
+                          ├── ArtifactPolicyEngine   assigns file class + category
+                          ├── PromptBuilder          builds constraint-first prompt
+                          ├── InferenceRuntime       sends to local Ollama
+                          └── SemanticValidator      validates vs. MachineState
+                                    │
+                                    └── persists blob + provenance to Redis
+```
 
 ---
 
@@ -97,17 +89,37 @@ Think of Chronos as a standard web app, but instead of "Users" and "Posts", we s
 
 ```text
 src/chronos/
-├── core/               # The "Backend" Logic
-│   ├── state.py        # State Hypervisor (The boss)
-│   ├── database.py     # Redis wrapper
-│   └── lua/            # Atomic scripts (prevent race conditions)
-├── interface/          # The "Frontend" (FUSE)
-│   └── fuse.py         # Handles syscalls (read/write/mkdir)
-├── intelligence/       # The "AI"
-│   ├── persona.py      # Manages system personalities
-│   └── llm.py          # Connects to OpenAI/Anthropic
-└── layer0/             # The "Reflexes"
-    └── rust-protocol/  # High-speed packet analysis (Rust)
+├── core/                   # State management
+│   ├── state.py            # State Hypervisor (Redis + Lua)
+│   ├── database.py         # Redis connection
+│   └── lua/                # Atomic scripts (atomic_create.lua)
+│
+├── interface/              # FUSE filesystem
+│   └── fuse.py             # Syscall handlers (read/write/mkdir/…)
+│
+├── intelligence/           # AI generation pipeline
+│   ├── ubuntu_profile.py   # Loads config/ubuntu.yaml → MachineState
+│   ├── artifact_policy.py  # File class resolution + artifact category sampling
+│   ├── prompt_builder.py   # Constraint-first prompt construction
+│   ├── validator.py        # 4-tier semantic validation
+│   ├── orchestrator.py     # Non-blocking background generation pool
+│   └── inference.py        # Ollama HTTP client (local inference only)
+│
+├── gateway/                # Entry points
+│   ├── ssh_server.py       # SSH gateway (injects session_id into FUSE context)
+│   └── http_server.py      # HTTP gateway (web app emulation)
+│
+├── watcher/                # Audit & monitoring
+│   ├── log_streamer.py     # Real-time PostgreSQL audit streaming
+│   └── event_processor.py  # Pattern-based attack detection
+│
+├── skills/                 # Threat intelligence (monitoring only, not generation)
+│   ├── command_analyzer.py # MITRE ATT&CK detection
+│   ├── threat_library.py   # Known attack signatures
+│   └── skill_detector.py   # Attacker behavioral profiling
+│
+└── layer0/                 # Rust performance layer
+    └── src/                # Traffic classification, circuit breakers
 ```
 
 ---
@@ -115,58 +127,74 @@ src/chronos/
 ## 4. Life of a Command 🔄
 
 ### Scenario A: Attacker writes a file
-**Command**: `echo "hacked" > /tmp/pwn`
 
-1.  **OS** calls `create("/tmp/pwn")`.
-2.  **FUSE** tells **State Hypervisor**: "Create this file".
-3.  **Hypervisor** runs a **Lua Script** in Redis:
-    *   Checks if `/tmp` exists.
-    *   Allocates new Inode ID (e.g., `105`).
-    *   Links `pwn` -> Inode `105`.
-4.  **OS** calls `write(inode=105, data="hacked")`.
-5.  **FUSE** saves "hacked" into Redis blob storage.
+**Command**: `echo "test" > /tmp/pwn`
 
-### Scenario B: Attacker reads a "Ghost" file
-**Command**: `cat /var/log/nginx/access.log` (Does not exist yet)
+1. OS calls `create("/tmp/pwn")`.
+2. **FUSE** tells **State Hypervisor**: "Create this file".
+3. **Hypervisor** runs a **Lua script** in Redis: checks parent, allocates inode, links name → inode.
+4. **FUSE** fire-and-forget: submits background generation to `GenerationOrchestrator`.
+5. OS calls `write(inode, data)` → FUSE stores the written bytes as a blob.
 
-1.  **OS** calls `read("/var/log/nginx/access.log")`.
-2.  **FUSE** sees the file has **No Content Hash**.
-3.  **FUSE** calls **Persona Engine**.
-4.  **Persona Engine** asks LLM: *"Generate nginx access logs for a Ubuntu server"*.
-5.  **LLM** returns text.
-6.  **FUSE** saves text to Redis.
-7.  **FUSE** returns text to Attacker.
-    *   *Next time they read it, it comes directly from Redis (Fast!).*
+### Scenario B: Attacker reads a ghost file
+
+**Command**: `cat /etc/nginx/nginx.conf` (inode exists, no content yet)
+
+1. OS calls `read("/etc/nginx/nginx.conf")`.
+2. **FUSE** sees the inode has **no content_hash**.
+3. **FUSE** calls `orchestrator.get_or_generate(inode, path, session_id, machine_state)`.
+4. **ArtifactPolicyEngine** resolves: `config_file`, category `valid`, model `llama3:8b`, max 80 lines.
+5. **PromptBuilder** builds a constrained prompt with only nginx-relevant MachineState facts.
+6. **InferenceRuntime** sends to local Ollama.
+7. **SemanticValidator** checks result against MachineState (nginx version, no mysql references, Ubuntu conventions).
+8. Result persisted to Redis. Future reads hit the cache.
+9. If Ollama times out → FUSE returns `EAGAIN`. Generation continues in background. Next read hits cache.
 
 ---
 
 ## 5. Developer Cheatsheet ⌨️
 
-**Start everything:**
+**Start the stack:**
 ```bash
-make prod
+make up
 ```
 
-**Check logs (is the AI generating?):**
+**Watch generation logs:**
 ```bash
 make logs
 ```
 
-**Enter the matrix (Manual Test):**
+**Connect as attacker:**
 ```bash
-make shell
-cd /mnt/honeypot
+ssh -p 2222 ubuntu@localhost    # any password
 ```
 
-**Reset the world (Wipe DB):**
+**Run intelligence verification:**
+```bash
+PYTHONPATH=src python3 tests/verification/verify_phase3.py
+```
+
+**Reset everything:**
 ```bash
 make clean
+```
+
+**Edit the Ubuntu machine definition:**
+```bash
+$EDITOR config/ubuntu.yaml
+```
+
+**Edit generation behavior (categories, constraints, model routing):**
+```bash
+$EDITOR config/generation_policy.yaml
 ```
 
 ---
 
 ## 6. Pro Tips 💡
 
-*   **Logic in Lua**: If you need to change how files are created, edit `src/chronos/core/lua/atomic_create.lua`. We use Lua so operations are atomic (thread-safe).
-*   **Debug Mode**: If `make prod` fails, try `docker compose up --build` (without `-d`) to see startup errors immediately.
-*   **LLM Config**: To use real AI, set `LLM_PROVIDER=openai` and `OPENAI_API_KEY=sk-...` in `docker-compose.prod.yml`.
+- **State in Lua**: File creation atomicity lives in `src/chronos/core/lua/atomic_create.lua`. Never bypass it.
+- **No cloud LLMs**: All inference goes to Ollama on `chronos-net`. There are no OpenAI/Anthropic API keys in this stack.
+- **Ubuntu only**: `SemanticValidator` will reject any generated content that references Windows, macOS, or non-Ubuntu package managers (yum, dnf, zypper). This is intentional.
+- **Session ≠ Process**: FUSE syscalls are session-aware via `threading.local` — never via `/proc` PID lookups. Session ID is set by the SSH gateway at connection start.
+- **Skill detection ≠ generation fidelity**: The `SkillDetector` feeds monitoring and logging. It does **not** change which model generates content — that is determined by file class only.

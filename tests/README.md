@@ -18,7 +18,7 @@ tests/
 ├── verification/        Implementation verification tests
 │   ├── verify_phase1.py           State Hypervisor & Database
 │   ├── verify_phase2.py           FUSE Interface
-│   ├── verify_phase3.py           Intelligence & Persona
+│   ├── verify_phase3.py           Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
 │   └── verify_phase4.py           Gateway, Watcher, Skills
 │
 └── integration/         End-to-end integration demos
@@ -144,11 +144,11 @@ Verifies all major components function correctly:
 ```bash
 cd tests/verification
 
-# Run individually
-python3 verify_phase1.py    # State management
-python3 verify_phase2.py    # FUSE interface
-python3 verify_phase3.py    # Intelligence layer
-python3 verify_phase4.py    # Gateway/Watcher/Skills
+# Run individually (PYTHONPATH required for intelligence layer imports)
+PYTHONPATH=src python3 verify_phase1.py    # State management
+PYTHONPATH=src python3 verify_phase2.py    # FUSE interface
+PYTHONPATH=src python3 verify_phase3.py    # Intelligence layer (Ubuntu-only)
+PYTHONPATH=src python3 verify_phase4.py    # Gateway/Watcher/Skills
 
 # Or run all from project root
 make verify

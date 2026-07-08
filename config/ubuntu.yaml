@@ -1,0 +1,83 @@
+# Ubuntu Machine Profile
+# ========================
+# This file defines what the simulated machine *is*.
+# Role is implied by installed packages and running services — not by a separate "persona".
+# State and behavior are kept strictly separate (see config/generation_policy.yaml for behavior).
+
+ubuntu_version: "24.04"
+codename: "noble"
+kernel_version: "6.8.0-51-generic"
+
+hostname: "web01"
+primary_user: "ubuntu"
+timezone: "UTC"
+
+# Installed packages — these are the ground truth for validator and prompt builder.
+# The role of the machine (web server, DB, etc.) is inferred from this list.
+installed_packages:
+  - { name: nginx,           version: "1.24.0" }
+  - { name: openssh-server,  version: "9.6p1"  }
+  - { name: curl,            version: "8.5.0"  }
+  - { name: vim,             version: "9.1.0"  }
+  - { name: git,             version: "2.43.0" }
+  - { name: ufw,             version: "0.36.2" }
+  - { name: fail2ban,        version: "1.0.2"  }
+  - { name: python3,         version: "3.12.3" }
+
+running_services:
+  - nginx
+  - ssh
+  - cron
+  - ufw
+  - fail2ban
+
+open_ports:
+  - { port: 22,  proto: tcp, service: ssh   }
+  - { port: 80,  proto: tcp, service: nginx }
+  - { port: 443, proto: tcp, service: nginx }
+
+users:
+  - { name: ubuntu, uid: 1000, gid: 1000, shell: /bin/bash, home: /home/ubuntu }
+  - { name: www-data, uid: 33, gid: 33,   shell: /usr/sbin/nologin, home: /var/www }
+  - { name: root,   uid: 0,    gid: 0,    shell: /bin/bash, home: /root }
+
+groups:
+  - { name: ubuntu,   gid: 1000, members: [ubuntu] }
+  - { name: www-data, gid: 33,   members: [www-data, ubuntu] }
+  - { name: sudo,     gid: 27,   members: [ubuntu] }
+  - { name: docker,   gid: 998,  members: [ubuntu] }
+
+network_interfaces:
+  - { name: eth0, ip: "10.0.1.42", netmask: "255.255.255.0", gateway: "10.0.1.1" }
+  - { name: lo,   ip: "127.0.0.1", netmask: "255.0.0.0"                          }
+
+mounted_drives:
+  - { device: /dev/sda1, mountpoint: /,     fstype: ext4,  size_gb: 50  }
+  - { device: /dev/sda2, mountpoint: /boot, fstype: vfat,  size_gb: 1   }
+  - { device: tmpfs,     mountpoint: /tmp,  fstype: tmpfs, size_gb: 2   }
+
+ssh_config:
+  permit_root_login: false
+  password_authentication: true
+  pubkey_authentication: true
+  port: 22
+
+cron_jobs:
+  - { user: root,   schedule: "0 2 * * *",     command: "/usr/bin/certbot renew --quiet" }
+  - { user: ubuntu, schedule: "*/15 * * * *",  command: "/home/ubuntu/scripts/health_check.sh" }
+  - { user: root,   schedule: "0 0 * * 0",     command: "apt-get autoremove -y > /dev/null 2>&1" }
+
+# Filesystem layout — directories that must exist in the FUSE tree.
+# Used by the PromptBuilder to validate path-level facts.
+filesystem_layout:
+  - /etc/nginx/
+  - /etc/nginx/sites-available/
+  - /etc/nginx/sites-enabled/
+  - /etc/ssh/
+  - /etc/fail2ban/
+  - /var/log/nginx/
+  - /var/log/auth.log
+  - /home/ubuntu/
+  - /home/ubuntu/.ssh/
+  - /home/ubuntu/scripts/
+  - /var/www/html/

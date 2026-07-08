@@ -1,0 +1,114 @@
+# Generation Policy
+# ==================
+# This file defines how AI *behaves* when generating artifacts.
+# It does NOT describe what the machine is (see config/ubuntu.yaml for that).
+#
+# State  → ubuntu.yaml
+# Behavior → generation_policy.yaml (this file)
+#
+# Policies are structured by FILE CLASS so every file of the same class
+# shares the same rules unless explicitly overridden.
+
+artifact_policy:
+
+  # Files that might hold credentials, tokens, or sensitive text.
+  credential_file:
+    distribution:
+      useful:    0.05   # Actually contains real-looking credentials
+      empty:     0.40   # Placeholder / never filled in
+      abandoned: 0.30   # Old, commented-out entries
+      notes:     0.20   # Personal notes referencing passwords loosely
+      corrupted: 0.05   # Partially written / truncated
+    max_lines: 20
+    validation_strictness: high
+    regeneration: static
+
+  # nginx, sshd, fail2ban, cron, etc.
+  config_file:
+    distribution:
+      valid:      0.90  # Functional configuration
+      deprecated: 0.08  # Old config with commented-out directives
+      broken:     0.02  # Syntax error or missing directive
+    max_lines: 80
+    validation_strictness: high
+    regeneration: static
+
+  # /var/log/nginx/access.log, /var/log/auth.log, etc.
+  log_file:
+    distribution:
+      active:    0.70   # Recent entries, plausible timestamps
+      archived:  0.20   # Old log, entries from weeks ago
+      empty:     0.05   # Rotated out / never written
+      corrupted: 0.05   # Partial write / binary noise at end
+    max_lines: 500
+    max_days: 7         # Entries span no more than 7 days into the past
+    validation_strictness: medium
+    regeneration: dynamic
+
+  # .bash_history, .python_history, etc.
+  history_file:
+    distribution:
+      active:    0.75   # Commands a real admin would run
+      empty:     0.15   # HISTFILE unset or newly created
+      abandoned: 0.10   # Last entry is months old
+    max_entries: 300
+    validation_strictness: low
+    regeneration: dynamic
+
+  # notes.txt, todo.txt, readme.txt, scratch files
+  notes_file:
+    distribution:
+      notes:     0.60   # Short personal notes
+      empty:     0.25   # Created but never written
+      abandoned: 0.15   # Half-started and forgotten
+    max_lines: 15
+    validation_strictness: low
+    regeneration: static
+
+  # Shell scripts, Python scripts, etc.
+  script_file:
+    distribution:
+      functional:  0.70  # Works; realistic admin script
+      incomplete:  0.20  # Draft; TODO comments, unfinished logic
+      abandoned:   0.10  # Commented-out, no longer called
+    max_lines: 150
+    validation_strictness: medium
+    regeneration: static
+
+  # /tmp/*, cache files, lock files
+  temp_file:
+    distribution:
+      stale:   0.50   # Old PID file, expired lock
+      empty:   0.30   # Placeholder
+      useful:  0.20   # Actually in use
+    max_lines: 30
+    validation_strictness: low
+    regeneration: dynamic
+
+# Model routing — file type to local model.
+# Attacker skill level does NOT influence this. Reproducibility > fidelity tuning.
+model_routing:
+  history_file:  "llama3:3b"
+  notes_file:    "llama3:3b"
+  temp_file:     "llama3:3b"
+  config_file:   "llama3:8b"
+  script_file:   "llama3:8b"
+  log_file:      "llama3:8b"
+  credential_file: "llama3:8b"
+  default:       "llama3:8b"
+
+# Prewarm priorities — which file classes to generate ahead of reads.
+# Based on known attacker traversal patterns.
+prewarm_priorities:
+  - credential_file   # passwd, shadow, .env, keys — attackers go here first
+  - history_file      # .bash_history is almost always checked
+  - config_file       # sshd_config, nginx.conf
+  - log_file
+  - script_file
+  - notes_file
+  - temp_file
+
+# Inference quota — per session to prevent resource exhaustion from `find /` style reads.
+inference_quota:
+  max_generations_per_minute: 20
+  quota_exhausted_behavior: template  # fall back to static template, never error

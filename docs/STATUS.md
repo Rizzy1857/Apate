@@ -1,7 +1,7 @@
-# Mirage (Chronos Framework) - Implementation Status
+# Mirage (Chronos Framework) — Implementation Status
 
-**Date:** March 22, 2026  
-**Status:** ✅ Phase 1 Complete | 🔄 Phase 2 In Progress
+**Date:** July 2026  
+**Status:** ✅ Phase 1 Complete | 🔄 Phase 2 In Progress (M2.A–M2.E complete)
 
 ---
 
@@ -12,7 +12,7 @@
 - Core framework: **Chronos**
 - Delivery model: two 6-month phases
   - **Phase 1:** Core platform engineering and validation (**Complete**)
-  - **Phase 2:** AI integration that complements system behavior without adding unnecessary complexity (**In Progress**)
+  - **Phase 2:** Ubuntu-only AI artifact generation under strict constraints (**In Progress**)
 
 ---
 
@@ -35,95 +35,121 @@
 - **Data Models** (`src/chronos/core/models.py`)
   - Pydantic models for type safety
 
-### Phase 2: FUSE Interface
+### Phase 1: FUSE Interface
 - **FUSE Filesystem** (`src/chronos/interface/fuse.py`)
   - POSIX syscall implementation
   - Path resolution and inode management
   - File descriptor tracking
   - Integration with State Hypervisor
 
-### Phase 3: Cognitive Intelligence
-- **LLM Providers** (`src/chronos/intelligence/llm.py`)
-  - OpenAI GPT-4 integration
-  - Anthropic Claude integration
-  - Mock provider for testing
-  
-- **Persona Engine** (`src/chronos/intelligence/persona.py`)
-  - Dynamic file content generation
-  - System personality profiles
-  - Context-aware responses
-
-### Phase 4: Gateway, Watcher & Skills
+### Phase 1: Gateway, Watcher & Skills
 
 #### Gateway (Entry Points)
-- **SSH Honeypot** (`src/chronos/gateway/ssh_server.py`)
+- **SSH Gateway** (`src/chronos/gateway/ssh_server.py`)
   - SSH server implementation using Paramiko
-  - Accepts any credentials (honeypot behavior)
+  - Accepts any credentials (deception behavior)
   - Command logging and session tracking
-  - Interactive shell simulation
+  - Session ID injection into FUSE context via threading.local (Phase 2 update)
   
-- **HTTP Honeypot** (`src/chronos/gateway/http_server.py`)
+- **HTTP Gateway** (`src/chronos/gateway/http_server.py`)
   - Simulates vulnerable web application
   - Multiple endpoints (login, admin, API)
-  - Threat detection in URLs and POST data
   - SQL injection, XSS, directory traversal detection
 
 #### Watcher (Audit & Monitoring)
 - **Log Streamer** (`src/chronos/watcher/log_streamer.py`)
   - Real-time PostgreSQL audit log streaming
   - Pub-sub pattern for event distribution
-  - Statistics and metrics collection
   - Session activity tracking
   
 - **Event Processor** (`src/chronos/watcher/event_processor.py`)
   - Pattern-based attack detection
   - Behavioral analysis
   - Risk scoring and classification
-  - Session correlation
 
-#### Skills (Threat Intelligence)
+#### Skills (Threat Intelligence — monitoring only, not generation)
 - **Command Analyzer** (`src/chronos/skills/command_analyzer.py`)
   - MITRE ATT&CK framework mapping
   - Attack pattern detection
   - Risk scoring algorithm
-  - Session-level risk profiling
   
 - **Threat Library** (`src/chronos/skills/threat_library.py`)
   - Known attack signatures
-  - Reverse shells, privilege escalation, persistence
-  - MITRE ATT&CK IDs
   - Severity classification
   
 - **Skill Detector** (`src/chronos/skills/skill_detector.py`)
-  - Attacker skill level assessment
+  - Attacker behavioral profiling
   - Attack phase progression tracking
-  - Tool sophistication analysis
-  - Behavioral profiling
+  - **Note:** Skill assessment feeds monitoring/logging only — it does NOT influence content generation fidelity
 
 ### Layer 0 (Rust)
 - **Protocol Analysis** (`src/chronos/layer0/`)
   - Traffic classification
   - Circuit breaker patterns
-  - Threat detection (SQL injection, XSS, etc.)
   - Python bindings via PyO3
+
+---
+
+## 🔄 Phase 2: Ubuntu-Only AI Integration (In Progress)
+
+### Completed Milestones
+
+#### M2.A — Ubuntu Profile & MachineState ✅
+- Removed multi-persona YAML system
+- Created `config/ubuntu.yaml` — single Ubuntu machine definition (packages, services, users, kernel)
+- Created `src/chronos/intelligence/ubuntu_profile.py` — typed accessors + Redis MachineState builder
+- Role is implied by installed packages, never declared as a persona type
+
+#### M2.B — Artifact Policy Engine ✅
+- Created `config/generation_policy.yaml` — file-class-based probability distributions, constraints, model routing
+- Created `src/chronos/intelligence/artifact_policy.py` — resolves policy per file before generation
+- File classes: `credential_file`, `config_file`, `log_file`, `history_file`, `notes_file`, `script_file`, `temp_file`
+- Categories: `valid`, `empty`, `abandoned`, `corrupted`, `deprecated`, `active`, `archived`, …
+- `empty` category skips AI entirely and returns `b''` immediately
+
+#### M2.C — Prompt Builder ✅
+- Created `src/chronos/intelligence/prompt_builder.py`
+- Constraint-first prompts: AI receives hard limits, relevant MachineState subgraph, category instructions
+- Sanitizes filenames/paths before interpolation (prompt-injection hardening)
+- AI cannot invent facts not present in the Constraints block
+
+#### M2.D — Non-Blocking Generation ✅
+- Created `src/chronos/intelligence/orchestrator.py`
+- ThreadPoolExecutor background pool, Redis dedup lock (`fs:generating:<inode>` TTL 30s)
+- Adaptive timeout: P95 latency per model + 2.0s safety margin
+- Per-session inference quota (token bucket in Redis, keyed by session_id)
+- On timeout: randomized POSIX error (EAGAIN/ETIMEDOUT/EIO), generation continues in background
+- FUSE fd-table extended to `{session_id, inode, open_time, flags, path}`
+- `create()` fires background generation; `readdir()` triggers bounded prewarm
+
+#### M2.E — Semantic Validator ✅
+- Created `src/chronos/intelligence/validator.py`
+- Tier 1: Refusal boilerplate detection (markdown fences, "As an AI…", "Here is…")
+- Tier 2: Ubuntu convention checks (no Windows, PowerShell, yum, dnf, zypper)
+- Tier 3: MachineState contradiction detection (uninstalled package references)
+- Tier 4: Information density limits (max_lines enforcement)
+- Retry once on REJECT; fall back to static template on second failure
+
+### Upcoming Milestones
+- **M2.F** Evidence Collector — deterministic per-session telemetry
+- **M2.G** Policy Engine & A/B Testing — evidence-driven policy evolution
+- **M2.H** Provenance & SSH FUSE Routing — full command routing through FUSE
+- **M2.I** Storage Lifecycle — Hot → Warm → Cold tiering
+- **M2.J** Circuit Breaker — graceful Ollama degradation
 
 ---
 
 ## 📊 Test Coverage
 
 ### Verification Scripts (`tests/verification/`)
-- ✅ `verify_phase1.py` - State Hypervisor & Database
-- ✅ `verify_phase2.py` - FUSE Interface
-- ✅ `verify_phase3.py` - Intelligence & Persona
-- ✅ `verify_phase4.py` - Gateway, Watcher, Skills (4/4 tests passing)
+- ✅ `verify_phase1.py` — State Hypervisor & Database
+- ✅ `verify_phase2.py` — FUSE Interface
+- ✅ `verify_phase3.py` — Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
+- ✅ `verify_phase4.py` — Gateway, Watcher, Skills (4/4 tests passing)
 
 ### Validation Scripts (`tests/validation/`)
-- ✅ `validate_core.py` - Core infrastructure integrity (8/8 tests passing)
-- ✅ `test_real_attack.py` - Real attack simulation (78.6% detection rate)
-
-### Integration Demos (`tests/integration/`)
-- ✅ `demo_standalone.py` - Skills showcase (no infrastructure dependencies)
-- ✅ `demo_integration.py` - Full system integration demo
+- ✅ `validate_core.py` — Core infrastructure integrity (8/8 tests passing)
+- ✅ `test_real_attack.py` — Real attack simulation (78.6% detection rate)
 
 ---
 
@@ -133,9 +159,7 @@
 Apate/
 ├── src/chronos/
 │   ├── core/              ✅ State management, database, audit logging
-│   │   ├── __init__.py
 │   │   ├── database.py
-│   │   ├── data_logger.py
 │   │   ├── main.py
 │   │   ├── models.py
 │   │   ├── persistence.py
@@ -143,150 +167,56 @@ Apate/
 │   │   └── lua/
 │   │       └── atomic_create.lua
 │   │
-│   ├── interface/         ✅ FUSE filesystem
+│   ├── interface/         ✅ FUSE filesystem (Phase 2 updated)
 │   │   └── fuse.py
 │   │
-│   ├── intelligence/      ✅ LLM integration & personas
-│   │   ├── __init__.py
-│   │   ├── llm.py
-│   │   └── persona.py
+│   ├── intelligence/      ✅ Ubuntu-only AI generation pipeline
+│   │   ├── ubuntu_profile.py    ← loads config/ubuntu.yaml
+│   │   ├── artifact_policy.py   ← file-class policy resolution
+│   │   ├── prompt_builder.py    ← constraint-first prompts
+│   │   ├── validator.py         ← 4-tier semantic validation
+│   │   ├── orchestrator.py      ← non-blocking background generation
+│   │   └── inference.py         ← local Ollama client
 │   │
 │   ├── gateway/           ✅ SSH/HTTP entry points
-│   │   ├── __init__.py
-│   │   ├── ssh_server.py
+│   │   ├── ssh_server.py        ← session_id injection (Phase 2)
 │   │   └── http_server.py
 │   │
 │   ├── watcher/           ✅ Audit log monitoring
-│   │   ├── __init__.py
 │   │   ├── log_streamer.py
 │   │   └── event_processor.py
 │   │
-│   ├── skills/            ✅ Threat detection & analysis
-│   │   ├── __init__.py
+│   ├── skills/            ✅ Threat detection (monitoring, not generation)
 │   │   ├── command_analyzer.py
 │   │   ├── threat_library.py
 │   │   └── skill_detector.py
 │   │
 │   └── layer0/            ✅ Rust performance layer
-│       ├── Cargo.toml
-│       ├── src/
-│       │   ├── lib.rs
-│       │   ├── protocol.rs
-│       │   ├── reducers.rs
-│       │   ├── circuit_breaker.rs
-│       │   └── utils.rs
-│       └── target/
-│
-├── tests/                 ✅ NEW: Organized test suite
-│   ├── validation/        ✅ Phase 1 core validation
-│   │   ├── validate_core.py
-│   │   └── test_real_attack.py
-│   │
-│   ├── verification/      ✅ Implementation verification
-│   │   ├── verify_phase1.py
-│   │   ├── verify_phase2.py
-│   │   ├── verify_phase3.py
-│   │   └── verify_phase4.py
-│   │
-│   ├── integration/       ✅ End-to-end demos
-│   │   ├── demo_standalone.py
-│   │   └── demo_integration.py
-│   │
-│   └── README.md          ✅ Test suite documentation
-│
-├── docs/
-│   ├── ARCHITECTURE.md    ✅ System architecture
-│   ├── ONBOARDING.md      ✅ Developer guide
-│   ├── PHASE1_VALIDATION.md      ✅ Validation criteria
-│   ├── PHASE1_RESULTS.md         ✅ Test results & findings
-│   └── PHASE1_ACTION_CHECKLIST.md ✅ Validation roadmap
 │
 ├── config/
+│   ├── ubuntu.yaml              ← Ubuntu machine definition (state)
+│   ├── generation_policy.yaml   ← AI generation behavior (behavior)
 │   └── prometheus/
 │       └── prometheus.yml
 │
-├── requirements.txt       ✅ Updated with new dependencies
-├── Makefile              ✅ Updated with test targets
+├── tests/
+│   ├── validation/
+│   ├── verification/
+│   └── integration/
+│
+├── docs/
+│   ├── AI_ARCHITECTURE.md
+│   ├── AI_ROADMAP.md
+│   ├── ARCHITECTURE.md
+│   ├── ONBOARDING.md
+│   └── STATUS.md (this file)
+│
+├── requirements.txt
+├── Makefile
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
-├── Dockerfile
-├── VALIDATION_COMPLETE.txt ✅ Validation summary
-└── README.md             ✅ Project overview
+└── Dockerfile
 ```
-
----
-
-## 🎯 Capabilities
-
-### Attack Detection
-- Reconnaissance detection
-- Privilege Escalation detection
-- Persistence mechanism detection
-- Credential Access detection
-- Lateral Movement detection
-- Data Exfiltration detection
-- Execution detection
-- Defense Evasion detection
-
-### Threat Intelligence
-- Known threat signatures
-- MITRE ATT&CK framework mapping
-- Risk scoring
-- Skill level classification
-- Attack phase progression tracking
-
-### System Features
-- State consistency management
-- FUSE filesystem
-- Content generation
-- Audit logging
-- Real-time event streaming
-- Session correlation
-
----
-
-## 🚀 Next Steps for Deployment
-
-### 1. Docker Environment Setup
-```bash
-make up          # Start development environment
-make logs        # Monitor core-engine logs
-make shell       # Enter container for testing
-```
-
-### 2. Run All Verifications
-```bash
-make verify      # Run all 4 phase verification scripts
-```
-
-### 3. Infrastructure Testing
-- Start Redis and PostgreSQL services
-- Mount FUSE filesystem
-- Test SSH gateway (port 2222)
-- Test HTTP gateway (port 8080)
-
-### 4. Production Deployment
-```bash
-make prod        # Start production stack
-```
-
----
-
-## 📈 Test Results
-
-### Verification Scripts
-- `verify_phase1.py` - State Hypervisor & Database
-- `verify_phase2.py` - FUSE Interface
-- `verify_phase3.py` - Intelligence & Persona
-- `verify_phase4.py` - Gateway, Watcher, Skills
-
-### Validation Scripts
-- `validate_core.py` - Core infrastructure integrity
-- `test_real_attack.py` - Real attack simulation
-
-### Integration Demos
-- `demo_standalone.py` - Skills showcase
-- `demo_integration.py` - Full system integration demo
 
 ---
 
@@ -296,120 +226,32 @@ make prod        # Start production stack
 - fusepy==3.0.1 (FUSE interface)
 - redis==5.0.1 (state storage)
 - psycopg2-binary==2.9.9 (audit logs)
-- paramiko==3.4.0 (SSH gateway) **NEW**
-- python-dateutil==2.8.2 (event processing) **NEW**
+- paramiko==3.4.0 (SSH gateway)
 - pydantic==2.5.3 (data models)
-- cryptography==41.0.7
-- PyYAML==6.0.1
-- requests==2.31.0
-- click==8.1.7
+- PyYAML==6.0.1 (config loading)
+- requests==2.31.0 (Ollama HTTP client)
+- prometheus-client (metrics)
 
 ### Rust (Layer 0)
 - tokio (async runtime)
 - serde (serialization)
 - pyo3 (Python bindings)
 - aho-corasick (pattern matching)
-- bloom (filters)
+
+### Infrastructure
+- **Redis 7.0+** — state, blobs, quotas, latency metrics
+- **PostgreSQL 14+** — audit logs, evidence records
+- **Ollama** — local LLM inference (llama3:3b, llama3:8b)
 
 ---
 
-## 📚 Documentation
+## 🛠️ Hardware Requirements
 
-- ✅ **README.md** - Project overview, quick start
-- ✅ **ARCHITECTURE.md** - Detailed system design
-- ✅ **ONBOARDING.md** - Developer guide
-- ✅ **STATUS.md** - This document
-
----
-
-## 🛠️ Tools/Software & Hardware Requirements
-
-### Software Requirements
-- **Python**: 3.10 or higher
-- **Rust**: 1.70+ (for Layer 0 compilation)
-- **Docker**: 20.10+ and Docker Compose 2.0+
-- **Redis**: 7.0+ (via Docker)
-- **PostgreSQL**: 14+ (via Docker)
-
-### Python Dependencies
-- fusepy==3.0.1 - FUSE filesystem integration
-- redis==5.0.1 - State storage and consistency
-- psycopg2-binary==2.9.9 - PostgreSQL connectivity
-- paramiko==3.4.0 - SSH server implementation
-- pydantic==2.5.3 - Data validation and modeling
-- requests==2.31.0 - HTTP requests
-- cryptography==41.0.7 - Encryption utilities
-- PyYAML==6.0.1 - Configuration management
-
-### Hardware Requirements
-- **CPU**: 2+ cores (4+ recommended)
-- **Memory**: 4GB minimum (8GB recommended)
-- **Storage**: 10GB free space (for Docker images and datasets)
-- **OS**: Linux (Ubuntu 20.04+), macOS (10.15+), or Windows with WSL2
-
-### Optional Tools
-- **Prometheus**: For metrics collection
-- **OpenAI API Key**: For GPT-4 intelligence features
-- **Anthropic API Key**: For Claude integration
-- **Git**: For version control and cloning
+- **CPU**: 4+ cores recommended (Ollama inference)
+- **Memory**: 8GB minimum (16GB recommended for llama3:8b)
+- **Storage**: 20GB free space (Ollama model weights + Docker images)
+- **OS**: Linux (Ubuntu 20.04+), macOS (for development only), or Windows with WSL2 (for development only)
 
 ---
 
-## 📸 System Overview
-
-### Architecture
-- FUSE filesystem implementation
-- Real-time audit logging
-- Multi-threaded SSH/HTTP gateway
-
-### Test Coverage
-```
-Phase 1 (State Management):     Complete
-Phase 2 (FUSE Interface):       Complete
-Phase 3 (Intelligence):         Complete
-Phase 4 (Gateway/Watcher/Skills): Complete
-```
-
-### Core Features
-- FUSE Operations with reasonable latency
-- Redis atomic operations
-- PostgreSQL logging
-- Attack pattern detection
-- Concurrent session support
-
----
-
-## 🚀 Potential Applications
-
-### Current Use Cases
-1. Attacker behavior analysis
-2. Threat research
-3. Security training environments
-4. Incident response simulation
-5. Honeypot deployment
-
-### Future Enhancements
-- Machine learning integration
-- Multi-system correlation
-- Interactive response mechanisms
-- SIEM integration
-- Cloud deployment templates
-- Real-time dashboard
-
----
-
-## ✨ Summary
-
-The Chronos Framework implementation includes:
-
-- Core Infrastructure: State management, database, persistence
-- FUSE Interface: Filesystem implementation
-- Intelligence Layer: LLM integration and personas
-- Gateway: SSH and HTTP entry points
-- Watcher: Real-time audit monitoring
-- Skills: Threat detection capabilities
-- Layer 0: Rust analytics layer
-
----
-
-*Last Updated: March 5, 2026*
+*Last Updated: July 2026 — Phase 2 M2.A–M2.E complete*

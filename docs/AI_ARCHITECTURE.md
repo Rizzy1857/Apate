@@ -1,13 +1,16 @@
 # Chronos AI Architecture Reference
 
 **Purpose:** Component layout, data flow, deployment topology, and storage
-schema for the AI integration described in `AI_ROADMAP.md`, implementing
-the decision logic in `AI_LOGIC.md`.
+schema for the AI integration described in `AI_ROADMAP.md`.
 
 This extends `docs/ARCHITECTURE.md` — it does not replace it. The six-layer
 architecture (Gateway → FUSE → State Hypervisor → Cognitive Intelligence →
 Analysis → Layer 0) is unchanged; this document zooms into Layer 4
-(Cognitive Intelligence) and its new dependencies.
+(Cognitive Intelligence) and its dependencies.
+
+**Governing principle:**
+> Chronos is not an AI-powered operating system. It is a deterministic Ubuntu honeypot
+> that uses AI only to generate plausible artifacts under strict constraints.
 
 ---
 
@@ -19,75 +22,70 @@ graph TD
         Read[read syscall]
         Create[create syscall]
         Readdir[readdir syscall]
+        FDTable["fd-table entry\n{session_id, inode,\nopen_time, flags, path}"]
     end
 
-    subgraph "New: Generation Orchestration"
-        Pool[Background Generation Pool]
-        Lock[Redis Dedup Lock<br/>fs:generating:inode]
-        CB[LLM Circuit Breaker]
-        Fidelity[Fidelity Tier Selector]
-        Scheduler[CPU/GPU Model Scheduler]
+    subgraph "Generation Pipeline (Layer 4)"
+        Pool[GenerationOrchestrator\nThreadPoolExecutor]
+        Lock["Redis Dedup Lock\nfs:generating:<inode> TTL=30s"]
+        Policy[ArtifactPolicyEngine\nfile class → category + constraints]
+        Builder[PromptBuilder\nconstraint-first Ubuntu prompt]
+        Runtime[InferenceRuntime\nOllama HTTP client]
+        Ollama[Ollama\nlocal models only]
+        Validator[SemanticValidator\n4-tier Ubuntu validation]
+        Templates[Static Template Fallbacks\nminimal Ubuntu-plausible content]
     end
 
-    subgraph "Layer 4: Cognitive Intelligence (extended)"
-        Persona[PersonaEngine]
-        PersonaCfg[YAML Persona Configs]
-        Facts[MachineState<br/>chronos:machine_state:session_id]
-        Router[Model Router]
-        Runtime[Inference Runtime]
-        Ollama[Ollama Local Models]
+    subgraph "Machine Definition"
+        UbuntuYAML["config/ubuntu.yaml\n(state)"]
+        PolicyYAML["config/generation_policy.yaml\n(behavior)"]
+        Profile[UbuntuProfile\ntypes + MachineState builder]
+        MachineState["chronos:machine_state:<session_id>\nRedis hash"]
     end
 
-    subgraph "New: Quality Gate"
-        Validator[Semantic Output Validator]
-        Templates[Static Template Fallbacks]
-    end
-
-    subgraph "Layer 3: State Hypervisor (unchanged)"
+    subgraph "Layer 3: State Hypervisor"
         Redis[(Redis)]
     end
 
-    subgraph "New: Storage Lifecycle"
-        BlobMeta[fs:blob_meta:hash]
-        ColdStore[(Cold Storage DB / Disk)]
-        ArchiveStore[(Archive Store)]
+    subgraph "Provenance & Lifecycle"
+        BlobMeta["fs:blob_meta:<hash>\nRedis hash"]
+        ColdStore[(PostgreSQL)]
     end
 
-    subgraph "Layer 5: Analysis (existing)"
-        SkillDetector[SkillDetector]
+    subgraph "Layer 5: Analysis"
+        SkillDetector[SkillDetector\nmonitoring only]
         Watcher[AuditLogStreamer]
     end
 
+    Read --> Pool
     Create -->|fire-and-forget| Pool
     Readdir -->|bounded prewarm| Pool
-    Read -->|cache-miss, adaptive wait| Pool
+    Read -.->|carries session_id| FDTable
 
     Pool --> Lock
-    Pool --> CB
-    CB --> Fidelity
-    Fidelity --> Scheduler
-    Scheduler --> Router
-    Fidelity -->|low tier| Templates
-
-    Router --> Runtime
+    Pool --> Policy
+    PolicyYAML --> Policy
+    Policy --> Builder
+    UbuntuYAML --> Profile
+    Profile --> MachineState
+    MachineState --> Builder
+    Builder --> Runtime
     Runtime --> Ollama
-
-    Persona --> PersonaCfg
-    Persona --> Facts
-    Fidelity --> Persona
-
-    Runtime --> Validator
+    Ollama --> Validator
+    MachineState --> Validator
     Validator -->|accept| Redis
-    Validator -->|reject, retry exhausted| Templates
+    Validator -->|reject x2| Templates
     Templates --> Redis
 
     Redis --> BlobMeta
     Redis -.->|age out| ColdStore
-    ColdStore -.->|expire| ArchiveStore
-    
-    SkillDetector -->|skill score| Fidelity
+
+    SkillDetector -->|detection evidence only| Watcher
     BlobMeta --> Watcher
 ```
+
+> **Note:** `SkillDetector` feeds monitoring/logging only. It does **not** influence
+> which model generates content. Model routing depends solely on file class.
 
 ---
 
@@ -95,11 +93,11 @@ graph TD
 
 ```mermaid
 graph LR
-    subgraph "chronos-net (bridge, no public egress required)"
-        Core[core-engine<br/>FUSE + Hypervisor + Intelligence]
+    subgraph "chronos-net (bridge, no public egress)"
+        Core["core-engine\nFUSE + Hypervisor + Intelligence"]
         Redis[(redis-store)]
         DB[(db-store / PostgreSQL)]
-        Ollama[ollama<br/>local inference runtime]
+        Ollama["ollama\nlocal inference only"]
     end
 
     Core --> Redis
@@ -107,35 +105,37 @@ graph LR
     Core --> Ollama
 ```
 
-**Key deployment decision:** `ollama` runs as a sibling container on
-`chronos-net`, same pattern as `redis-store`/`db-store`. This ensures the entire stack is air-gapped — no attacker-facing container needs public internet access. Abstractions for external providers (OpenAI, Anthropic) have been removed in favor of a robust local-first **Inference Runtime** and **Model Router**.
+The entire stack is air-gapped. No container requires public internet access.
+There are no cloud LLM providers (OpenAI, Anthropic) in this architecture.
+All inference is handled by Ollama running as a sibling container on `chronos-net`.
 
-**Resource note:** `docker-compose.prod.yml` currently caps `core-engine`
-at 2 CPU / 2GB. Ollama needs its own budget, ideally GPU-backed if available.
+**Resource note:** `ollama` needs its own CPU/memory budget in `docker-compose.prod.yml`.
+GPU-backed inference is supported via Docker device passthrough if available.
 
 ---
 
-## 3. Storage Lifecycle and Schema Additions
+## 3. Storage Schema Additions
 
-Extends the existing schema in `docs/ARCHITECTURE.md §1`. All new keys are additive.
+All new Redis keys are additive to the existing schema in `docs/ARCHITECTURE.md §1`.
 
 ### Redis Additions
 
 | Key Pattern | Type | Purpose | TTL |
 |---|---|---|---|
-| `fs:generating:<inode>` | String (lock) | Cross-process generation dedup | 30s |
-| `chronos:machine_state:<session_id>` | Hash/JSON | Relational world model (hostname, user, IP, services) | Session lifetime |
-| `fs:blob_meta:<hash>` | Hash | Provenance: persona, model, prompt, seed, temp, top_p, generated_at, validated, fidelity | None (persists with blob) |
-| `chronos:session:<session_id>:fidelity_tier` | String | Current escalated fidelity tier for the session | Session lifetime |
-| `chronos:metrics:llm:*` | Counters/Histograms | Generation latency, timeout count, semantic validation pass/fail | None |
+| `fs:generating:<inode>` | String (lock) | Cross-thread generation dedup | 30s |
+| `chronos:machine_state:<session_id>` | Hash | Ubuntu machine state per session (packages, services, users, ports, …) | Session lifetime |
+| `fs:blob_meta:<hash>` | Hash | Provenance: ubuntu_version, kernel_version, model, file_class, category, generated_at, validated | Persists with blob |
+| `chronos:metrics:latency:<model>` | JSON list | Rolling 50-sample latency window for adaptive timeout calculation | None |
+| `chronos:quota:<session_id>:<window>` | Integer | Per-session inference quota counter (token bucket) | 2× quota window |
 
 ### Storage Tiering
 
-To prevent unbounded storage growth from millions of generated blobs, Chronos implements a storage lifecycle:
-1.  **Hot (Memory/Cache):** Frequently accessed files and recently generated dynamic files.
-2.  **Warm (Redis):** Standard `fs:blob:<hash>` storage for the active session.
-3.  **Cold (Disk / PostgreSQL):** Files that haven't been accessed in a defined period but belong to an active session.
-4.  **Archive / Delete:** Files belonging to expired sessions are aged out and deleted to reclaim space.
+| Tier | Storage | Contents |
+|---|---|---|
+| Hot | Redis memory | Recently accessed blobs, active session MachineState |
+| Warm | Redis persistent | Standard `fs:blob:<hash>` for active sessions |
+| Cold | PostgreSQL | Blobs from sessions inactive > threshold |
+| Archive/Delete | — | Blobs from expired sessions, aged out |
 
 ---
 
@@ -145,40 +145,41 @@ To prevent unbounded storage growth from millions of generated blobs, Chronos im
 sequenceDiagram
     participant Attacker
     participant FUSE as ChronosFUSE.read()
-    participant Pool as Background Pool
+    participant Pool as GenerationOrchestrator
     participant Lock as Redis Lock
-    participant CB as Circuit Breaker
-    participant Persona as PersonaEngine
-    participant Runtime as Inference Runtime
-    participant Validator as Semantic Validator
+    participant Policy as ArtifactPolicyEngine
+    participant Builder as PromptBuilder
+    participant Runtime as InferenceRuntime
+    participant Validator as SemanticValidator
     participant Redis
 
-    Attacker->>FUSE: cat /etc/ghost.conf
+    Attacker->>FUSE: cat /etc/nginx/nginx.conf
     FUSE->>Redis: check content_hash
     Redis-->>FUSE: none (cache miss)
-    FUSE->>Pool: get_or_start_generation(inode, path)
+    FUSE->>Pool: get_or_generate(inode, path, session_id, machine_state)
     Pool->>Lock: SET fs:generating:<inode> NX EX 30
-    Pool->>CB: check_allow()
-    CB-->>Pool: allowed (Closed state)
-    Pool->>Persona: generate_content(filename, MachineState)
-    Persona->>Runtime: generate(prompt)
+    Pool->>Policy: resolve(filename, path)
+    Policy-->>Pool: ArtifactPolicy(class=config_file, category=valid, model=llama3:8b, max_lines=80)
+    Pool->>Builder: build(filename, path, machine_state, policy)
+    Builder-->>Pool: constrained Ubuntu prompt
+    Pool->>Runtime: generate(prompt, system_prompt, model=llama3:8b)
+    Runtime->>Ollama: POST /api/generate
 
-    alt completes within Adaptive Timeout (e.g. P95 latency + margin)
-        Runtime-->>Persona: content
-        Persona-->>Pool: content
-        Pool->>Validator: validate_semantically(content, content_type)
+    alt Completes within adaptive timeout (P95 latency + 2.0s)
+        Ollama-->>Runtime: raw content
+        Runtime-->>Pool: raw content
+        Pool->>Validator: validate(content, policy, machine_state)
         Validator-->>Pool: ACCEPT
         Pool->>Redis: persist blob + inode + blob_meta
-        Pool-->>FUSE: content
+        Pool-->>FUSE: content bytes
         FUSE-->>Attacker: file content
-    else exceeds Adaptive Timeout
+    else Timeout exceeded
         FUSE-->>Attacker: EAGAIN / ETIMEDOUT / EIO (randomized)
-        Note over Pool,Runtime: generation continues in background,<br/>not cancelled
-        Runtime-->>Persona: content (later)
-        Persona-->>Pool: content
-        Pool->>Validator: validate_semantically(content, content_type)
+        Note over Pool,Ollama: generation continues in background,\nnot cancelled
+        Ollama-->>Runtime: content (later)
+        Pool->>Validator: validate(...)
         Pool->>Redis: persist blob + inode + blob_meta
-        Note over Redis: next read() for this path<br/>takes the fast cache-hit path
+        Note over Redis: next read() takes fast cache-hit path
     end
 ```
 
@@ -191,16 +192,15 @@ sequenceDiagram
     participant Attacker
     participant FUSE as ChronosFUSE.readdir()
     participant Redis
-    participant Pool as Background Pool
+    participant Pool as GenerationOrchestrator
 
     Attacker->>FUSE: ls /etc
     FUSE->>Redis: ZRANGE fs:dir:<inode>
-    Redis-->>FUSE: [file1, file2, ..., fileN]
-    loop High Priority (Likely Reads) Children
+    Redis-->>FUSE: [nginx/, ssh/, fail2ban/, …]
+    loop Up to 5 ungenerated children
         FUSE->>Redis: check content_hash for child
-        alt no content_hash yet
-            FUSE->>Pool: submit_background(generate_and_persist)
-            Note over Pool: prioritized via task routing
+        alt no content_hash
+            FUSE->>Pool: submit_background(inode, path, session_id, PRIORITY_MEDIUM)
         end
     end
     FUSE-->>Attacker: directory listing (immediate, unaffected by prewarm)
@@ -208,28 +208,26 @@ sequenceDiagram
 
 ---
 
-## 6. MachineState & Fidelity: Data Ownership
+## 6. MachineState: Data Ownership
 
 ```mermaid
 graph TD
-    Session[SSH/HTTP Session Start] --> StateInit{chronos:machine_state:session_id exists?}
-    StateInit -->|no| CreateState[Create relational graph from persona]
-    StateInit -->|yes| ReuseState[Reuse existing MachineState]
-    CreateState --> StateStore[(chronos:machine_state:session_id)]
-    ReuseState --> StateStore
+    SSHConnect[SSH Connection] --> SessionID[Generate session_id\nuuid4]
+    SessionID --> CtxInject["threading.local\nfuse_context.session_id"]
+    CtxInject --> FUSEOpen["fuse.open()\nfd_table[fd] = {session_id, inode, open_time, flags, path}"]
 
-    CmdAnalysis[CommandAnalyzer / SkillDetector<br/>per command] --> ScoreUpdate[skill_score updated]
-    ScoreUpdate --> TierCheck{score crosses threshold?}
-    TierCheck -->|yes, upward only| TierStore[(chronos:session:id:fidelity_tier)]
-    TierCheck -->|no| TierStore
+    FUSEOpen --> StateCheck{"chronos:machine_state\n:session_id exists?"}
+    StateCheck -->|no| CreateState[UbuntuProfile.build_machine_state()]
+    CreateState --> UbuntuYAML[config/ubuntu.yaml]
+    CreateState --> StateStore[(Redis: machine_state hash)]
+    StateCheck -->|yes| StateStore
 
-    StateStore --> Generation[generate_content call via Prompt Builder]
-    TierStore --> Generation
-    Generation --> Output[Generated content]
+    StateStore --> Generation[PromptBuilder\nextracts relevant subgraph]
+    Generation --> Output[Generated Ubuntu artifact]
 ```
 
-This makes explicit that **MachineState and fidelity tier are independent axes**:
-a low-fidelity session (`template_only`) still uses the same locked relational state if it later escalates. Consistency doesn't reset when fidelity changes, only richness does.
+MachineState is created once per session from `ubuntu.yaml` and frozen.
+AI cannot modify MachineState — it only reads the relevant subgraph when building prompts.
 
 ---
 
@@ -237,19 +235,18 @@ a low-fidelity session (`template_only`) still uses the same locked relational s
 
 ```mermaid
 graph TD
-    subgraph "Always available regardless of AI state"
-        StateOps[Filesystem state ops<br/>create, unlink, mkdir, getattr]
-        Detection[CommandAnalyzer / ThreatLibrary /<br/>SkillDetector]
-        Audit[AuditLogStreamer / EventProcessor]
+    subgraph "Always available"
+        StateOps["Filesystem state ops\ncreate, unlink, mkdir, getattr"]
+        Detection["CommandAnalyzer / ThreatLibrary\nSkillDetector"]
+        Audit["AuditLogStreamer / EventProcessor"]
     end
 
-    subgraph "Degradable"
+    subgraph "Gracefully degradable"
         Generation[Content generation]
-        Fidelity[Fidelity tiering]
     end
 
-    Outage[Inference Runtime outage] -->|circuit breaker trips| Generation
-    Generation -->|falls back to| Templates[Static templates]
+    Outage[Ollama outage] -->|circuit breaker trips| Generation
+    Generation -->|falls back to| Templates[Static minimal Ubuntu content]
     Outage -.->|no effect on| StateOps
     Outage -.->|no effect on| Detection
     Outage -.->|no effect on| Audit
@@ -259,14 +256,7 @@ graph TD
 
 ## 8. What This Does *Not* Change
 
-To keep this document scoped correctly:
-
-- **FUSE syscall semantics** (`getattr`, `readdir`, `unlink`, `rmdir`,
-  `chmod`, `chown`, `truncate`) are untouched — only `read()` and `create()`
-  gain new orchestration logic.
-- **Atomic Lua scripts** (`atomic_create.lua`) are untouched — inode
-  allocation and directory linking remain exactly as fast and atomic as
-  before.
-- **Layer 0 (Rust)** is untouched — protocol classification, circuit
-  breaking for traffic, and noise detection operate independently of
-  anything in this document.
+- **FUSE syscall semantics** (`getattr`, `readdir`, `unlink`, `rmdir`, `chmod`, `chown`, `truncate`) are untouched — only `read()` and `create()` gain orchestration logic.
+- **Atomic Lua scripts** (`atomic_create.lua`) are untouched — inode allocation and directory linking remain atomic and fast.
+- **Layer 0 (Rust)** is untouched — traffic classification and circuit breaking operate independently.
+- **SkillDetector** remains unmodified — its output goes to monitoring only, not to model selection.

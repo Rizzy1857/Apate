@@ -40,6 +40,22 @@ services:
       timeout: 5s
       retries: 5
 
+  # The Inference Runtime: Local LLMs
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chronos_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - chronos-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # The Core Engine: FUSE Filesystem + State Hypervisor
   core-engine:
     build:
@@ -55,6 +71,7 @@ services:
     environment:
       - REDIS_HOST=redis-store
       - POSTGRES_HOST=db-store
+      - OLLAMA_HOST=ollama
       - PYTHONPATH=/app/src
     ports:
       - "2222:2222"  # SSH honeypot
@@ -65,6 +82,8 @@ services:
       redis-store:
         condition: service_healthy
       db-store:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     networks:
       - chronos-net
@@ -78,3 +97,4 @@ volumes:
   redis-data:
   postgres-data:
   fuse-mount:
+  ollama-data:

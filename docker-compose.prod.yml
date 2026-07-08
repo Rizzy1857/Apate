@@ -41,6 +41,25 @@ services:
           cpus: '1.0'
           memory: 1G
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chronos_ollama
+    restart: always
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - chronos-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+
   core-engine:
     build: .
     container_name: chronos_core
@@ -56,12 +75,12 @@ services:
         condition: service_healthy
       db-store:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
     environment:
       - REDIS_HOST=redis-store
       - POSTGRES_HOST=db-store
-      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OLLAMA_HOST=ollama
       - PROMETHEUS_MULTIPROC_DIR=/tmp
     volumes:
       - fuse-mount:/mnt/honeypot
@@ -107,6 +126,7 @@ volumes:
   fuse-mount:
   prometheus_data:
   grafana_data:
+  ollama-data:
 
 
 networks:

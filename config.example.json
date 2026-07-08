@@ -1,42 +1,30 @@
 {
-  "_comment": "Example configuration file for Mirage Honeypot - Copy this to config.json and modify as needed",
+  "_comment": "Example configuration for Mirage / Chronos. Copy to config.json and adjust as needed. All inference runs locally via Ollama — no cloud API keys required.",
   "database": {
     "host": "localhost",
     "port": 5432,
-    "name": "mirage_honeypot",
-    "user": "mirage"
+    "name": "chronos",
+    "user": "chronos"
   },
-  "ai": {
-    "provider": "openai",
-    "model": "gpt-3.5-turbo",
-    "max_tokens": 500,
+  "inference": {
+    "ollama_host": "ollama",
+    "default_model": "llama3:8b",
+    "max_tokens": 800,
     "temperature": 0.7,
-    "enable_adaptive_responses": true,
-    "response_cache_ttl": 3600
+    "quota_per_session_per_minute": 20
   },
-  "honeypot": {
+  "gateway": {
     "ssh_port": 2222,
     "http_port": 8080,
-    "tcp_port": 9999,
-    "iot_port": 8081,
-    "ssh_welcome_banner": "Ubuntu 20.04.3 LTS",
-    "ssh_motd": "Welcome to production server",
-    "ssh_fake_users": ["admin", "root", "user", "ubuntu", "postgres", "mysql"],
-    "http_fake_apps": ["wordpress", "phpmyadmin", "jenkins", "grafana"],
-    "http_login_paths": ["/admin", "/login", "/wp-admin", "/dashboard"],
-    "max_attempts_per_ip": 100,
-    "rate_limit_window": 3600
+    "max_connections_per_ip": 100,
+    "rate_limit_window_seconds": 3600
   },
-  "honeytokens": {
-    "default_expiry_days": 30,
-    "callback_url": "http://localhost:8000/api/v1/honeytokens/callback",
-    "enable_web_beacons": true,
-    "fake_api_providers": ["openai", "stripe", "aws", "github", "slack"]
-  },
+  "ubuntu_profile": "config/ubuntu.yaml",
+  "generation_policy": "config/generation_policy.yaml",
   "logging": {
     "level": "INFO",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    "file_path": "./logs/mirage.log",
+    "file_path": "./logs/chronos.log",
     "max_file_size": "10MB",
     "backup_count": 5,
     "enable_json_logs": false
