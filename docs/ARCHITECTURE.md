@@ -14,46 +14,46 @@ This document provides a deep dive into the internal architecture of the Chronos
 
 ---
 
-##  System Components
+## System Components
 
 The architecture follows a strict separation of concerns (top to bottom):
 
-1.  **Interface Layer (FUSE)**: The "skin" of the honeypot. Purely reactive.
-2.  **Gateway Layer (SSH/HTTP)**: Entry points for attacker interaction.
-3.  **Core Layer (Hypervisor)**: The "brain". Enforces logic and consistency.
-4.  **Intelligence Layer (Cognitive)**: The "imagination". Generates content on demand.
-5.  **Data Layer (Persistence)**: The "memory". Atomic storage and audit logs.
-6.  **Layer 0 (Rust)**: High-performance traffic analysis and threat detection.
+1. **Interface Layer (FUSE)**: The "skin" of the honeypot. Purely reactive.
+2. **Gateway Layer (SSH/HTTP)**: Entry points for attacker interaction.
+3. **Core Layer (Hypervisor)**: The "brain". Enforces logic and consistency.
+4. **Intelligence Layer (Cognitive)**: The "imagination". Generates content on demand.
+5. **Data Layer (Persistence)**: The "memory". Atomic storage and audit logs.
+6. **Layer 0 (Rust)**: High-performance traffic analysis and threat detection.
 
 ```mermaid
 graph TD
-    subgraph "Attacker Interaction - TOP"
-        Shell[SSH/HTTP Clients] -->|Commands/Requests| Gateway[Gateway Layer]
-        Gateway -->|Syscalls| Fuse[FUSE Interface]
-    end
+  subgraph "Attacker Interaction - TOP"
+    Shell[SSH/HTTP Clients] -->|Commands/Requests| Gateway[Gateway Layer]
+    Gateway -->|Syscalls| Fuse[FUSE Interface]
+  end
 
-    subgraph "Chronos Core"
-        Fuse -->|Resolves Path| Hypervisor[State Hypervisor]
-        Hypervisor -->|Atomic Ops| Lua[Redis Lua Scripts]
-        
-        Fuse -->|Read Content| Cache{Has Content?}
-        Cache -->|Yes| Blob[Blob Store]
-        Cache -->|No| Persona[Persona Engine]
-        
-        Persona -->|Prompt| LLM[LLM Provider]
-        LLM -->|Generated Text| Blob
-    end
+  subgraph "Chronos Core"
+    Fuse -->|Resolves Path| Hypervisor[State Hypervisor]
+    Hypervisor -->|Atomic Ops| Lua[Redis Lua Scripts]
+    
+    Fuse -->|Read Content| Cache{Has Content?}
+    Cache -->|Yes| Blob[Blob Store]
+    Cache -->|No| Persona[Persona Engine]
+    
+    Persona -->|Prompt| LLM[LLM Provider]
+    LLM -->|Generated Text| Blob
+  end
 
-    subgraph "Persistence"
-        Lua -->|Commit| Redis[(Redis DB)]
-        Hypervisor -->|Audit| Postgres[(PostgreSQL)]
-    end
+  subgraph "Persistence"
+    Lua -->|Commit| Redis[(Redis DB)]
+    Hypervisor -->|Audit| Postgres[(PostgreSQL)]
+  end
 
-    subgraph "Layer 0 - BOTTOM"
-        Gateway -->|Traffic| Layer0[Rust Protocol Analysis]
-        Layer0 -->|Threats| Skills[Threat Detection]
-        Skills -->|Risk Scores| Postgres
-    end
+  subgraph "Layer 0 - BOTTOM"
+    Gateway -->|Traffic| Layer0[Rust Protocol Analysis]
+    Layer0 -->|Threats| Skills[Threat Detection]
+    Skills -->|Risk Scores| Postgres
+  end
 ```
 
 **Figure A1.** Mirage high-level architecture and data flow (Chronos framework).
@@ -108,11 +108,11 @@ We use a hybrid schema optimized for O(1) lookups and atomic updates.
 To prevent race conditions (e.g., two attackers creating the same file simultaneously), we use Redis Lua scripts. These execute atomically on the Redis server.
 
 **Example: `atomic_create.lua` logic**
-1.  Check `fs:dir:<parent>` for filename existence. (Abort if exists)
-2.  `INCR fs:next_inode` -> Get new ID.
-3.  `HSET fs:inode:<new_id>` -> Set default metadata (0644, root:root).
-4.  `ZADD fs:dir:<parent>` -> Link new inode to parent directory.
-5.  All happens in a single transaction block.
+1. Check `fs:dir:<parent>` for filename existence. (Abort if exists)
+2. `INCR fs:next_inode` -> Get new ID.
+3. `HSET fs:inode:<new_id>` -> Set default metadata (0644, root:root).
+4. `ZADD fs:dir:<parent>` -> Link new inode to parent directory.
+5. All happens in a single transaction block.
 
 ---
 
@@ -132,12 +132,12 @@ Chronos implements a userspace filesystem using `fusepy`. This allows us to inte
 
 ### Path Resolution
 Since Redis is a flat key-value store, we must simulate hierarchy.
-*   **Resolution**: Recursive lookup.
-    *   Path: `/etc/passwd`
-    *   Root Inode: `1`
-    *   `ZSCORE fs:dir:1 "etc"` -> Returns Inode `2`
-    *   `ZSCORE fs:dir:2 "passwd"` -> Returns Inode `3`
-    *   Return Inode `3`.
+*  **Resolution**: Recursive lookup.
+  *  Path: `/etc/passwd`
+  *  Root Inode: `1`
+  *  `ZSCORE fs:dir:1 "etc"` -> Returns Inode `2`
+  *  `ZSCORE fs:dir:2 "passwd"` -> Returns Inode `3`
+  *  Return Inode `3`.
 
 ---
 
@@ -146,19 +146,19 @@ Since Redis is a flat key-value store, we must simulate hierarchy.
 Chronos introduces "Lazy Generation" to populate the filesystem dynamically.
 
 ### Workflow
-1.  **Attacker**: `cat /etc/secret_config.conf`
-2.  **FUSE**: Resolves path to Inode `X`.
-3.  **Core**: Checks Inode `X`.
-    *   `content_hash`: `NULL` (Ghost File)
-4.  **Persona Engine**:
-    *   Builds Context: `{"filename": "secret_config.conf", "path": "/etc", "persona": "Database Server"}`
-    *   Prompts LLM: *"You are a Database Server. Generate a realistic config file for..."*
-5.  **LLM**: Returns valid configuration text.
-6.  **Core**:
-    *   Saves text to `fs:blob:<new_hash>`
-    *   Updates Inode `X` with `content_hash`
-    *   **Crucial**: The file is now "solid". Subsequent reads come from Redis, not LLM.
-7.  **FUSE**: Returns content to attacker.
+1. **Attacker**: `cat /etc/secret_config.conf`
+2. **FUSE**: Resolves path to Inode `X`.
+3. **Core**: Checks Inode `X`.
+  *  `content_hash`: `NULL` (Ghost File)
+4. **Persona Engine**:
+  *  Builds Context: `{"filename": "secret_config.conf", "path": "/etc", "persona": "Database Server"}`
+  *  Prompts LLM: *"You are a Database Server. Generate a realistic config file for..."*
+5. **LLM**: Returns valid configuration text.
+6. **Core**:
+  *  Saves text to `fs:blob:<new_hash>`
+  *  Updates Inode `X` with `content_hash`
+  *  **Crucial**: The file is now "solid". Subsequent reads come from Redis, not LLM.
+7. **FUSE**: Returns content to attacker.
 
 This design improves **consistency** (stable subsequent reads) and supports **high apparent depth** through on-demand generation.
 
@@ -168,11 +168,11 @@ This design improves **consistency** (stable subsequent reads) and supports **hi
 
 While the Python/FUSE layer handles logic, high-volume traffic analysis happens in Rust (`src/chronos/layer0`).
 
-*   **Role**: Pre-flight analysis of payloads.
-*   **Mechanism**:
-    *   Protocol Buffering
-    *   Regex/Heuristic matching for standard exploits (SQLi, XSS, Command Injection)
-    *   Feeds directly into the Risk Engine (Future Phase).
+*  **Role**: Pre-flight analysis of payloads.
+*  **Mechanism**:
+  *  Protocol Buffering
+  *  Regex/Heuristic matching for standard exploits (SQLi, XSS, Command Injection)
+  *  Feeds directly into the Risk Engine (Future Phase).
 
 ---
 
@@ -180,17 +180,17 @@ While the Python/FUSE layer handles logic, high-volume traffic analysis happens 
 
 ### Containerization
 Chronos runs inside a Docker container with specific capabilities:
-*   `CAP_SYS_ADMIN`: Required for FUSE mount.
-*   `/dev/fuse`: Device mapping.
+*  `CAP_SYS_ADMIN`: Required for FUSE mount.
+*  `/dev/fuse`: Device mapping.
 
 ### Isolation Strategy
-*   **Network**: The honeypot runs on an isolated Docker network (`chronos-net`).
-*   **Persistence**: Redis/Postgres verify the only "state" that persists. Destroying the `core-engine` container resets the interface but preserves the data logic if volumes are kept.
+*  **Network**: The honeypot runs on an isolated Docker network (`chronos-net`).
+*  **Persistence**: Redis/Postgres verify the only "state" that persists. Destroying the `core-engine` container resets the interface but preserves the data logic if volumes are kept.
 
 ---
 
 ## 6. Future Roadmap
 
-1.  **Network Topology Simulation**: Simulating multiple hosts (lateral movement targets).
-2.  **Active Countermeasures**: Slowing down `read()` calls based on Attacker Risk Score.
-3.  **Visual Dashboard**: Web UI for the PostgreSQL audit logs.
+1. **Network Topology Simulation**: Simulating multiple hosts (lateral movement targets).
+2. **Active Countermeasures**: Slowing down `read()` calls based on Attacker Risk Score.
+3. **Visual Dashboard**: Web UI for the PostgreSQL audit logs.

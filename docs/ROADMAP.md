@@ -55,25 +55,25 @@ From repository docs and tests as of March 2026:
 
 ```mermaid
 gantt
-    title Mirage Program Roadmap (Apate Repo)
-    dateFormat  YYYY-MM-DD
-    axisFormat  %b %Y
+  title Mirage Program Roadmap (Apate Repo)
+  dateFormat YYYY-MM-DD
+  axisFormat %b %Y
 
-    section Phase 1 — Core Platform (Completed)
-    Foundation and architecture baseline          :done, p1a, 2025-08-24, 90d
-    Layer 0 Rust + integration hardening          :done, p1b, 2025-11-21, 70d
-    Gateway/Watcher/Skills completion             :done, p1c, 2026-02-01, 20d
-    Validation docs + test consolidation           :done, p1d, 2026-02-25, 10d
+  section Phase 1 — Core Platform (Completed)
+  Foundation and architecture baseline     :done, p1a, 2025-08-24, 90d
+  Layer 0 Rust + integration hardening     :done, p1b, 2025-11-21, 70d
+  Gateway/Watcher/Skills completion       :done, p1c, 2026-02-01, 20d
+  Validation docs + test consolidation      :done, p1d, 2026-02-25, 10d
 
-    section Phase 2 — AI Integration (In Progress)
-    AI scope guardrails and use-case boundary      :active, p2a, 2026-03-03, 30d
-    Deterministic-AI coupling patterns             :p2b, after p2a, 35d
-    Explainable analysis layer and prompts         :p2c, after p2b, 35d
-    AI regression and anti-slop quality gates      :p2d, after p2c, 30d
-    Phase 2 release review                         :milestone, p2e, after p2d, 1d
+  section Phase 2 — AI Integration (In Progress)
+  AI scope guardrails and use-case boundary   :active, p2a, 2026-03-03, 30d
+  Deterministic-AI coupling patterns       :p2b, after p2a, 35d
+  Explainable analysis layer and prompts     :p2c, after p2b, 35d
+  AI regression and anti-slop quality gates   :p2d, after p2c, 30d
+  Phase 2 release review             :milestone, p2e, after p2d, 1d
 ```
 
-  **Figure R1.** Mirage two-phase delivery timeline (commit-evidence aligned).
+ **Figure R1.** Mirage two-phase delivery timeline (commit-evidence aligned).
 
 ---
 
@@ -81,27 +81,27 @@ gantt
 
 ```mermaid
 flowchart TD
-    A[Apate Repository] --> B[Mirage Product Goals]
-    B --> C[Chronos Framework]
+  A[Apate Repository] --> B[Mirage Product Goals]
+  B --> C[Chronos Framework]
 
-    C --> D[State Hypervisor + Redis/Lua]
-    C --> E[FUSE Interface]
-    C --> F[Gateway + Watcher + Skills]
-    C --> G[Layer 0 Rust]
+  C --> D[State Hypervisor + Redis/Lua]
+  C --> E[FUSE Interface]
+  C --> F[Gateway + Watcher + Skills]
+  C --> G[Layer 0 Rust]
 
-    D --> H[Phase 1 Completion]
-    E --> H
-    F --> H
-    G --> H
+  D --> H[Phase 1 Completion]
+  E --> H
+  F --> H
+  G --> H
 
-    H --> I[Phase 2 AI Integration]
-    I --> J[Controlled AI usage]
-    I --> K[Explainable outputs]
-    I --> L[Minimize state contradiction risk]
-    I --> M[No unnecessary complexity]
+  H --> I[Phase 2 AI Integration]
+  I --> J[Controlled AI usage]
+  I --> K[Explainable outputs]
+  I --> L[Minimize state contradiction risk]
+  I --> M[No unnecessary complexity]
 ```
 
-  **Figure R2.** Dependency relationship between Apate repository assets and Mirage phase outcomes.
+ **Figure R2.** Dependency relationship between Apate repository assets and Mirage phase outcomes.
 
 ---
 
@@ -270,9 +270,9 @@ This backlog lists candidate additions not mandatory for Phase 2 completion but 
 
 - Any roadmap modification must update this file and reference evidence (commit IDs, test outputs, or docs links)
 - Naming must remain consistent:
-  - Repo: Apate
-  - Product: Mirage
-  - Framework: Chronos
+ - Repo: Apate
+ - Product: Mirage
+ - Framework: Chronos
 - AI features are accepted only if they preserve deterministic truth and improve operator clarity
 
 ---

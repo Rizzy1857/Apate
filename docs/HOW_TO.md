@@ -54,44 +54,44 @@ cat etc/passwd
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Attacker/User                       │
+│         Attacker/User            │
 └───────────────────┬─────────────────────────────────┘
-                    │
-                    ▼
+          │
+          ▼
 ┌─────────────────────────────────────────────────────┐
-│              FUSE Filesystem Layer                   │
-│         (Intercepts ALL file operations)             │
-│                                                       │
-│  • read()  • write()  • open()  • readdir()          │
-│  • getattr() • create() • unlink() • mkdir()         │
+│       FUSE Filesystem Layer          │
+│     (Intercepts ALL file operations)       │
+│                            │
+│ • read() • write() • open() • readdir()     │
+│ • getattr() • create() • unlink() • mkdir()     │
 └───────────────────┬─────────────────────────────────┘
-                    │
-                    ▼
+          │
+          ▼
 ┌─────────────────────────────────────────────────────┐
-│              State Management (Redis)                │
-│                                                       │
-│  • Directory structure cache                         │
-│  • Session tracking                                  │
-│  • Command history                                   │
-│  • Atomic operations via Lua scripts                 │
+│       State Management (Redis)        │
+│                            │
+│ • Directory structure cache             │
+│ • Session tracking                 │
+│ • Command history                  │
+│ • Atomic operations via Lua scripts         │
 └───────────────────┬─────────────────────────────────┘
-                    │
-                    ▼
+          │
+          ▼
 ┌─────────────────────────────────────────────────────┐
-│           Intelligence Layer (Python)                │
-│                                                       │
-│  CommandAnalyzer: Pattern matching & heuristics      │
-│  ThreatLibrary: MITRE ATT&CK signatures             │
-│  SkillDetector: Attacker profiling                   │
+│      Intelligence Layer (Python)        │
+│                            │
+│ CommandAnalyzer: Pattern matching & heuristics   │
+│ ThreatLibrary: MITRE ATT&CK signatures       │
+│ SkillDetector: Attacker profiling          │
 └───────────────────┬─────────────────────────────────┘
-                    │
-                    ▼
+          │
+          ▼
 ┌─────────────────────────────────────────────────────┐
-│         Persistence Layer (PostgreSQL)               │
-│                                                       │
-│  • Long-term event storage                           │
-│  • Session metadata                                  │
-│  • Attack timelines                                  │
+│     Persistence Layer (PostgreSQL)        │
+│                            │
+│ • Long-term event storage              │
+│ • Session metadata                 │
+│ • Attack timelines                 │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -102,11 +102,11 @@ cat etc/passwd
 #### 1. **FUSE Filesystem** (`src/chronos/interface/fuse.py`)
 - **Purpose**: Creates a realistic Linux-like filesystem and tracks key operations
 - **How it works**:
-  - Implements all standard POSIX filesystem operations
-  - Each operation (read, write, list) is intercepted
-  - Operations are logged before being executed
-  - Returns simulated file contents (e.g., fake `/etc/passwd`)
-  
+ - Implements all standard POSIX filesystem operations
+ - Each operation (read, write, list) is intercepted
+ - Operations are logged before being executed
+ - Returns simulated file contents (e.g., fake `/etc/passwd`)
+ 
 **Example**: When attacker runs `cat /etc/passwd`:
 ```python
 1. FUSE intercepts open("/etc/passwd", O_RDONLY)
@@ -118,23 +118,23 @@ cat etc/passwd
 #### 2. **Redis State Management** (`src/chronos/core/state.py`)
 - **Purpose**: Ultra-fast in-memory storage for live tracking
 - **Data Structures**:
-  ```
-  chronos:fs:/etc/passwd          → Hash of file metadata
-  chronos:session:abc123          → Hash of session data
-  chronos:commands:abc123         → List of executed commands
-  chronos:metrics:operations      → Counter for stats
-  ```
+ ```
+ chronos:fs:/etc/passwd     → Hash of file metadata
+ chronos:session:abc123     → Hash of session data
+ chronos:commands:abc123     → List of executed commands
+ chronos:metrics:operations   → Counter for stats
+ ```
 - **Atomic Operations**: Uses Lua scripts to prevent race conditions
-  ```lua
-  -- Example: Creating a file atomically
-  local exists = redis.call('EXISTS', KEYS[1])
-  if exists == 0 then
-      redis.call('HSET', KEYS[1], 'created', ARGV[1])
-      return 1
-  else
-      return 0
-  end
-  ```
+ ```lua
+ -- Example: Creating a file atomically
+ local exists = redis.call('EXISTS', KEYS[1])
+ if exists == 0 then
+   redis.call('HSET', KEYS[1], 'created', ARGV[1])
+   return 1
+ else
+   return 0
+ end
+ ```
 
 #### 3. **Intelligence Layer** (`src/chronos/intelligence/`)
 
@@ -145,10 +145,10 @@ cat etc/passwd
 Command: "find / -perm -4000 2>/dev/null"
 
 Analysis:
-   Contains "find" → reconnaissance
-   Searches for SUID binaries (-perm -4000) → privilege escalation
-   Redirects errors (2>/dev/null) → covering tracks
-  
+  Contains "find" → reconnaissance
+  Searches for SUID binaries (-perm -4000) → privilege escalation
+  Redirects errors (2>/dev/null) → covering tracks
+ 
 Result: MEDIUM RISK - privilege_escalation.suid_search
 ```
 
@@ -164,11 +164,11 @@ Result: HIGH RISK - Password File Dumping
 ##### SkillDetector
 **Profiles attacker sophistication:**
 ```
-Opportunistic (0-10):  Random commands, no clear goal
+Opportunistic (0-10): Random commands, no clear goal
 Script Kiddie (10-30): Running known exploits, basic enumeration
-Intermediate (30-60):  Custom scripts, multi-stage attacks
-Advanced (60-80):      Obfuscation, anti-forensics, custom tools
-Expert (80-100):       Zero-days, custom malware, nation-state TTPs
+Intermediate (30-60): Custom scripts, multi-stage attacks
+Advanced (60-80):   Obfuscation, anti-forensics, custom tools
+Expert (80-100):    Zero-days, custom malware, nation-state TTPs
 ```
 
 #### 4. **PostgreSQL Persistence** (`src/chronos/core/database.py`)
@@ -200,46 +200,46 @@ Layer 0 is Chronos's **ultra-fast first line of defense**, written in Rust for m
 
 ```
 Network Packet
-      │
-      ▼
+   │
+   ▼
 ┌─────────────────────────────────────────┐
-│   Circuit Breaker (Latency Protection)  │
-│   • Trips at >5ms latency               │
-│   • Auto-recovery after 30s              │
-│   • Prevents cascading failures          │
+│  Circuit Breaker (Latency Protection) │
+│  • Trips at >5ms latency        │
+│  • Auto-recovery after 30s       │
+│  • Prevents cascading failures     │
 └──────────────┬──────────────────────────┘
-               │
-               ▼
+        │
+        ▼
 ┌─────────────────────────────────────────┐
-│   Protocol Classifier (Aho-Corasick)    │
-│   • Multi-pattern matching in O(n+m)    │
-│   • SSH-2.0, HTTP/1.1, FTP, SMTP...     │
-│   • Returns in <10 microseconds          │
+│  Protocol Classifier (Aho-Corasick)  │
+│  • Multi-pattern matching in O(n+m)  │
+│  • SSH-2.0, HTTP/1.1, FTP, SMTP...   │
+│  • Returns in <10 microseconds     │
 └──────────────┬──────────────────────────┘
-               │
-               ▼
+        │
+        ▼
 ┌─────────────────────────────────────────┐
-│   Noise Detector (Bloom Filter)         │
-│   • 1M fingerprints @ 1% false positive │
-│   • Identifies repeat scanners           │
-│   • Constant O(1) lookup                 │
+│  Noise Detector (Bloom Filter)     │
+│  • 1M fingerprints @ 1% false positive │
+│  • Identifies repeat scanners      │
+│  • Constant O(1) lookup         │
 └──────────────┬──────────────────────────┘
-               │
-               ▼
+        │
+        ▼
 ┌─────────────────────────────────────────┐
-│   Threat Pattern Matcher (Regex)        │
-│   • SQL injection, command injection    │
-│   • Directory traversal, XSS            │
-│   • Privilege escalation, lateral move  │
-│   • Pre-compiled static patterns         │
+│  Threat Pattern Matcher (Regex)    │
+│  • SQL injection, command injection  │
+│  • Directory traversal, XSS      │
+│  • Privilege escalation, lateral move │
+│  • Pre-compiled static patterns     │
 └──────────────┬──────────────────────────┘
-               │
-               ▼
+        │
+        ▼
 ┌─────────────────────────────────────────┐
-│   Response Router                        │
-│   • FastFake: Instant error response    │
-│   • SlowFake: Delayed inconsistent      │
-│   • Mirror: Escalate to Python layer    │
+│  Response Router            │
+│  • FastFake: Instant error response  │
+│  • SlowFake: Delayed inconsistent   │
+│  • Mirror: Escalate to Python layer  │
 └─────────────────────────────────────────┘
 ```
 
@@ -253,9 +253,9 @@ Network Packet
 
 ```rust
 pub enum CircuitState {
-    Closed,   // Normal operation
-    Open,     // Tripped - failing fast
-    HalfOpen, // Recovering - testing one request
+  Closed,  // Normal operation
+  Open,   // Tripped - failing fast
+  HalfOpen, // Recovering - testing one request
 }
 
 const LATENCY_THRESHOLD_MS: u64 = 5;
@@ -267,7 +267,7 @@ const RESET_TIMEOUT_MS: u64 = 30_000; // 30 seconds
 ```rust
 // Before processing
 if !circuit_breaker.check_allow() {
-    return Err("Circuit breaker open - system overloaded");
+  return Err("Circuit breaker open - system overloaded");
 }
 
 // After processing
@@ -293,31 +293,31 @@ circuit_breaker.record_result(duration);
 
 ```rust
 pub fn classify_protocol_fast(data: &[u8]) -> Protocol {
-    let ac = AhoCorasick::new([
-        "SSH-2.0",
-        "SSH-1.99",
-        "HTTP/1.1",
-        "HTTP/1.0",
-        "GET /",
-        "POST /",
-        "FTP",
-        "220 ",
-        "EHLO",
-        "HELO",
-    ]).unwrap();
-    
-    // Single pass through data
-    if let Some(mat) = ac.find(data) {
-        match mat.pattern() {
-            0 | 1 => Protocol::SSH,
-            2 | 3 | 4 | 5 => Protocol::HTTP,
-            6 | 7 => Protocol::FTP,
-            8 | 9 => Protocol::SMTP,
-            _ => Protocol::Unknown
-        }
-    } else {
-        Protocol::Unknown
+  let ac = AhoCorasick::new([
+    "SSH-2.0",
+    "SSH-1.99",
+    "HTTP/1.1",
+    "HTTP/1.0",
+    "GET /",
+    "POST /",
+    "FTP",
+    "220 ",
+    "EHLO",
+    "HELO",
+  ]).unwrap();
+  
+  // Single pass through data
+  if let Some(mat) = ac.find(data) {
+    match mat.pattern() {
+      0 | 1 => Protocol::SSH,
+      2 | 3 | 4 | 5 => Protocol::HTTP,
+      6 | 7 => Protocol::FTP,
+      8 | 9 => Protocol::SMTP,
+      _ => Protocol::Unknown
     }
+  } else {
+    Protocol::Unknown
+  }
 }
 ```
 
@@ -335,33 +335,33 @@ pub fn classify_protocol_fast(data: &[u8]) -> Protocol {
 
 ```rust
 pub struct NoiseDetector {
-    bloom: Arc<Mutex<BloomFilter>>,
-    noise_count: AtomicU64,
+  bloom: Arc<Mutex<BloomFilter>>,
+  noise_count: AtomicU64,
 }
 
 impl NoiseDetector {
-    pub fn new() -> Self {
-        // 1 million items, 1% false positive rate
-        let bloom = BloomFilter::with_rate(0.01, 1_000_000);
-        Self {
-            bloom: Arc::new(Mutex::new(bloom)),
-            noise_count: AtomicU64::new(0),
-        }
+  pub fn new() -> Self {
+    // 1 million items, 1% false positive rate
+    let bloom = BloomFilter::with_rate(0.01, 1_000_000);
+    Self {
+      bloom: Arc::new(Mutex::new(bloom)),
+      noise_count: AtomicU64::new(0),
     }
+  }
+  
+  pub fn check_and_mark(&self, fingerprint: &str) -> bool {
+    let mut bloom = self.bloom.lock().unwrap();
     
-    pub fn check_and_mark(&self, fingerprint: &str) -> bool {
-        let mut bloom = self.bloom.lock().unwrap();
-        
-        if bloom.contains(fingerprint) {
-            // Seen before - probably noise
-            self.noise_count.fetch_add(1, Ordering::Relaxed);
-            true
-        } else {
-            // New - mark and return false
-            bloom.insert(fingerprint);
-            false
-        }
+    if bloom.contains(fingerprint) {
+      // Seen before - probably noise
+      self.noise_count.fetch_add(1, Ordering::Relaxed);
+      true
+    } else {
+      // New - mark and return false
+      bloom.insert(fingerprint);
+      false
     }
+  }
 }
 ```
 
@@ -374,14 +374,14 @@ impl NoiseDetector {
 **What gets fingerprinted:**
 ```rust
 pub fn generate_fingerprint(data: &[u8]) -> String {
-    // Hash of: source IP + first 64 bytes of packet
-    // Scanner from same IP sending same probe = same fingerprint
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    
-    let mut hasher = DefaultHasher::new();
-    data.hash(&mut hasher);
-    format!("{:x}", hasher.finish())
+  // Hash of: source IP + first 64 bytes of packet
+  // Scanner from same IP sending same probe = same fingerprint
+  use std::collections::hash_map::DefaultHasher;
+  use std::hash::{Hash, Hasher};
+  
+  let mut hasher = DefaultHasher::new();
+  data.hash(&mut hasher);
+  format!("{:x}", hasher.finish())
 }
 ```
 
@@ -394,37 +394,37 @@ pub fn generate_fingerprint(data: &[u8]) -> String {
 ```rust
 // SQL Injection
 static SQL_INJECTION: Regex = regex!(
-    r"(?i)(union\s+select|select\s+.*\s+from|drop\s+table)"
+  r"(?i)(union\s+select|select\s+.*\s+from|drop\s+table)"
 );
 
-// Command Injection  
+// Command Injection 
 static COMMAND_INJECTION: Regex = regex!(
-    r"(?i)(;|\||&|\$\(|\`|/bin/sh|/bin/bash)"
+  r"(?i)(;|\||&|\$\(|\`|/bin/sh|/bin/bash)"
 );
 
 // Directory Traversal
 static DIRECTORY_TRAVERSAL: Regex = regex!(
-    r"(\.\./|\.\.\\|%2e%2e%2f)"
+  r"(\.\./|\.\.\\|%2e%2e%2f)"
 );
 
 // Reconnaissance
 static RECONNAISSANCE: Regex = regex!(
-    r"(?i)(whoami|uname|ps\s+aux|netstat|ifconfig)"
+  r"(?i)(whoami|uname|ps\s+aux|netstat|ifconfig)"
 );
 
 // Privilege Escalation
 static PRIVILEGE_ESCALATION: Regex = regex!(
-    r"(?i)(sudo|su\s|passwd|chmod\s+777|crontab)"
+  r"(?i)(sudo|su\s|passwd|chmod\s+777|crontab)"
 );
 
 // Lateral Movement
 static LATERAL_MOVEMENT: Regex = regex!(
-    r"(?i)(ssh|scp|rsync|nc\s|wget|curl.*http)"
+  r"(?i)(ssh|scp|rsync|nc\s|wget|curl.*http)"
 );
 
 // Data Exfiltration
 static DATA_EXFILTRATION: Regex = regex!(
-    r"(?i)(tar\s|zip|base64|cat.*passwd|cat.*shadow)"
+  r"(?i)(tar\s|zip|base64|cat.*passwd|cat.*shadow)"
 );
 ```
 
@@ -432,43 +432,43 @@ static DATA_EXFILTRATION: Regex = regex!(
 
 ```rust
 pub fn analyze_for_threats(message: &ProtocolMessage) -> Option<ThreatEvent> {
-    let payload = &message.payload;
-    let mut threat_types = Vec::new();
-    let mut max_severity = "low";
-    
-    // Critical threats
-    if COMMAND_INJECTION.is_match(payload) {
-        threat_types.push("command_injection");
-        max_severity = "critical";
-    }
-    
-    // High threats
-    if SQL_INJECTION.is_match(payload) {
-        threat_types.push("sql_injection");
-        if max_severity != "critical" { max_severity = "high"; }
-    }
-    
-    if PRIVILEGE_ESCALATION.is_match(payload) {
-        threat_types.push("privilege_escalation");
-        if max_severity != "critical" { max_severity = "high"; }
-    }
-    
-    // Return None if no threats detected
-    if threat_types.is_empty() {
-        return None;
-    }
-    
-    Some(ThreatEvent {
-        event_id: Uuid::new_v4().to_string(),
-        timestamp: Utc::now(),
-        source_ip: message.source.ip().to_string(),
-        event_type: threat_types.join(", "),
-        severity: max_severity.to_string(),
-        metadata: json!({
-            "message_id": message.id,
-            "patterns": threat_types
-        })
+  let payload = &message.payload;
+  let mut threat_types = Vec::new();
+  let mut max_severity = "low";
+  
+  // Critical threats
+  if COMMAND_INJECTION.is_match(payload) {
+    threat_types.push("command_injection");
+    max_severity = "critical";
+  }
+  
+  // High threats
+  if SQL_INJECTION.is_match(payload) {
+    threat_types.push("sql_injection");
+    if max_severity != "critical" { max_severity = "high"; }
+  }
+  
+  if PRIVILEGE_ESCALATION.is_match(payload) {
+    threat_types.push("privilege_escalation");
+    if max_severity != "critical" { max_severity = "high"; }
+  }
+  
+  // Return None if no threats detected
+  if threat_types.is_empty() {
+    return None;
+  }
+  
+  Some(ThreatEvent {
+    event_id: Uuid::new_v4().to_string(),
+    timestamp: Utc::now(),
+    source_ip: message.source.ip().to_string(),
+    event_type: threat_types.join(", "),
+    severity: max_severity.to_string(),
+    metadata: json!({
+      "message_id": message.id,
+      "patterns": threat_types
     })
+  })
 }
 ```
 
@@ -482,17 +482,17 @@ The `regex` crate is used with a linear-time strategy (O(m × n)) to reduce cata
 
 ```rust
 pub enum ResponseProfile {
-    FastFake,  // Lane 1: instant fake response
-    SlowFake,  // Lane 2: delayed + inconsistent
-    Mirror,    // Lane 3: escalate to Python layer
+  FastFake, // Lane 1: instant fake response
+  SlowFake, // Lane 2: delayed + inconsistent
+  Mirror,  // Lane 3: escalate to Python layer
 }
 
 pub struct Layer0Output {
-    pub proto_guess: Protocol,
-    pub response_profile: ResponseProfile,
-    pub tags: u32,              // Bitflags for metadata
-    pub escalate: bool,         // Send to Python?
-    pub suspicion_score: u8,    // 0-255 additive
+  pub proto_guess: Protocol,
+  pub response_profile: ResponseProfile,
+  pub tags: u32,       // Bitflags for metadata
+  pub escalate: bool,     // Send to Python?
+  pub suspicion_score: u8,  // 0-255 additive
 }
 ```
 
@@ -500,26 +500,26 @@ pub struct Layer0Output {
 
 ```rust
 fn route_response(input: &[u8]) -> Layer0Output {
-    let mut output = Layer0Output::new(
-        classify_protocol_fast(input)
-    );
-    
-    // Check if noise (repeat scanner)
-    let fingerprint = generate_fingerprint(input);
-    if noise_detector.check_and_mark(&fingerprint) {
-        output.add_tag(tags::PROBABLE_NOISE);
-        output.response_profile = ResponseProfile::FastFake;
-        return output;  // Don't escalate boring probes
-    }
-    
-    // Check for threats
-    if let Some(threat) = analyze_for_threats(&message) {
-        output.add_score(50);  // High suspicion
-        output.escalate = true;
-        output.response_profile = ResponseProfile::Mirror;
-    }
-    
-    output
+  let mut output = Layer0Output::new(
+    classify_protocol_fast(input)
+  );
+  
+  // Check if noise (repeat scanner)
+  let fingerprint = generate_fingerprint(input);
+  if noise_detector.check_and_mark(&fingerprint) {
+    output.add_tag(tags::PROBABLE_NOISE);
+    output.response_profile = ResponseProfile::FastFake;
+    return output; // Don't escalate boring probes
+  }
+  
+  // Check for threats
+  if let Some(threat) = analyze_for_threats(&message) {
+    output.add_score(50); // High suspicion
+    output.escalate = true;
+    output.response_profile = ResponseProfile::Mirror;
+  }
+  
+  output
 }
 ```
 
@@ -529,12 +529,12 @@ fn route_response(input: &[u8]) -> Layer0Output {
 
 ```rust
 pub mod tags {
-    pub const PROBABLE_NOISE: u32    = 1 << 0;  // 0x01
-    pub const REPEATED_PROBE: u32    = 1 << 1;  // 0x02
-    pub const EXPLOIT_HINT: u32      = 1 << 2;  // 0x04
-    pub const BURSTY: u32            = 1 << 3;  // 0x08
-    pub const ODD_CADENCE: u32       = 1 << 4;  // 0x10
-    pub const PROTO_UNKNOWN: u32     = 1 << 5;  // 0x20
+  pub const PROBABLE_NOISE: u32  = 1 << 0; // 0x01
+  pub const REPEATED_PROBE: u32  = 1 << 1; // 0x02
+  pub const EXPLOIT_HINT: u32   = 1 << 2; // 0x04
+  pub const BURSTY: u32      = 1 << 3; // 0x08
+  pub const ODD_CADENCE: u32    = 1 << 4; // 0x10
+  pub const PROTO_UNKNOWN: u32   = 1 << 5; // 0x20
 }
 
 // Usage
@@ -542,7 +542,7 @@ output.add_tag(tags::PROBABLE_NOISE | tags::REPEATED_PROBE);
 
 // Check
 if output.tags & tags::EXPLOIT_HINT != 0 {
-    // Has exploit hint tag
+  // Has exploit hint tag
 }
 ```
 
@@ -553,28 +553,28 @@ if output.tags & tags::EXPLOIT_HINT != 0 {
 ```rust
 #[pymodule]
 fn rust_protocol(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(validate_ip_py, m)?)?;
-    m.add_function(wrap_pyfunction!(calculate_entropy_py, m)?)?;
-    m.add_function(wrap_pyfunction!(generate_fingerprint_py, m)?)?;
-    m.add_function(wrap_pyfunction!(detect_threats_py, m)?)?;
-    m.add_function(wrap_pyfunction!(get_circuit_breaker_status_py, m)?)?;
-    Ok(())
+  m.add_function(wrap_pyfunction!(validate_ip_py, m)?)?;
+  m.add_function(wrap_pyfunction!(calculate_entropy_py, m)?)?;
+  m.add_function(wrap_pyfunction!(generate_fingerprint_py, m)?)?;
+  m.add_function(wrap_pyfunction!(detect_threats_py, m)?)?;
+  m.add_function(wrap_pyfunction!(get_circuit_breaker_status_py, m)?)?;
+  Ok(())
 }
 
 #[pyfunction]
 fn validate_ip_py(ip: &str) -> PyResult<bool> {
-    if ip.len() > 45 {  // Max IPv6 length
-        return Err(PyValueError::new_err("IP too long"));
-    }
-    Ok(utils::is_valid_ip(ip))
+  if ip.len() > 45 { // Max IPv6 length
+    return Err(PyValueError::new_err("IP too long"));
+  }
+  Ok(utils::is_valid_ip(ip))
 }
 
 #[pyfunction]
 fn calculate_entropy_py(data: &str) -> PyResult<f64> {
-    if data.len() > 1_000_000 {  // 1MB limit
-        return Err(PyValueError::new_err("Data too large"));
-    }
-    Ok(utils::shannon_entropy(data.as_bytes()))
+  if data.len() > 1_000_000 { // 1MB limit
+    return Err(PyValueError::new_err("Data too large"));
+  }
+  Ok(utils::shannon_entropy(data.as_bytes()))
 }
 ```
 
@@ -585,12 +585,12 @@ import rust_protocol
 
 # Fast IP validation (Rust speed)
 if rust_protocol.validate_ip("192.168.1.1"):
-    print("Valid IP")
+  print("Valid IP")
 
 # Calculate Shannon entropy
 entropy = rust_protocol.calculate_entropy(payload)
 if entropy > 7.5:
-    print("High entropy - possibly encrypted/encoded")
+  print("High entropy - possibly encrypted/encoded")
 
 # Generate fingerprint
 fp = rust_protocol.generate_fingerprint(packet_data)
@@ -622,17 +622,17 @@ threats = rust_protocol.detect_threats(message_dict)
 **Comparison:**
 
 ```
-Python regex match:     ~100μs
-Rust regex match:       ~0.5μs
-Speedup:                200x
+Python regex match:   ~100μs
+Rust regex match:    ~0.5μs
+Speedup:        200x
 
-Python JSON parsing:    ~50μs
-Rust serde parsing:     ~2μs
-Speedup:                25x
+Python JSON parsing:  ~50μs
+Rust serde parsing:   ~2μs
+Speedup:        25x
 
-Python IP validation:   ~10μs
-Rust IP validation:     ~0.1μs
-Speedup:                100x
+Python IP validation:  ~10μs
+Rust IP validation:   ~0.1μs
+Speedup:        100x
 ```
 
 ### Home vs Enterprise Profiles
@@ -641,21 +641,21 @@ Speedup:                100x
 
 ```rust
 impl ProfileFlags {
-    // Home honeypot: see everything
-    pub const HOME: Self = Self {
-        drop_enabled: false,              // Configured not to drop packets
-        bloom_drop: false,                // Log all noise
-        benign_sampling: false,           // Log all benign
-        latency_adaptive_security: false, // Fixed security
-    };
-    
-    // Enterprise: performance first
-    pub const ENTERPRISE: Self = Self {
-        drop_enabled: true,               // Can drop noise
-        bloom_drop: true,                 // Auto-drop repeats
-        benign_sampling: true,            // Sample at 1%
-        latency_adaptive_security: true,  // Relax under load
-    };
+  // Home honeypot: see everything
+  pub const HOME: Self = Self {
+    drop_enabled: false,       // Configured not to drop packets
+    bloom_drop: false,        // Log all noise
+    benign_sampling: false,      // Log all benign
+    latency_adaptive_security: false, // Fixed security
+  };
+  
+  // Enterprise: performance first
+  pub const ENTERPRISE: Self = Self {
+    drop_enabled: true,        // Can drop noise
+    bloom_drop: true,         // Auto-drop repeats
+    benign_sampling: true,      // Sample at 1%
+    latency_adaptive_security: true, // Relax under load
+  };
 }
 ```
 
@@ -687,27 +687,27 @@ cargo test protocol_classifier
 ```rust
 #[test]
 fn test_circuit_breaker_trip() {
-    let cb = CircuitBreaker::new();
-    
-    // 10 slow operations trip the breaker
-    for _ in 0..10 {
-        cb.record_result(10);  // 10ms > 5ms threshold
-    }
-    
-    // Should be open now
-    assert!(!cb.check_allow());
-    
-    // Fast forward 30 seconds
-    std::thread::sleep(Duration::from_millis(500));
-    
-    // Should allow one test request (HalfOpen)
-    assert!(cb.check_allow());
-    
-    // Fast operation recovers
-    cb.record_result(1);
-    
-    // Should be closed now
-    assert!(cb.check_allow());
+  let cb = CircuitBreaker::new();
+  
+  // 10 slow operations trip the breaker
+  for _ in 0..10 {
+    cb.record_result(10); // 10ms > 5ms threshold
+  }
+  
+  // Should be open now
+  assert!(!cb.check_allow());
+  
+  // Fast forward 30 seconds
+  std::thread::sleep(Duration::from_millis(500));
+  
+  // Should allow one test request (HalfOpen)
+  assert!(cb.check_allow());
+  
+  // Fast operation recovers
+  cb.record_result(1);
+  
+  // Should be closed now
+  assert!(cb.check_allow());
 }
 ```
 
@@ -745,10 +745,10 @@ Python imports this as `rust_protocol` module.
 
 ```
 Target: 1ms total response time
-├─ Network I/O:        200μs (20%)
-├─ Layer 0 (Rust):     100μs (10%)  ← You are here
-├─ Python Analysis:    500μs (50%)
-└─ Redis logging:      200μs (20%)
+├─ Network I/O:    200μs (20%)
+├─ Layer 0 (Rust):   100μs (10%) ← You are here
+├─ Python Analysis:  500μs (50%)
+└─ Redis logging:   200μs (20%)
 ```
 
 Without Layer 0:
@@ -780,10 +780,10 @@ docker exec -it chronos_core /bin/bash
 
 # Perform normal operations
 cd /mnt/honeypot
-ls -la                    # List directory
-cat hackme.txt           # Read a file
+ls -la          # List directory
+cat hackme.txt      # Read a file
 echo "test" > myfile.txt # Create a file
-rm myfile.txt            # Delete a file
+rm myfile.txt      # Delete a file
 ```
 
 **Watch the detection**:
@@ -875,94 +875,94 @@ python tests/validation/test_real_attack.py
 ```python
 # fuse.py - read() method
 def read(self, path, size, offset, fh):
-    # Log the operation
-    logger.info(f"READ: {path} offset={offset} size={size}")
-    
-    # Get file content from Redis state
-    content = self.state.get_file_content(path)
-    
-    # Return simulated content
-    return content[offset:offset+size]
+  # Log the operation
+  logger.info(f"READ: {path} offset={offset} size={size}")
+  
+  # Get file content from Redis state
+  content = self.state.get_file_content(path)
+  
+  # Return simulated content
+  return content[offset:offset+size]
 ```
 
 **Step 2: Command Analysis**
 ```python
 # command_analyzer.py
 def analyze(self, command: str) -> AnalysisResult:
-    techniques = []
-    
-    # Pattern matching
-    if re.search(r'cat\s+/etc/shadow', command):
-        techniques.append('credential_access.passwd_dump')
-    
-    # Calculate risk
-    risk = calculate_risk(techniques)
-    
-    return AnalysisResult(
-        techniques=techniques,
-        risk_level='HIGH',
-        timestamp=now()
-    )
+  techniques = []
+  
+  # Pattern matching
+  if re.search(r'cat\s+/etc/shadow', command):
+    techniques.append('credential_access.passwd_dump')
+  
+  # Calculate risk
+  risk = calculate_risk(techniques)
+  
+  return AnalysisResult(
+    techniques=techniques,
+    risk_level='HIGH',
+    timestamp=now()
+  )
 ```
 
 **Step 3: Threat Signature Matching**
 ```python
 # threat_library.py
 signatures = {
-    'T1003.008': {
-        'name': 'Password File Dumping',
-        'pattern': r'cat\s+/etc/(passwd|shadow)',
-        'mitre_id': 'T1003.008',
-        'severity': 'high'
-    }
+  'T1003.008': {
+    'name': 'Password File Dumping',
+    'pattern': r'cat\s+/etc/(passwd|shadow)',
+    'mitre_id': 'T1003.008',
+    'severity': 'high'
+  }
 }
 
 # Matches and logs
 match = check_signatures(command)
 if match:
-    log_threat(match)
+  log_threat(match)
 ```
 
 **Step 4: State Update**
 ```python
 # state.py - Redis update
 def log_command(self, session_id: str, command: str, result: AnalysisResult):
-    pipe = self.redis.pipeline()
-    
-    # Add to command history
-    pipe.lpush(f"chronos:commands:{session_id}", json.dumps({
-        'command': command,
-        'timestamp': time.time(),
-        'risk': result.risk_level,
-        'techniques': result.techniques
-    }))
-    
-    # Update session risk score
-    pipe.hincrby(f"chronos:session:{session_id}", 'risk_score', result.risk_value)
-    
-    # Execute atomically
-    pipe.execute()
+  pipe = self.redis.pipeline()
+  
+  # Add to command history
+  pipe.lpush(f"chronos:commands:{session_id}", json.dumps({
+    'command': command,
+    'timestamp': time.time(),
+    'risk': result.risk_level,
+    'techniques': result.techniques
+  }))
+  
+  # Update session risk score
+  pipe.hincrby(f"chronos:session:{session_id}", 'risk_score', result.risk_value)
+  
+  # Execute atomically
+  pipe.execute()
 ```
 
 **Step 5: Skill Profiling**
 ```python
 # skill_detector.py
 def update_skill_level(self, session_id: str):
-    commands = get_session_commands(session_id)
-    
-    score = 0
-    # Analyze command complexity
-    score += len(set(cmd['techniques'] for cmd in commands)) * 5  # Technique diversity
-    score += sum(1 for cmd in commands if 'obfuscation' in cmd) * 10  # Evasion
-    score += sum(1 for cmd in commands if cmd['risk'] == 'HIGH') * 3  # Severity
-    
-    if score < 10:
-        return 'OPPORTUNISTIC'
-    elif score < 30:
-        return 'SCRIPT_KIDDIE'
-    elif score < 60:
-        return 'INTERMEDIATE'
-    # etc...
+  commands = get_session_commands(session_id)
+  
+  score = 0
+  # Analyze command complexity
+  score += len(set(cmd['techniques'] for cmd in commands)) * 5 # Technique diversity
+  score += sum(1 for cmd in commands if 'obfuscation' in cmd) * 10 # Evasion
+  score += sum(1 for cmd in commands if cmd['risk'] == 'HIGH') * 3 # Severity
+  
+  if score < 10:
+    return 'OPPORTUNISTIC'
+  elif score < 30:
+    return 'SCRIPT_KIDDIE'
+  elif score < 60:
+    return 'INTERMEDIATE'
+  # etc...
 ```
 
 ### Detection Patterns
@@ -970,34 +970,34 @@ def update_skill_level(self, session_id: str):
 #### Pattern Categories
 
 1. **Reconnaissance**
-   - `whoami`, `id`, `uname`: System info gathering
-   - `ps aux`, `netstat`: Process/network enumeration
-   - `cat /etc/passwd`: User enumeration
-   
+  - `whoami`, `id`, `uname`: System info gathering
+  - `ps aux`, `netstat`: Process/network enumeration
+  - `cat /etc/passwd`: User enumeration
+  
 2. **Privilege Escalation**
-   - `sudo -l`: Sudo capability check
-   - `find / -perm -4000`: SUID binary search
-   - `cat /etc/sudoers`: Sudoers file inspection
+  - `sudo -l`: Sudo capability check
+  - `find / -perm -4000`: SUID binary search
+  - `cat /etc/sudoers`: Sudoers file inspection
 
 3. **Persistence**
-   - `crontab -l`, `crontab -e`: Cron job manipulation
-   - `echo ... >> ~/.ssh/authorized_keys`: SSH key injection
-   - `echo ... >> /etc/profile`: Login script backdoor
+  - `crontab -l`, `crontab -e`: Cron job manipulation
+  - `echo ... >> ~/.ssh/authorized_keys`: SSH key injection
+  - `echo ... >> /etc/profile`: Login script backdoor
 
 4. **Lateral Movement**
-   - `scp`, `rsync`: File transfer
-   - `ssh`, `ssh-copy-id`: Remote access
-   - Network scanning patterns
+  - `scp`, `rsync`: File transfer
+  - `ssh`, `ssh-copy-id`: Remote access
+  - Network scanning patterns
 
 5. **Exfiltration**
-   - `tar`, `zip`, `gzip`: Data archiving
-   - `base64`, `xxd`: Encoding for transfer
-   - `curl`, `wget`, `nc`: Data transfer
+  - `tar`, `zip`, `gzip`: Data archiving
+  - `base64`, `xxd`: Encoding for transfer
+  - `curl`, `wget`, `nc`: Data transfer
 
 6. **Defense Evasion**
-   - `history -c`: Clear command history
-   - `rm ~/.bash_history`: Delete history file
-   - `unset HISTFILE`: Disable history logging
+  - `history -c`: Clear command history
+  - `rm ~/.bash_history`: Delete history file
+  - `unset HISTFILE`: Disable history logging
 
 ---
 
@@ -1084,10 +1084,10 @@ SELECT session_id, COUNT(*) FROM commands GROUP BY session_id;
 ```python
 # Traditional approach: Write to disk (slow)
 with open('/var/log/honeypot.log', 'a') as f:
-    f.write(f"{timestamp} {command}\n")  # ~1-10ms
+  f.write(f"{timestamp} {command}\n") # ~1-10ms
 
 # Chronos approach: Write to Redis (fast)
-redis.lpush(f"commands:{session}", data)  # ~0.04ms
+redis.lpush(f"commands:{session}", data) # ~0.04ms
 ```
 
 **Result**: 250x faster operations
@@ -1113,15 +1113,15 @@ return file
 ```python
 # Pre-compiled regex patterns
 PATTERNS = {
-    'passwd': re.compile(r'cat\s+/etc/(passwd|shadow)'),
-    'suid': re.compile(r'find.*-perm.*-4000'),
-    # ... compiled once at startup
+  'passwd': re.compile(r'cat\s+/etc/(passwd|shadow)'),
+  'suid': re.compile(r'find.*-perm.*-4000'),
+  # ... compiled once at startup
 }
 
 # Fast lookup
 for name, pattern in PATTERNS.items():
-    if pattern.search(command):
-        # Match found
+  if pattern.search(command):
+    # Match found
 ```
 
 ### Performance Benchmarks
@@ -1213,10 +1213,10 @@ docker exec chronos_redis redis-cli INFO clients
 source .venv/bin/activate
 
 # Run all validations
-make validate-core       # Infrastructure tests
-make validate-attacks    # Attack detection tests
+make validate-core    # Infrastructure tests
+make validate-attacks  # Attack detection tests
 make validate-concurrency # Concurrency tests
-make validate-crash      # Crash recovery tests
+make validate-crash   # Crash recovery tests
 ```
 
 ### Test Descriptions
@@ -1271,24 +1271,24 @@ Traditional honeypots face a challenge:
 
 ```
 ┌─────────────────────────────────────────────┐
-│          Redis (Hot Storage)                │
-│                                              │
-│  • Directory structure (instant lookup)     │
-│  • Active sessions (real-time tracking)     │
-│  • Command buffer (immediate writes)        │
-│  • AOF persistence (crash safety)           │
+│     Redis (Hot Storage)        │
+│                       │
+│ • Directory structure (instant lookup)   │
+│ • Active sessions (real-time tracking)   │
+│ • Command buffer (immediate writes)    │
+│ • AOF persistence (crash safety)      │
 └──────────────────┬──────────────────────────┘
-                   │
-         Async background writes
-                   │
-                   ▼
+          │
+     Async background writes
+          │
+          ▼
 ┌─────────────────────────────────────────────┐
-│       PostgreSQL (Cold Storage)             │
-│                                              │
-│  • Historical sessions                       │
-│  • Attack timelines                          │
-│  • Forensic analysis                         │
-│  • Long-term retention                       │
+│    PostgreSQL (Cold Storage)       │
+│                       │
+│ • Historical sessions            │
+│ • Attack timelines             │
+│ • Forensic analysis             │
+│ • Long-term retention            │
 └─────────────────────────────────────────────┘
 ```
 
@@ -1299,14 +1299,14 @@ Traditional honeypots face a challenge:
 Key: chronos:fs:/etc/passwd
 Type: Hash
 Fields:
-  - content: "root:x:0:0:root:/root:/bin/bash\n..."
-  - size: 1847
-  - mode: 33188 (0644 in octal)
-  - uid: 0
-  - gid: 0
-  - atime: 1709372400.123
-  - mtime: 1709372400.123
-  - ctime: 1709372400.123
+ - content: "root:x:0:0:root:/root:/bin/bash\n..."
+ - size: 1847
+ - mode: 33188 (0644 in octal)
+ - uid: 0
+ - gid: 0
+ - atime: 1709372400.123
+ - mtime: 1709372400.123
+ - ctime: 1709372400.123
 ```
 
 #### 2. Session Tracking
@@ -1314,14 +1314,14 @@ Fields:
 Key: chronos:session:abc123
 Type: Hash
 Fields:
-  - session_id: abc123
-  - username: attacker
-  - ip_address: 192.168.1.100
-  - start_time: 1709372400.123
-  - last_activity: 1709372450.789
-  - risk_score: 45
-  - skill_level: SCRIPT_KIDDIE
-  - command_count: 23
+ - session_id: abc123
+ - username: attacker
+ - ip_address: 192.168.1.100
+ - start_time: 1709372400.123
+ - last_activity: 1709372450.789
+ - risk_score: 45
+ - skill_level: SCRIPT_KIDDIE
+ - command_count: 23
 ```
 
 #### 3. Command History
@@ -1329,20 +1329,20 @@ Fields:
 Key: chronos:commands:abc123
 Type: List (LPUSH for new commands)
 Values: [
-  {
-    "command": "cat /etc/shadow",
-    "timestamp": 1709372450.789,
-    "risk": "HIGH",
-    "techniques": ["credential_access.passwd_dump"],
-    "signatures": ["T1003.008"]
-  },
-  {
-    "command": "whoami",
-    "timestamp": 1709372445.123,
-    "risk": "LOW",
-    "techniques": ["reconnaissance.system_info"],
-    "signatures": []
-  }
+ {
+  "command": "cat /etc/shadow",
+  "timestamp": 1709372450.789,
+  "risk": "HIGH",
+  "techniques": ["credential_access.passwd_dump"],
+  "signatures": ["T1003.008"]
+ },
+ {
+  "command": "whoami",
+  "timestamp": 1709372445.123,
+  "risk": "LOW",
+  "techniques": ["reconnaissance.system_info"],
+  "signatures": []
+ }
 ]
 ```
 
@@ -1375,7 +1375,7 @@ local timestamp = ARGV[2]
 -- Check if exists
 local exists = redis.call('EXISTS', path)
 if exists == 1 then
-    return {err = "File already exists"}
+  return {err = "File already exists"}
 end
 
 -- Create atomically
@@ -1390,9 +1390,9 @@ return {ok = "File created"}
 **Usage in Python**:
 ```python
 result = redis.evalsha(
-    sha='<script_hash>',
-    keys=['chronos:fs:/tmp/test.txt'],
-    args=['file content', time.time()]
+  sha='<script_hash>',
+  keys=['chronos:fs:/tmp/test.txt'],
+  args=['file content', time.time()]
 )
 ```
 
@@ -1406,35 +1406,35 @@ result = redis.evalsha(
 
 ```
 Command Input
-     │
-     ▼
+   │
+   ▼
 ┌─────────────────────────────────┐
-│   Stage 1: CommandAnalyzer      │
-│   (Pattern Matching)             │
-│                                  │
-│   • Regex-based detection        │
-│   • Syntax analysis              │
-│   • Argument inspection          │
+│  Stage 1: CommandAnalyzer   │
+│  (Pattern Matching)       │
+│                 │
+│  • Regex-based detection    │
+│  • Syntax analysis       │
+│  • Argument inspection     │
 └────────────┬────────────────────┘
-             │
-             ▼
+       │
+       ▼
 ┌─────────────────────────────────┐
-│   Stage 2: ThreatLibrary        │
-│   (Signature Matching)           │
-│                                  │
-│   • MITRE ATT&CK mapping         │
-│   • Known exploit detection      │
-│   • IOC correlation              │
+│  Stage 2: ThreatLibrary    │
+│  (Signature Matching)      │
+│                 │
+│  • MITRE ATT&CK mapping     │
+│  • Known exploit detection   │
+│  • IOC correlation       │
 └────────────┬────────────────────┘
-             │
-             ▼
+       │
+       ▼
 ┌─────────────────────────────────┐
-│   Stage 3: SkillDetector        │
-│   (Behavioral Analysis)          │
-│                                  │
-│   • Technique diversity          │
-│   • Attack sophistication        │
-│   • Temporal patterns            │
+│  Stage 3: SkillDetector    │
+│  (Behavioral Analysis)     │
+│                 │
+│  • Technique diversity     │
+│  • Attack sophistication    │
+│  • Temporal patterns      │
 └─────────────────────────────────┘
 ```
 
@@ -1444,55 +1444,55 @@ Command Input
 
 ```python
 TECHNIQUES = {
-    # Reconnaissance
-    'reconnaissance.system_info': [
-        r'\b(whoami|id|uname|hostname)\b',
-        r'\bcat\s+/etc/(os-release|issue|version)\b'
-    ],
-    'reconnaissance.process_enum': [
-        r'\bps\s+(aux|ef|--forest)',
-        r'\btop\b'
-    ],
-    'reconnaissance.network_scan': [
-        r'\b(netstat|ss|ifconfig|ip\s+addr)\b',
-        r'\bnmap\b'
-    ],
-    
-    # Privilege Escalation
-    'privilege_escalation.sudo_abuse': [
-        r'\bsudo\s+-l\b',
-        r'\bsudo\s+su\b'
-    ],
-    'privilege_escalation.suid_search': [
-        r'find.*-perm.*-4000',
-        r'find.*-user\s+root.*-perm'
-    ],
-    
-    # Persistence
-    'persistence.cron_job': [
-        r'\bcrontab\s+-(l|e)\b',
-        r'\becho.*>.*cron'
-    ],
-    'persistence.ssh_key': [
-        r'authorized_keys',
-        r'\.ssh/id_rsa'
-    ],
-    
-    # Exfiltration
-    'exfiltration.tar_archive': [
-        r'\b(tar|zip|gzip|bzip2)\b.*\b(czf|zcf)\b',
-    ],
-    'exfiltration.base64_encode': [
-        r'\bbase64\b',
-        r'\bxxd\b'
-    ],
-    
-    # Defense Evasion
-    'defense_evasion.history_clear': [
-        r'\bhistory\s+-c\b',
-        r'\brm.*\.bash_history',
-        r'\bunset\s+HISTFILE\b'
-    ]
+  # Reconnaissance
+  'reconnaissance.system_info': [
+    r'\b(whoami|id|uname|hostname)\b',
+    r'\bcat\s+/etc/(os-release|issue|version)\b'
+  ],
+  'reconnaissance.process_enum': [
+    r'\bps\s+(aux|ef|--forest)',
+    r'\btop\b'
+  ],
+  'reconnaissance.network_scan': [
+    r'\b(netstat|ss|ifconfig|ip\s+addr)\b',
+    r'\bnmap\b'
+  ],
+  
+  # Privilege Escalation
+  'privilege_escalation.sudo_abuse': [
+    r'\bsudo\s+-l\b',
+    r'\bsudo\s+su\b'
+  ],
+  'privilege_escalation.suid_search': [
+    r'find.*-perm.*-4000',
+    r'find.*-user\s+root.*-perm'
+  ],
+  
+  # Persistence
+  'persistence.cron_job': [
+    r'\bcrontab\s+-(l|e)\b',
+    r'\becho.*>.*cron'
+  ],
+  'persistence.ssh_key': [
+    r'authorized_keys',
+    r'\.ssh/id_rsa'
+  ],
+  
+  # Exfiltration
+  'exfiltration.tar_archive': [
+    r'\b(tar|zip|gzip|bzip2)\b.*\b(czf|zcf)\b',
+  ],
+  'exfiltration.base64_encode': [
+    r'\bbase64\b',
+    r'\bxxd\b'
+  ],
+  
+  # Defense Evasion
+  'defense_evasion.history_clear': [
+    r'\bhistory\s+-c\b',
+    r'\brm.*\.bash_history',
+    r'\bunset\s+HISTFILE\b'
+  ]
 }
 ```
 
@@ -1500,31 +1500,31 @@ TECHNIQUES = {
 
 ```python
 def calculate_risk(techniques: List[str]) -> int:
-    """Calculate risk score from detected techniques"""
-    
-    risk_weights = {
-        'reconnaissance': 5,
-        'privilege_escalation': 25,
-        'persistence': 30,
-        'lateral_movement': 35,
-        'exfiltration': 40,
-        'defense_evasion': 20,
-        'credential_access': 30,
-        'execution': 25
-    }
-    
-    total_risk = 0
-    for technique in techniques:
-        category = technique.split('.')[0]
-        total_risk += risk_weights.get(category, 5)
-    
-    # Risk levels
-    if total_risk < 10:
-        return 'LOW'
-    elif total_risk < 30:
-        return 'MEDIUM'
-    else:
-        return 'HIGH'
+  """Calculate risk score from detected techniques"""
+  
+  risk_weights = {
+    'reconnaissance': 5,
+    'privilege_escalation': 25,
+    'persistence': 30,
+    'lateral_movement': 35,
+    'exfiltration': 40,
+    'defense_evasion': 20,
+    'credential_access': 30,
+    'execution': 25
+  }
+  
+  total_risk = 0
+  for technique in techniques:
+    category = technique.split('.')[0]
+    total_risk += risk_weights.get(category, 5)
+  
+  # Risk levels
+  if total_risk < 10:
+    return 'LOW'
+  elif total_risk < 30:
+    return 'MEDIUM'
+  else:
+    return 'HIGH'
 ```
 
 ---
@@ -1534,29 +1534,29 @@ def calculate_risk(techniques: List[str]) -> int:
 ### Security Hardening
 
 1. **Change default credentials**
-   ```bash
-   # Update docker-compose.yml
-   POSTGRES_PASSWORD=<strong_password>
-   REDIS_PASSWORD=<strong_password>
-   ```
+  ```bash
+  # Update docker-compose.yml
+  POSTGRES_PASSWORD=<strong_password>
+  REDIS_PASSWORD=<strong_password>
+  ```
 
 2. **Enable authentication**
-   ```bash
-   # Redis
-   requirepass <redis_password>
-   
-   # PostgreSQL
-   # Update pg_hba.conf
-   ```
+  ```bash
+  # Redis
+  requirepass <redis_password>
+  
+  # PostgreSQL
+  # Update pg_hba.conf
+  ```
 
 3. **Network isolation**
-   ```yaml
-   # docker-compose.yml
-   networks:
-     honeypot_net:
-       driver: bridge
-       internal: true  # No external access
-   ```
+  ```yaml
+  # docker-compose.yml
+  networks:
+   honeypot_net:
+    driver: bridge
+    internal: true # No external access
+  ```
 
 ### Scaling Considerations
 

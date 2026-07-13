@@ -6,24 +6,24 @@ This directory contains all testing, verification, and validation scripts for th
 
 ```
 tests/
-├── validation/          Phase 1 core validation tests
-│   ├── validate_core.py           Core infrastructure validation
-│   └── test_real_attack.py        Real attack simulation testing
-│   ├── test_concurrency.py         Multi-process session concurrency
-│   ├── test_crash_recovery.py      Redis/Postgres/core crash recovery
-│   ├── test_cowrie_comparison.py   Chronos vs Cowrie comparison
-│   ├── test_stability.py           24-hour stability run
-│   └── setup_cowrie_comparison.sh  Cowrie install + comparison helper
+├── validation/     Phase 1 core validation tests
+│  ├── validate_core.py      Core infrastructure validation
+│  └── test_real_attack.py    Real attack simulation testing
+│  ├── test_concurrency.py     Multi-process session concurrency
+│  ├── test_crash_recovery.py   Redis/Postgres/core crash recovery
+│  ├── test_cowrie_comparison.py  Chronos vs Cowrie comparison
+│  ├── test_stability.py      24-hour stability run
+│  └── setup_cowrie_comparison.sh Cowrie install + comparison helper
 │
-├── verification/        Implementation verification tests
-│   ├── verify_phase1.py           State Hypervisor & Database
-│   ├── verify_phase2.py           FUSE Interface
-│   ├── verify_phase3.py           Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
-│   └── verify_phase4.py           Gateway, Watcher, Skills
+├── verification/    Implementation verification tests
+│  ├── verify_phase1.py      State Hypervisor & Database
+│  ├── verify_phase2.py      FUSE Interface
+│  ├── verify_phase3.py      Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
+│  └── verify_phase4.py      Gateway, Watcher, Skills
 │
-└── integration/         End-to-end integration demos
-    ├── demo_standalone.py         Skills showcase (no infrastructure)
-    └── demo_integration.py        Full system integration demo
+└── integration/     End-to-end integration demos
+  ├── demo_standalone.py     Skills showcase (no infrastructure)
+  └── demo_integration.py    Full system integration demo
 ```
 
 ## Running Tests
@@ -32,8 +32,8 @@ tests/
 
 ```bash
 # From project root
-make validate-core      # Run core validation
-make verify             # Run all verification tests
+make validate-core   # Run core validation
+make verify       # Run all verification tests
 ```
 
 ### Individual Test Suites
@@ -145,10 +145,10 @@ Verifies all major components function correctly:
 cd tests/verification
 
 # Run individually (PYTHONPATH required for intelligence layer imports)
-PYTHONPATH=src python3 verify_phase1.py    # State management
-PYTHONPATH=src python3 verify_phase2.py    # FUSE interface
-PYTHONPATH=src python3 verify_phase3.py    # Intelligence layer (Ubuntu-only)
-PYTHONPATH=src python3 verify_phase4.py    # Gateway/Watcher/Skills
+PYTHONPATH=src python3 verify_phase1.py  # State management
+PYTHONPATH=src python3 verify_phase2.py  # FUSE interface
+PYTHONPATH=src python3 verify_phase3.py  # Intelligence layer (Ubuntu-only)
+PYTHONPATH=src python3 verify_phase4.py  # Gateway/Watcher/Skills
 
 # Or run all from project root
 make verify
@@ -185,7 +185,7 @@ python3 demo_integration.py
 
 Start services:
 ```bash
-make up    # From project root
+make up  # From project root
 ```
 
 **Cowrie Comparison:**
@@ -208,10 +208,10 @@ All tests use dependencies from `requirements.txt`:
 
 | Test Category | Status | Score |
 |--------------|--------|-------|
-| Core Infrastructure |  PASS | 8/8 (100%) |
-| Implementation Tests |  PASS | 4/4 (100%) |
-| Attack Simulation |  PASS | 22/28 (78.6%) |
-| Performance |  EXCELLENT | 0.04ms avg |
+| Core Infrastructure | PASS | 8/8 (100%) |
+| Implementation Tests | PASS | 4/4 (100%) |
+| Attack Simulation | PASS | 22/28 (78.6%) |
+| Performance | EXCELLENT | 0.04ms avg |
 
 **Overall Phase 1 Score:** 4.5/7 (64%)
 
@@ -252,12 +252,12 @@ Tests can be integrated into CI/CD pipelines:
 ```yaml
 # Example GitHub Actions
 - name: Run Core Validation
-  run: |
-    make up
-    python3 tests/validation/validate_core.py
+ run: |
+  make up
+  python3 tests/validation/validate_core.py
 
 - name: Run Verification Tests
-  run: make verify
+ run: make verify
 ```
 
 ---

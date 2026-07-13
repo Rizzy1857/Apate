@@ -1,4 +1,4 @@
-#  Mirage Developer Onboarding (Chronos Framework)
+# Mirage Developer Onboarding (Chronos Framework)
 
 **Naming convention:** Repository codename is **Apate**. Product/idea name is **Mirage**. Framework implementation name is **Chronos**.
 
@@ -63,24 +63,24 @@ State and behavior are deliberately kept separate.
 
 ```
 SSH Gateway
-    │  generates session_id → injects into threading.local
-    ▼
-ChronosFUSE  (src/chronos/interface/fuse.py)
-    │  every syscall is session-aware via fd-table[fd].session_id
-    ▼
-State Hypervisor  (src/chronos/core/state.py)
-    │  Redis + atomic Lua scripts — sole source of filesystem truth
-    │
-    ├── cache hit  → return blob immediately (fast path)
-    │
-    └── cache miss → GenerationOrchestrator
-                          │
-                          ├── ArtifactPolicyEngine   assigns file class + category
-                          ├── PromptBuilder          builds constraint-first prompt
-                          ├── InferenceRuntime       sends to local Ollama
-                          └── SemanticValidator      validates vs. MachineState
-                                    │
-                                    └── persists blob + provenance to Redis
+  │ generates session_id → injects into threading.local
+  ▼
+ChronosFUSE (src/chronos/interface/fuse.py)
+  │ every syscall is session-aware via fd-table[fd].session_id
+  ▼
+State Hypervisor (src/chronos/core/state.py)
+  │ Redis + atomic Lua scripts — sole source of filesystem truth
+  │
+  ├── cache hit → return blob immediately (fast path)
+  │
+  └── cache miss → GenerationOrchestrator
+             │
+             ├── ArtifactPolicyEngine  assigns file class + category
+             ├── PromptBuilder     builds constraint-first prompt
+             ├── InferenceRuntime    sends to local Ollama
+             └── SemanticValidator   validates vs. MachineState
+                  │
+                  └── persists blob + provenance to Redis
 ```
 
 ---
@@ -89,37 +89,37 @@ State Hypervisor  (src/chronos/core/state.py)
 
 ```text
 src/chronos/
-├── core/                   # State management
-│   ├── state.py            # State Hypervisor (Redis + Lua)
-│   ├── database.py         # Redis connection
-│   └── lua/                # Atomic scripts (atomic_create.lua)
+├── core/          # State management
+│  ├── state.py      # State Hypervisor (Redis + Lua)
+│  ├── database.py     # Redis connection
+│  └── lua/        # Atomic scripts (atomic_create.lua)
 │
-├── interface/              # FUSE filesystem
-│   └── fuse.py             # Syscall handlers (read/write/mkdir/…)
+├── interface/       # FUSE filesystem
+│  └── fuse.py       # Syscall handlers (read/write/mkdir/…)
 │
-├── intelligence/           # AI generation pipeline
-│   ├── ubuntu_profile.py   # Loads config/ubuntu.yaml → MachineState
-│   ├── artifact_policy.py  # File class resolution + artifact category sampling
-│   ├── prompt_builder.py   # Constraint-first prompt construction
-│   ├── validator.py        # 4-tier semantic validation
-│   ├── orchestrator.py     # Non-blocking background generation pool
-│   └── inference.py        # Ollama HTTP client (local inference only)
+├── intelligence/      # AI generation pipeline
+│  ├── ubuntu_profile.py  # Loads config/ubuntu.yaml → MachineState
+│  ├── artifact_policy.py # File class resolution + artifact category sampling
+│  ├── prompt_builder.py  # Constraint-first prompt construction
+│  ├── validator.py    # 4-tier semantic validation
+│  ├── orchestrator.py   # Non-blocking background generation pool
+│  └── inference.py    # Ollama HTTP client (local inference only)
 │
-├── gateway/                # Entry points
-│   ├── ssh_server.py       # SSH gateway (injects session_id into FUSE context)
-│   └── http_server.py      # HTTP gateway (web app emulation)
+├── gateway/        # Entry points
+│  ├── ssh_server.py    # SSH gateway (injects session_id into FUSE context)
+│  └── http_server.py   # HTTP gateway (web app emulation)
 │
-├── watcher/                # Audit & monitoring
-│   ├── log_streamer.py     # Real-time PostgreSQL audit streaming
-│   └── event_processor.py  # Pattern-based attack detection
+├── watcher/        # Audit & monitoring
+│  ├── log_streamer.py   # Real-time PostgreSQL audit streaming
+│  └── event_processor.py # Pattern-based attack detection
 │
-├── skills/                 # Threat intelligence (monitoring only, not generation)
-│   ├── command_analyzer.py # MITRE ATT&CK detection
-│   ├── threat_library.py   # Known attack signatures
-│   └── skill_detector.py   # Attacker behavioral profiling
+├── skills/         # Threat intelligence (monitoring only, not generation)
+│  ├── command_analyzer.py # MITRE ATT&CK detection
+│  ├── threat_library.py  # Known attack signatures
+│  └── skill_detector.py  # Attacker behavioral profiling
 │
-└── layer0/                 # Rust performance layer
-    └── src/                # Traffic classification, circuit breakers
+└── layer0/         # Rust performance layer
+  └── src/        # Traffic classification, circuit breakers
 ```
 
 ---
@@ -166,7 +166,7 @@ make logs
 
 **Connect as attacker:**
 ```bash
-ssh -p 2222 ubuntu@localhost    # any password
+ssh -p 2222 ubuntu@localhost  # any password
 ```
 
 **Run intelligence verification:**

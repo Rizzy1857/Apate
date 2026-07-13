@@ -1,7 +1,7 @@
 # Mirage (Chronos Framework) — Implementation Status
 
-**Date:** July 2026  
-**Status:**  Phase 1 Complete |  Phase 2 In Progress (M2.A–M2.E complete)
+**Date:** July 2026 
+**Status:** Phase 1 Complete | Phase 2 In Progress (M2.A–M2.E complete)
 
 ---
 
@@ -11,86 +11,86 @@
 - Product / idea: **Mirage**
 - Core framework: **Chronos**
 - Delivery model: two 6-month phases
-  - **Phase 1:** Core platform engineering and validation (**Complete**)
-  - **Phase 2:** Ubuntu-only AI artifact generation under strict constraints (**In Progress**)
+ - **Phase 1:** Core platform engineering and validation (**Complete**)
+ - **Phase 2:** Ubuntu-only AI artifact generation under strict constraints (**In Progress**)
 
 ---
 
-##  Completed Components
+## Completed Components
 
 ### Phase 1: Foundation (State Management)
 - **State Hypervisor** (`src/chronos/core/state.py`)
-  - Filesystem state consistency management
-  - Atomic operations via Redis Lua scripts
-  - Inode allocation and path resolution
-  
+ - Filesystem state consistency management
+ - Atomic operations via Redis Lua scripts
+ - Inode allocation and path resolution
+ 
 - **Database Layer** (`src/chronos/core/database.py`)
-  - Redis connection management
-  - Schema initialization
-  
+ - Redis connection management
+ - Schema initialization
+ 
 - **Persistence** (`src/chronos/core/persistence.py`)
-  - Audit logging to PostgreSQL
-  - Session tracking
-  
+ - Audit logging to PostgreSQL
+ - Session tracking
+ 
 - **Data Models** (`src/chronos/core/models.py`)
-  - Pydantic models for type safety
+ - Pydantic models for type safety
 
 ### Phase 1: FUSE Interface
 - **FUSE Filesystem** (`src/chronos/interface/fuse.py`)
-  - POSIX syscall implementation
-  - Path resolution and inode management
-  - File descriptor tracking
-  - Integration with State Hypervisor
+ - POSIX syscall implementation
+ - Path resolution and inode management
+ - File descriptor tracking
+ - Integration with State Hypervisor
 
 ### Phase 1: Gateway, Watcher & Skills
 
 #### Gateway (Entry Points)
 - **SSH Gateway** (`src/chronos/gateway/ssh_server.py`)
-  - SSH server implementation using Paramiko
-  - Accepts any credentials (deception behavior)
-  - Command logging and session tracking
-  - Session ID injection into FUSE context via threading.local (Phase 2 update)
-  
+ - SSH server implementation using Paramiko
+ - Accepts any credentials (deception behavior)
+ - Command logging and session tracking
+ - Session ID injection into FUSE context via threading.local (Phase 2 update)
+ 
 - **HTTP Gateway** (`src/chronos/gateway/http_server.py`)
-  - Simulates vulnerable web application
-  - Multiple endpoints (login, admin, API)
-  - SQL injection, XSS, directory traversal detection
+ - Simulates vulnerable web application
+ - Multiple endpoints (login, admin, API)
+ - SQL injection, XSS, directory traversal detection
 
 #### Watcher (Audit & Monitoring)
 - **Log Streamer** (`src/chronos/watcher/log_streamer.py`)
-  - Real-time PostgreSQL audit log streaming
-  - Pub-sub pattern for event distribution
-  - Session activity tracking
-  
+ - Real-time PostgreSQL audit log streaming
+ - Pub-sub pattern for event distribution
+ - Session activity tracking
+ 
 - **Event Processor** (`src/chronos/watcher/event_processor.py`)
-  - Pattern-based attack detection
-  - Behavioral analysis
-  - Risk scoring and classification
+ - Pattern-based attack detection
+ - Behavioral analysis
+ - Risk scoring and classification
 
 #### Skills (Threat Intelligence — monitoring only, not generation)
 - **Command Analyzer** (`src/chronos/skills/command_analyzer.py`)
-  - MITRE ATT&CK framework mapping
-  - Attack pattern detection
-  - Risk scoring algorithm
-  
+ - MITRE ATT&CK framework mapping
+ - Attack pattern detection
+ - Risk scoring algorithm
+ 
 - **Threat Library** (`src/chronos/skills/threat_library.py`)
-  - Known attack signatures
-  - Severity classification
-  
+ - Known attack signatures
+ - Severity classification
+ 
 - **Skill Detector** (`src/chronos/skills/skill_detector.py`)
-  - Attacker behavioral profiling
-  - Attack phase progression tracking
-  - **Note:** Skill assessment feeds monitoring/logging only — it does NOT influence content generation fidelity
+ - Attacker behavioral profiling
+ - Attack phase progression tracking
+ - **Note:** Skill assessment feeds monitoring/logging only — it does NOT influence content generation fidelity
 
 ### Layer 0 (Rust)
 - **Protocol Analysis** (`src/chronos/layer0/`)
-  - Traffic classification
-  - Circuit breaker patterns
-  - Python bindings via PyO3
+ - Traffic classification
+ - Circuit breaker patterns
+ - Python bindings via PyO3
 
 ---
 
-##  Phase 2: Ubuntu-Only AI Integration (In Progress)
+## Phase 2: Ubuntu-Only AI Integration (In Progress)
 
 ### Completed Milestones
 
@@ -139,77 +139,77 @@
 
 ---
 
-##  Test Coverage
+## Test Coverage
 
 ### Verification Scripts (`tests/verification/`)
--  `verify_phase1.py` — State Hypervisor & Database
--  `verify_phase2.py` — FUSE Interface
--  `verify_phase3.py` — Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
--  `verify_phase4.py` — Gateway, Watcher, Skills (4/4 tests passing)
+- `verify_phase1.py` — State Hypervisor & Database
+- `verify_phase2.py` — FUSE Interface
+- `verify_phase3.py` — Intelligence layer (Ubuntu-only: UbuntuProfile, ArtifactPolicyEngine, PromptBuilder, SemanticValidator)
+- `verify_phase4.py` — Gateway, Watcher, Skills (4/4 tests passing)
 
 ### Validation Scripts (`tests/validation/`)
--  `validate_core.py` — Core infrastructure integrity (8/8 tests passing)
--  `test_real_attack.py` — Real attack simulation (78.6% detection rate)
+- `validate_core.py` — Core infrastructure integrity (8/8 tests passing)
+- `test_real_attack.py` — Real attack simulation (78.6% detection rate)
 
 ---
 
-##  Project Structure
+## Project Structure
 
 ```
 Apate/
 ├── src/chronos/
-│   ├── core/               State management, database, audit logging
-│   │   ├── database.py
-│   │   ├── main.py
-│   │   ├── models.py
-│   │   ├── persistence.py
-│   │   ├── state.py
-│   │   └── lua/
-│   │       └── atomic_create.lua
-│   │
-│   ├── interface/          FUSE filesystem (Phase 2 updated)
-│   │   └── fuse.py
-│   │
-│   ├── intelligence/       Ubuntu-only AI generation pipeline
-│   │   ├── ubuntu_profile.py    ← loads config/ubuntu.yaml
-│   │   ├── artifact_policy.py   ← file-class policy resolution
-│   │   ├── prompt_builder.py    ← constraint-first prompts
-│   │   ├── validator.py         ← 4-tier semantic validation
-│   │   ├── orchestrator.py      ← non-blocking background generation
-│   │   └── inference.py         ← local Ollama client
-│   │
-│   ├── gateway/            SSH/HTTP entry points
-│   │   ├── ssh_server.py        ← session_id injection (Phase 2)
-│   │   └── http_server.py
-│   │
-│   ├── watcher/            Audit log monitoring
-│   │   ├── log_streamer.py
-│   │   └── event_processor.py
-│   │
-│   ├── skills/             Threat detection (monitoring, not generation)
-│   │   ├── command_analyzer.py
-│   │   ├── threat_library.py
-│   │   └── skill_detector.py
-│   │
-│   └── layer0/             Rust performance layer
+│  ├── core/        State management, database, audit logging
+│  │  ├── database.py
+│  │  ├── main.py
+│  │  ├── models.py
+│  │  ├── persistence.py
+│  │  ├── state.py
+│  │  └── lua/
+│  │    └── atomic_create.lua
+│  │
+│  ├── interface/     FUSE filesystem (Phase 2 updated)
+│  │  └── fuse.py
+│  │
+│  ├── intelligence/    Ubuntu-only AI generation pipeline
+│  │  ├── ubuntu_profile.py  ← loads config/ubuntu.yaml
+│  │  ├── artifact_policy.py  ← file-class policy resolution
+│  │  ├── prompt_builder.py  ← constraint-first prompts
+│  │  ├── validator.py     ← 4-tier semantic validation
+│  │  ├── orchestrator.py   ← non-blocking background generation
+│  │  └── inference.py     ← local Ollama client
+│  │
+│  ├── gateway/      SSH/HTTP entry points
+│  │  ├── ssh_server.py    ← session_id injection (Phase 2)
+│  │  └── http_server.py
+│  │
+│  ├── watcher/      Audit log monitoring
+│  │  ├── log_streamer.py
+│  │  └── event_processor.py
+│  │
+│  ├── skills/       Threat detection (monitoring, not generation)
+│  │  ├── command_analyzer.py
+│  │  ├── threat_library.py
+│  │  └── skill_detector.py
+│  │
+│  └── layer0/       Rust performance layer
 │
 ├── config/
-│   ├── ubuntu.yaml              ← Ubuntu machine definition (state)
-│   ├── generation_policy.yaml   ← AI generation behavior (behavior)
-│   └── prometheus/
-│       └── prometheus.yml
+│  ├── ubuntu.yaml       ← Ubuntu machine definition (state)
+│  ├── generation_policy.yaml  ← AI generation behavior (behavior)
+│  └── prometheus/
+│    └── prometheus.yml
 │
 ├── tests/
-│   ├── validation/
-│   ├── verification/
-│   └── integration/
+│  ├── validation/
+│  ├── verification/
+│  └── integration/
 │
 ├── docs/
-│   ├── AI_ARCHITECTURE.md
-│   ├── AI_ROADMAP.md
-│   ├── ARCHITECTURE.md
-│   ├── ONBOARDING.md
-│   └── STATUS.md (this file)
+│  ├── AI_ARCHITECTURE.md
+│  ├── AI_ROADMAP.md
+│  ├── ARCHITECTURE.md
+│  ├── ONBOARDING.md
+│  └── STATUS.md (this file)
 │
 ├── requirements.txt
 ├── Makefile
@@ -220,7 +220,7 @@ Apate/
 
 ---
 
-##  Dependencies
+## Dependencies
 
 ### Python (requirements.txt)
 - fusepy==3.0.1 (FUSE interface)
@@ -245,7 +245,7 @@ Apate/
 
 ---
 
-##  Hardware Requirements
+## Hardware Requirements
 
 - **CPU**: 4+ cores recommended (Ollama inference)
 - **Memory**: 8GB minimum (16GB recommended for llama3:8b)
