@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2026-07-08
 
+### Added
+- **Evidence Collector (Phase M2.F):** Implemented `EvidenceCollector` to generate deterministic, per-session telemetry without AI involvement.
+  - Subscribes to `AuditLogStreamer` events in real-time.
+  - Maintains a session graph in a Redis hash (`chronos:evidence:<session_id>`).
+  - Tracks execution duration, executed commands, visited files, traversal graph, and identifies the first suspicious command using `CommandAnalyzer`.
+  - Added `session_evidence` PostgreSQL table and `flush_evidence` mechanism in `PersistenceLayer`.
+  - Hooked SSH disconnect to trigger evidence flushing to PostgreSQL upon session termination.
+
 ### Changed
 - **Ubuntu-Only Architecture:** Completely refactored the AI intelligence layer to focus exclusively on emulating Ubuntu 24.04. Removed support and configurations for multiple personas (e.g., vulnerable_db, iot_device, Debian).
 - **Inference Runtime:** Replaced cloud LLM providers (OpenAI, Anthropic) and Mock providers with a local-only, air-gapped `InferenceRuntime` pointing to Ollama. Removed the old `ModelRouter` which relied on Debian-era routing (`sql_dump`).

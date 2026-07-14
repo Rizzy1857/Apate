@@ -187,6 +187,10 @@ class SSHHoneypot:
             except:
                 pass
             client_socket.close()
+            
+            self.audit_log("ssh_disconnect", {
+                "session_id": session_id,
+            })
             logger.info(f"[SSH] Connection closed: {addr}")
             
     def _execute_command(self, command):
