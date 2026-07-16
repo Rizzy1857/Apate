@@ -67,7 +67,8 @@ class PersistenceLayer:
                     last_successful_interaction TIMESTAMP,
                     commands JSONB,
                     visited_files JSONB,
-                    traversal_graph JSONB
+                    traversal_graph JSONB,
+                    skill_assessment JSONB
                 );
             """)
             self.conn.commit()
@@ -96,9 +97,9 @@ class PersistenceLayer:
                         session_id, start_time, end_time, duration_seconds, 
                         detection_status, detection_confidence, exit_reason, 
                         first_suspicious_command, last_successful_interaction, 
-                        commands, visited_files, traversal_graph
+                        commands, visited_files, traversal_graph, skill_assessment
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     ON CONFLICT (session_id) DO UPDATE SET
                         end_time = EXCLUDED.end_time,
@@ -110,7 +111,8 @@ class PersistenceLayer:
                         last_successful_interaction = EXCLUDED.last_successful_interaction,
                         commands = EXCLUDED.commands,
                         visited_files = EXCLUDED.visited_files,
-                        traversal_graph = EXCLUDED.traversal_graph
+                        traversal_graph = EXCLUDED.traversal_graph,
+                        skill_assessment = EXCLUDED.skill_assessment
                 """, (
                     session_id,
                     evidence_data.get('start_time'),
@@ -123,7 +125,8 @@ class PersistenceLayer:
                     evidence_data.get('last_successful_interaction'),
                     Json(evidence_data.get('commands', [])),
                     Json(evidence_data.get('visited_files', [])),
-                    Json(evidence_data.get('traversal_graph', {}))
+                    Json(evidence_data.get('traversal_graph', {})),
+                    Json(evidence_data.get('skill_assessment'))
                 ))
                 self.conn.commit()
         except Exception as e:

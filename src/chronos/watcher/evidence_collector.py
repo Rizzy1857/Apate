@@ -9,6 +9,7 @@ from chronos.watcher.log_streamer import AuditLogStreamer
 from chronos.core.persistence import PersistenceLayer
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
+from chronos.skills.skill_detector import SkillDetector
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class EvidenceCollector:
         self.streamer.subscribe(self._process_event)
         self.command_analyzer = CommandAnalyzer()
         self.threat_library = ThreatLibrary()
+        self.skill_detector = SkillDetector()
 
         logger.info("[EvidenceCollector] Subscribed to AuditLogStreamer")
 
@@ -68,15 +70,20 @@ class EvidenceCollector:
             metadata = event.get('metadata', {})
             cmd = metadata.get('command')
             if cmd:
+                # Analyze command for techniques and threat signatures
+                analysis = self.command_analyzer.analyze(cmd)
+                matches = self.threat_library.match(cmd)
+
                 evidence['commands'].append({
                     "timestamp": timestamp_str,
-                    "command": cmd
+                    "command": cmd,
+                    "techniques": analysis.techniques,
+                    "risk_score": analysis.risk_score,
+                    "signatures": [m.id for m in matches],
                 })
                 evidence['last_successful_interaction'] = timestamp_str
 
                 # Update detection state
-                analysis = self.command_analyzer.analyze(cmd)
-                matches = self.threat_library.match(cmd)
                 if analysis.risk_score > 0 or matches:
                     if evidence['first_suspicious_command'] is None:
                         evidence['first_suspicious_command'] = cmd
@@ -106,6 +113,14 @@ class EvidenceCollector:
             end_dt = datetime.fromisoformat(evidence['end_time'])
             evidence['duration_seconds'] = int((end_dt - start_dt).total_seconds())
             evidence['exit_reason'] = "disconnect"
+
+            # Persist skill assessment atomically with evidence flush
+            command_analyses = self.command_analyzer.batch_analyze(
+                [c['command'] for c in evidence['commands'] if 'command' in c]
+            )
+            if command_analyses:
+                skill_assessment = self.skill_detector.analyze_session(session_id, command_analyses)
+                evidence['skill_assessment'] = skill_assessment
             
             self._save_evidence(session_id, evidence)
             self._flush(session_id, evidence)
