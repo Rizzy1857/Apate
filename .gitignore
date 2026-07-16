@@ -570,3 +570,6 @@ config.local.json
 # Test files (currently excluded but may be enabled later)
 # tests/
 # debug/
+
+#misc.
+docs/files

@@ -5,6 +5,7 @@ from fuse import FUSE
 from prometheus_client import start_http_server
 from chronos.core.state import StateHypervisor
 from chronos.interface.fuse import ChronosFUSE
+from chronos.core.persistence import PersistenceLayer
 
 def signal_handler(sig, frame):
     print("\n[!] Received shutdown signal, unmounting...")
@@ -23,6 +24,10 @@ def main():
     hv = StateHypervisor()
     hv.initialize_filesystem()
     print("[+] State initialized.")
+    
+    # Initialize DB Schema
+    db_layer = PersistenceLayer()
+    db_layer.connect()
 
     # 2. Register Signal Handlers
     signal.signal(signal.SIGINT, signal_handler)

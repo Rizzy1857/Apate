@@ -1,0 +1,18 @@
+[package]
+name = "dashboard"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.29.1"
+egui = "0.29.1"
+egui_extras = "0.29.1"
+tokio = { version = "1.37.0", features = ["full"] }
+tokio-postgres = { version = "0.7.10", features = ["with-chrono-0_4"] }
+redis = { version = "0.25.3", features = ["tokio-comp"] }
+flume = "0.11.0"
+log = "0.4.21"
+env_logger = "0.11.3"
+chrono = "0.4.38"
+serde = { version = "1.0.200", features = ["derive"] }
+serde_json = "1.0.116"
