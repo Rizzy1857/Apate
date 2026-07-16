@@ -67,6 +67,10 @@
  - Behavioral analysis
  - Risk scoring and classification
 
+- **Visual Dashboard** (`src/chronos/dashboard/src/app.rs`)
+ - Real-time PostgreSQL audit log visualization
+ - Built with `egui` for WebAssembly/native rendering
+
 #### Skills (Threat Intelligence — monitoring only, not generation)
 - **Command Analyzer** (`src/chronos/skills/command_analyzer.py`)
  - MITRE ATT&CK framework mapping

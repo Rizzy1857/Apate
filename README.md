@@ -165,6 +165,7 @@ PYTHONPATH=src python3 tests/verification/verify_phase4.py # Gateway, Watcher, S
 | InferenceRuntime | Local Ollama HTTP client | Phase 2 |
 | SSH Gateway | Session-aware interactive shell (session_id injected) | Phase 2 |
 | HTTP Gateway | Web application emulation | Complete |
+| Visual Dashboard | Rust-based egui web interface for real-time audit logs | Complete |
 | Command Analyzer | MITRE ATT&CK technique detection | Complete |
 | Threat Library | Known attack signature database | Complete |
 | Skill Detector | Attacker behavioral profiling (monitoring only) | Complete |

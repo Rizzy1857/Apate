@@ -47,6 +47,7 @@ graph TD
   subgraph "Persistence"
     Lua -->|Commit| Redis[(Redis DB)]
     Hypervisor -->|Audit| Postgres[(PostgreSQL)]
+    Postgres -->|Visualize| Dashboard[egui Dashboard]
   end
 
   subgraph "Layer 0 - BOTTOM"
@@ -193,4 +194,3 @@ Chronos runs inside a Docker container with specific capabilities:
 
 1. **Network Topology Simulation**: Simulating multiple hosts (lateral movement targets).
 2. **Active Countermeasures**: Slowing down `read()` calls based on Attacker Risk Score.
-3. **Visual Dashboard**: Web UI for the PostgreSQL audit logs.
