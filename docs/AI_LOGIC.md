@@ -289,24 +289,23 @@ RELEVANT_FIELDS = {
 
 ## 7. Provenance Metadata
 
-Every persisted blob has a corresponding provenance record:
+Every persisted blob has a corresponding provenance record. Only fields that will actually
+be inspected during analysis are stored — no forensic noise.
 
 ```
 fs:blob_meta:<sha256_hash> = {
-  "ubuntu_version":    "24.04",
-  "kernel_version":    "6.8.0-51-generic",
-  "model":         "llama3:8b",
+  "model":           "llama3:8b",
   "file_class":      "config_file",
-  "category":       "valid",
-  "validation_strictness": "high",
+  "prompt_version":  "v1",
   "generated_at":     <unix timestamp>,
   "validated":       "true"
 }
 ```
 
-Note: There is no `persona` field. There is no `fidelity_tier` field.
-Those concepts have been removed. Ubuntu version + model + file class + category
-is sufficient to reproduce any generated artifact.
+Note: Fields like `temperature`, `top_p`, `seed`, `prompt hash`, `model hash`, and `persona`
+have been deliberately removed. They add storage cost without being actionable.
+Ubuntu version and kernel version are available from MachineState and don't need
+to be duplicated per-blob.
 
 ---
 

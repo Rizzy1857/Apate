@@ -168,6 +168,7 @@ make logs
 ```bash
 ssh -p 2222 ubuntu@localhost  # any password
 ```
+> **Note:** The SSH gateway currently uses a stub shell (Tier 1 roadmap gap). Commands entered here are not yet routed to the FUSE filesystem.
 
 **Run intelligence verification:**
 ```bash

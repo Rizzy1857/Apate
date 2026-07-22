@@ -1,7 +1,7 @@
 # Mirage (Chronos Framework) — Implementation Status
 
 **Date:** July 2026 
-**Status:** Phase 1 Complete | Phase 2 In Progress (M2.A–M2.E complete)
+**Status:** Phase 1 Complete | Phase 2 In Progress (M2.A–M2.F complete)
 
 ---
 
@@ -134,12 +134,38 @@
 - Tier 4: Information density limits (max_lines enforcement)
 - Retry once on REJECT; fall back to static template on second failure
 
-### Upcoming Milestones
-- **M2.F** Evidence Collector — deterministic per-session telemetry
-- **M2.G** Policy Engine & A/B Testing — evidence-driven policy evolution
-- **M2.H** Provenance & SSH FUSE Routing — full command routing through FUSE
-- **M2.I** Storage Lifecycle — Hot → Warm → Cold tiering
+#### M2.F — Evidence Collector 
+- Created `src/chronos/watcher/evidence_collector.py`
+- Per-command enrichment: techniques, risk_score, and signatures stored in JSONB
+- Skill assessment persisted atomically on session disconnect via `SkillDetector`
+- Flush to PostgreSQL `session_evidence` table on session close
+- `skill_assessment` JSONB column added to persistence layer
+
+### Overseer Dashboard (egui)
+- Rebuilt `src/chronos/dashboard/` from raw log viewer into 6-tab analysis tool
+- Live Ops: health strip, pause/resume stream, operation filter, active session count
+- Sessions: sortable table with click-through to detail view
+- Session Detail: command timeline with per-command risk coloring, traversal tree, skill assessment card
+- Threat Analytics, AI Provenance, Configuration: stubbed for future implementation
+- Bidirectional channel architecture (UI→backend requests, backend→UI messages)
+
+### Upcoming Milestones (Tier-Prioritized)
+
+**Tier 1 — Must-Have:**
+- **M2.H** SSH → FUSE Routing — full command routing through FUSE (CRITICAL: SSH currently uses stub shell)
 - **M2.J** Circuit Breaker — graceful Ollama degradation
+
+**Tier 2 — Important:**
+- Entropy Engine — filesystem entropy simulation for realism
+- Aging System — realistic timestamp distribution across filesystem
+- Provenance (simplified) — model, file_class, prompt_version, generated_at, validated
+
+**Tier 3 — Later:**
+- Storage Lifecycle (simplified) — Redis → PostgreSQL → Delete
+
+**Removed:**
+- ~~M2.G Policy Engine & A/B Testing~~ — replaced with operational KPIs (see ROADMAP.md)
+- ~~M2.I 4-tier Storage~~ — simplified to 2-tier
 
 ---
 
@@ -183,17 +209,24 @@ Apate/
 │  │  └── inference.py     ← local Ollama client
 │  │
 │  ├── gateway/      SSH/HTTP entry points
-│  │  ├── ssh_server.py    ← session_id injection (Phase 2)
+│  │  ├── ssh_server.py    ← session_id injection (⚠ stub shell — M2.H pending)
 │  │  └── http_server.py
 │  │
 │  ├── watcher/      Audit log monitoring
 │  │  ├── log_streamer.py
-│  │  └── event_processor.py
+│  │  ├── event_processor.py
+│  │  └── evidence_collector.py ← per-command enrichment + skill assessment
 │  │
 │  ├── skills/       Threat detection (monitoring, not generation)
 │  │  ├── command_analyzer.py
 │  │  ├── threat_library.py
 │  │  └── skill_detector.py
+│  │
+│  ├── dashboard/     Overseer GUI (egui/Rust)
+│  │  └── src/
+│  │    ├── main.rs
+│  │    ├── app.rs     ← 6-tab analysis interface
+│  │    └── backend.rs   ← Postgres/Redis polling + on-demand queries
 │  │
 │  └── layer0/       Rust performance layer
 │
@@ -258,4 +291,4 @@ Apate/
 
 ---
 
-*Last Updated: July 2026 — Phase 2 M2.A–M2.E complete*
+*Last Updated: July 2026 — Phase 2 M2.A–M2.F complete, Overseer Dashboard live, strategic reprioritization applied*

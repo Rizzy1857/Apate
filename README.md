@@ -63,7 +63,11 @@ Command: cat /etc/ghost.conf again → Reads from Redis cache (consistent)
 *  **Session-Identity Architecture**: Every FUSE syscall carries a session ID injected by the SSH gateway. No `/proc` lookups. Quotas, evidence, and MachineState are all session-keyed.
 *  **Real-Time Analysis**: Command analyzer detects attack techniques using MITRE ATT&CK framework patterns.
 *  **Forensic Logging**: Complete audit trail in PostgreSQL for incident response and threat hunting.
+*  **Evidence Collection**: Per-command technique and risk enrichment, skill assessment on session close.
+*  **Overseer Dashboard**: 6-tab egui analysis interface — Live Ops, Sessions, Session Detail, with Threat Analytics, AI Provenance, and Configuration views planned.
 *  **Layer 0 Routing**: High-performance Rust traffic analysis for initial threat tagging.
+
+> **⚠ Known Gap:** SSH commands currently use a stub shell and do not route through FUSE. This is the Tier 1 priority (M2.H). See [Roadmap](docs/ROADMAP.md).
 
 ---
 
@@ -157,21 +161,25 @@ PYTHONPATH=src python3 tests/verification/verify_phase4.py # Gateway, Watcher, S
 |-----------|---------|--------|
 | State Hypervisor | Redis atomic filesystem state | Complete |
 | FUSE Interface | Kernel VFS interception + non-blocking AI integration | Phase 2 |
-| UbuntuProfile | Single Ubuntu machine definition from `ubuntu.yaml` | Phase 2 |
-| ArtifactPolicyEngine | File-class policy resolution (category + constraints) | Phase 2 |
-| PromptBuilder | Constraint-first prompt construction | Phase 2 |
-| SemanticValidator | 4-tier validation against MachineState | Phase 2 |
-| GenerationOrchestrator | Non-blocking background generation pool | Phase 2 |
-| InferenceRuntime | Local Ollama HTTP client | Phase 2 |
-| SSH Gateway | Session-aware interactive shell (session_id injected) | Phase 2 |
+| UbuntuProfile | Single Ubuntu machine definition from `ubuntu.yaml` | Complete |
+| ArtifactPolicyEngine | File-class policy resolution (category + constraints) | Complete |
+| PromptBuilder | Constraint-first prompt construction | Complete |
+| SemanticValidator | 4-tier validation against MachineState | Complete |
+| GenerationOrchestrator | Non-blocking background generation pool | Complete |
+| InferenceRuntime | Local Ollama HTTP client | Complete |
+| SSH Gateway | Session-aware interactive shell (⚠ stub — M2.H pending) | Phase 2 |
 | HTTP Gateway | Web application emulation | Complete |
-| Visual Dashboard | Rust-based egui web interface for real-time audit logs | Complete |
+| Visual Dashboard | Rust-based egui 6-tab Overseer interface | Complete |
+| Evidence Collector | Per-command enrichment + skill assessment persistence | Complete |
 | Command Analyzer | MITRE ATT&CK technique detection | Complete |
 | Threat Library | Known attack signature database | Complete |
 | Skill Detector | Attacker behavioral profiling (monitoring only) | Complete |
 | Event Processor | Pattern correlation | Complete |
 | Audit Streamer | Real-time event streaming | Complete |
 | Layer 0 (Rust) | Traffic analysis | Complete |
+| Entropy Engine | Filesystem entropy simulation | Planned (Tier 2) |
+| Aging System | Realistic timestamp distribution | Planned (Tier 2) |
+| Circuit Breaker | Graceful Ollama degradation | Planned (Tier 1) |
 
 ---
 

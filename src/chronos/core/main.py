@@ -1,6 +1,7 @@
 import sys
 import os
 import signal
+import threading
 from fuse import FUSE
 from prometheus_client import start_http_server
 from chronos.core.state import StateHypervisor
@@ -37,7 +38,32 @@ def main():
     print("[*] Starting Metrics Server on port 8000...")
     start_http_server(8000)
 
-    # 4. Mount FUSE
+    # 4. Start Watcher Pipeline (audit streamer + evidence collector)
+    try:
+        from chronos.watcher.log_streamer import AuditLogStreamer
+        from chronos.watcher.evidence_collector import EvidenceCollector
+
+        streamer = AuditLogStreamer(db_layer)
+        evidence_collector = EvidenceCollector(streamer, db_layer)
+
+        streamer_thread = threading.Thread(target=streamer.start, daemon=True)
+        streamer_thread.start()
+        print("[+] Watcher pipeline started.")
+    except Exception as e:
+        print(f"[!] Watcher pipeline failed to start: {e}")
+
+    # 5. Start SSH Gateway (daemon thread — must start before FUSE blocks)
+    try:
+        from chronos.gateway.ssh_server import SSHHoneypot
+
+        ssh = SSHHoneypot(port=2222)
+        ssh_thread = threading.Thread(target=ssh.start, daemon=True)
+        ssh_thread.start()
+        print("[+] SSH Gateway started on port 2222.")
+    except Exception as e:
+        print(f"[!] SSH Gateway failed to start: {e}")
+
+    # 6. Mount FUSE (blocks forever — must be last)
     print("[*] Mounting FUSE filesystem (foreground)...")
     try:
         # allow_other is crucial for Docker if accessed from host or other users

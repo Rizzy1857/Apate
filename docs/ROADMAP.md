@@ -8,16 +8,18 @@ This roadmap defines the delivery plan for **Mirage** (product idea) implemented
 - Product/idea name: **Mirage**
 - Framework/engine name: **Chronos**
 
+## Core Design Thesis
+
+> AI doesn't own truth. Redis owns truth. AI fills empty spaces.
+
+Chronos is a deterministic Ubuntu honeypot that uses AI only to generate plausible file content under strict constraints. The system improves through evidence-based policy updates, not autonomous AI learning.
+
 ## Program Structure
 
-Mirage is delivered in two 6-month phases:
+Mirage is delivered in two phases, with remaining work prioritized by **impact on attacker deception quality**:
 
 - **Phase 1 (6 months): Core platform engineering + validation** — **Completed**
-- **Phase 2 (6 months): AI integration for analyst value without complexity** — **In Progress**
-
-## Roadmap Focus (From Now Onward)
-
-The remainder of this document is action-oriented and focused on **what to build next**. Historical content is retained only as context for planning and risk control.
+- **Phase 2 (6 months): AI integration for realism without complexity** — **In Progress**
 
 ---
 
@@ -28,7 +30,7 @@ This roadmap is grounded in repository state and commit history, not speculative
 ### Commit-Derived Milestones (Selected)
 
 | Date | Commit | Milestone Evidence |
-|------|--------|--------------------|
+|------|--------|---------------------|
 | 2025-08-24 | `a2fce5e`, `a9b7dca` | Initial structure and core files in Apate |
 | 2025-11-21 | `30ca497`, `bba4434` | Python FFI + hybrid Rust/Python architecture documented |
 | 2025-11-25 | `8938ae3`, `90eb90e` | Circuit breaker + Layer 0 threat detection integration |
@@ -36,18 +38,164 @@ This roadmap is grounded in repository state and commit history, not speculative
 | 2026-02-09 | `071682e`, `e7168e6` | Production compose, monitoring, Phase 4 (gateway/watcher/skills) |
 | 2026-02-25 | `0820809` | Phase 1 validation docs and scripts |
 | 2026-03-02 | `6180396` | Validation targets, docs updates, test reorganization |
+| 2026-07-22 | — | Overseer GUI (egui), evidence enrichment, skill persistence |
 
 ### Current Verified Baseline
 
-From repository docs and tests as of March 2026:
+From repository docs and tests as of July 2026:
 
 - Core state engine + atomic Redis/Lua operations
 - FUSE interface and filesystem simulation
-- SSH/HTTP gateways
+- SSH/HTTP gateways (SSH currently stub shell — see Tier 1)
 - Skills stack (command analyzer, threat library, skill detector)
-- Watcher stack (event processor, log streamer)
+- Watcher stack (event processor, log streamer, evidence collector)
 - Layer 0 Rust performance subsystem
+- Overseer Dashboard (egui — Live Ops, Sessions, Session Detail)
+- AI generation pipeline (M2.A–M2.F complete)
 - Validation coverage including core checks and attack simulation
+
+---
+
+## Priority Framework
+
+Remaining work is prioritized by a single question: **does this increase the odds that an attacker believes they're on a real machine?**
+
+Features that directly improve deception quality come first. Infrastructure polish comes after the illusion has been validated.
+
+---
+
+## Tier 1: Must-Have (Critical Path)
+
+These are blocking. Without them, the deception doesn't work end-to-end.
+
+### SSH → FUSE Routing (M2.H)
+
+**Why it's Tier 1:** The SSH gateway currently returns hardcoded stub responses. Attackers aren't touching the FUSE filesystem at all. This means the entire Chronos architecture — State Hypervisor, lazy generation, semantic validation — is bypassed during SSH sessions.
+
+**Scope:**
+- Route SSH commands through the FUSE-mounted filesystem at `/mnt/honeypot`
+- Track CWD per session
+- Support: `cd`, `ls`, `cat`, `pwd`, `find`, `stat`, `touch`, `mkdir`, `rm`, `echo >`, `grep`
+- Pipe and semicolon chaining (`cat /etc/passwd | grep root`)
+- Error responses that match real Ubuntu behavior
+
+**Exit criteria:** An attacker SSH session exercises the full FUSE pipeline. `cat /etc/nginx/nginx.conf` triggers lazy generation. `touch /tmp/test && ls /tmp` shows the file.
+
+### Circuit Breaker (M2.J)
+
+**Why it's Tier 1:** If Ollama goes down, FUSE calls will hang or error unpredictably. A circuit breaker makes degradation invisible to the attacker.
+
+**Scope:**
+- Track per-model failure rate and latency percentile
+- Auto-degrade to static templates after N consecutive failures
+- Time-based backoff recovery with exponential delay
+- No FUSE-level errors visible to attacker during degradation
+
+---
+
+## Tier 2: Important (Realism Polish)
+
+These significantly improve the believability of the deception.
+
+### Entropy Engine
+
+**Why it matters:** A filesystem where every file was modified at the same timestamp is instantly suspicious. Entropy simulation makes the filesystem feel alive.
+
+**Scope:**
+- Gradual log file growth (`/var/log/syslog`, `/var/log/auth.log`)
+- Cache and temp file churn
+- Service-realistic patterns (nginx access logs grow during "business hours")
+
+### Aging System
+
+**Why it matters:** Attackers subconsciously trust chronology. A machine where `/etc/passwd` was modified in 2024, `/var/log/nginx/access.log` was modified today, and `~/.bash_history` was modified yesterday feels real.
+
+**Scope:**
+- Realistic `mtime`/`atime`/`ctime` distribution across the filesystem
+- OS files dated to installation time, config files dated to setup time, logs dated to recent activity
+- Gradual timestamp drift rather than static values
+
+### Provenance Metadata
+
+**Why it matters:** Lets a red-team researcher trust or distrust what they're looking at.
+
+**Scope (simplified — only track what you'll actually inspect):**
+- `model` — which Ollama model generated this
+- `file_class` — credential, config, log, etc.
+- `prompt_version` — which prompt template was used
+- `generated_at` — timestamp
+- `validated` — did the semantic validator pass
+
+~~Removed:~~ `temperature`, `top_p`, `seed`, `prompt hash`, `model hash`, `persona` — forensic noise.
+
+### Predictive Generation
+
+Already partially implemented in `readdir()` prewarm. Extend to predict likely next paths based on traversal patterns.
+
+---
+
+## Tier 3: Later (Infrastructure)
+
+These make sense **after** the deception has been validated with real attacker sessions.
+
+### Storage Lifecycle (Simplified)
+
+The original 4-tier storage system (Hot → Warm → Cold → Archive) is enterprise architecture syndrome for the current scale.
+
+**Simplified to:**
+```
+Redis (hot) → PostgreSQL (cold) → Delete
+```
+
+Blobs aged out on session expiry. Add tiers later only if Redis memory pressure becomes measurable.
+
+### Operational Hardening
+
+Canary deployments, model rollout strategies, blue-green inference — these are important **after people actually use the software**. Optimizing deployment of software nobody has deployed yet is a classic startup mistake.
+
+### SIEM Integrations
+
+Splunk, Sentinel, Elastic connectors. Nobody installs software because it supports Splunk. They install it because it solves a problem. Connectors come after validation.
+
+---
+
+## Tier 4: Only If Needed
+
+These should only be built if concrete evidence (attacker data, user requests) justifies them.
+
+### A/B Testing
+
+~~Removed from M2.G.~~ Attackers aren't filling out satisfaction surveys. Instead, track operational metrics that actually indicate deception quality (see KPIs below).
+
+### Complex Fidelity Experiments
+
+Three fidelity levels (cheap, normal, premium) are enough. Eight tiers is an MMO skill tree. Don't maintain what won't be measured.
+
+### Multi-Instance Scaling
+
+One machine. One Redis. One PostgreSQL. One Ollama. That's enough. Kubernetes syndrome is not a feature.
+
+### Advanced Rollout Strategies
+
+Version promotion, blue-green inference. Build this when the user base demands it.
+
+---
+
+## Attacker-Facing KPIs
+
+This is the biggest gap. Tons of architecture, almost no attacker-facing measurement. These metrics tell you whether the deception is actually working.
+
+| Metric | Why It Matters | Source |
+|---|---|---|
+| Average session duration | Measures realism — longer = more believable | `session_evidence.duration_seconds` |
+| Commands executed per session | Interaction depth | `session_evidence.commands` |
+| Unique directories visited | Exploration behavior | `session_evidence.visited_files` |
+| Percentage of cache misses | AI workload indicator | Orchestrator metrics |
+| AI generation latency (P50, P95) | Performance | Prometheus `chronos_generation_latency_seconds` |
+| Honeypot detection attempts | Realism indicator — env checks, kernel probes | CommandAnalyzer |
+| Time before first exploit | Attacker confidence | `session_evidence.first_suspicious_command` timestamp |
+| Validator rejection rate | Signal of model drift | SemanticValidator |
+| MTTD (Mean Time To Detection) | Primary deception quality metric | EvidenceCollector |
 
 ---
 
@@ -66,203 +214,12 @@ gantt
   Validation docs + test consolidation      :done, p1d, 2026-02-25, 10d
 
   section Phase 2 — AI Integration (In Progress)
-  AI scope guardrails and use-case boundary   :active, p2a, 2026-03-03, 30d
-  Deterministic-AI coupling patterns       :p2b, after p2a, 35d
-  Explainable analysis layer and prompts     :p2c, after p2b, 35d
-  AI regression and anti-slop quality gates   :p2d, after p2c, 30d
-  Phase 2 release review             :milestone, p2e, after p2d, 1d
+  AI generation pipeline (M2.A–M2.F)      :done, p2a, 2026-03-03, 120d
+  Overseer Dashboard (egui)           :done, p2b, 2026-07-14, 8d
+  Tier 1: SSH→FUSE + Circuit Breaker      :active, p2c, 2026-07-22, 30d
+  Tier 2: Entropy + Aging + Provenance      :p2d, after p2c, 30d
+  Phase 2 close                :milestone, p2e, after p2d, 1d
 ```
-
- **Figure R1.** Mirage two-phase delivery timeline (commit-evidence aligned).
-
----
-
-## Architecture-to-Roadmap Dependency View
-
-```mermaid
-flowchart TD
-  A[Apate Repository] --> B[Mirage Product Goals]
-  B --> C[Chronos Framework]
-
-  C --> D[State Hypervisor + Redis/Lua]
-  C --> E[FUSE Interface]
-  C --> F[Gateway + Watcher + Skills]
-  C --> G[Layer 0 Rust]
-
-  D --> H[Phase 1 Completion]
-  E --> H
-  F --> H
-  G --> H
-
-  H --> I[Phase 2 AI Integration]
-  I --> J[Controlled AI usage]
-  I --> K[Explainable outputs]
-  I --> L[Minimize state contradiction risk]
-  I --> M[No unnecessary complexity]
-```
-
- **Figure R2.** Dependency relationship between Apate repository assets and Mirage phase outcomes.
-
----
-
-## Phase 1 Closure (Completed)
-
-### Objective
-Deliver a production-capable, state-consistent deception platform baseline for Mirage.
-
-### Exit Criteria (Met)
-
-- Core architecture implemented across `src/chronos/*`
-- Validation scripts and phase verification present in `tests/validation` and `tests/verification`
-- Monitoring/deployment baseline available (`docker-compose*`, Prometheus config, Make targets)
-- Documentation baseline available in `README.md` and `docs/*`
-
-### Residual Risks Carried into Phase 2
-
-- AI must not overwrite deterministic state semantics
-- Prompt outputs must stay auditable and explainable
-- AI functionality must improve analyst outcomes, not add opaque complexity
-
----
-
-## Phase 2 Scope (In Progress)
-
-### Guiding Principle
-
-AI should **complement** Mirage operations, not complicate Chronos or create "AI slop".
-
-### Workstream 1: AI Boundary and Governance
-
-- Define allowed AI touchpoints (content augmentation, analyst summaries, optional triage)
-- Define disallowed AI responsibilities (state truth, atomic mutation logic, source-of-truth storage)
-- Add review checklist for any AI-facing PR
-
-### Workstream 2: Deterministic + AI Coupling
-
-- Ensure all stateful actions remain owned by deterministic engine paths
-- Ground all AI generations against a structured `MachineState` (relational facts)
-- Add fallback behavior when the local Inference Runtime is overloaded or unavailable
-
-### Workstream 3: Explainability and Analyst Utility
-
-- Standardize explanation templates for risk scores and threat labels
-- Surface provenance (rule hit vs model suggestion, generation parameters)
-- Keep outputs concise, evidence-linked, and reviewable
-
-### Workstream 4: Quality Gates and Regression Controls
-
-- Add AI regression suite (semantic consistency checks against `MachineState`)
-- Add anti-slop gate for repetitive/low-signal AI output
-- Add acceptance thresholds for precision/utility before rollout
-
-### Phase 2 Execution Plan (Next 6 Months)
-
-#### Window A (0-30 days)
-
-- Finalize AI boundary policy and merge architecture guardrails
-- Add CI checks that block AI changes from mutating deterministic state paths
-- Define evaluation rubric for AI-generated analyst outputs (usefulness, concision, traceability)
-
-#### Window B (31-90 days)
-
-- Implement explainable output bundle (reason + evidence + confidence)
-- Add fallback routing when AI provider is unavailable or low-confidence
-- Expand regression suite for contradiction-risk and noisy-output detection
-
-#### Window C (91-180 days)
-
-- Tune AI-assisted detection summaries with red-team replay data
-- Integrate analyst feedback loop for output quality scoring
-- Complete Phase 2 review pack (metrics, risk register, deployment recommendation)
-
----
-
-## Phase 2 Milestones and Acceptance Criteria
-
-| Milestone | Target Window | Acceptance Criteria |
-|-----------|---------------|---------------------|
-| M2.1 AI Boundaries Frozen | Month 1 | Governance rules merged; deterministic ownership documented |
-| M2.2 Deterministic Coupling Complete | Month 2-3 | No state mutation through AI-only path; tests green |
-| M2.3 Explainability Rollout | Month 3-4 | Analyst-facing rationale available for detections |
-| M2.4 Quality Gates Enforced | Month 4-5 | AI regression checks mandatory in CI |
-| M2.5 Phase 2 Review | Month 6 | Release decision with evidence pack and risk sign-off |
-
----
-
-## Metrics to Track (Phase 2)
-
-- **State consistency errors:** target `0` in validation suite
-- **AI fallback reliability:** deterministic operation available when provider is down
-- **Analyst signal quality:** reduction in low-value/noisy AI output
-- **Explainability coverage:** percentage of AI-assisted outputs with rationale metadata
-- **Regression stability:** pass rate of AI-specific validation gates
-
-### Suggested Additional Metrics
-
-- **Explanation utility score:** reviewer-rated usefulness of AI summaries
-- **Noise ratio:** fraction of AI outputs marked low-value by operators
-- **Fallback activation rate:** frequency of deterministic fallback usage
-- **Drift alerts:** deviations in model output style/quality across releases
-
----
-
-## Future Focus (Post Phase 2)
-
-After Phase 2 closes, Mirage should prioritize operational maturity and ecosystem integration.
-
-### Track F1: Operational Hardening
-
-- Formal SLOs for core state operations and analysis latency
-- Canary release flow for model/prompt updates
-- Audit retention policy with tiered storage
-
-### Track F2: Intelligence and Detection Expansion
-
-- Behavioral sequence modeling for multi-command attack intent
-- Cross-session campaign clustering
-- ATT\&CK coverage expansion with precision/recall tracking
-
-### Track F3: Platform Integrations
-
-- SIEM connectors (structured export profiles)
-- Incident timeline API for external responders
-- Rule/action handoff to orchestration tools
-
-### Track F4: Deployment and Scale
-
-- Multi-instance coordination blueprint
-- Cost-aware scaling policy for inference + storage
-- Environment profiles for research lab vs production pilot
-
----
-
-## Additional Things to Add (Backlog)
-
-This backlog lists candidate additions not mandatory for Phase 2 completion but valuable for roadmap continuity.
-
-### Product Additions
-
-- Role-based analyst views (triage vs investigation)
-- Session replay narrative generator (human-readable timeline)
-- Threat report templates for weekly/monthly review
-
-### Engineering Additions
-
-- Prompt/version registry with rollback metadata
-- Deterministic state invariants test harness (nightly)
-- Synthetic adversarial scenario generator for regression input
-
-### Security and Governance Additions
-
-- AI safety checklist in PR template for all intelligence-layer changes
-- Data minimization policy for prompt/context payloads
-- Risk acceptance log for experimental AI features
-
-### Research Additions
-
-- Controlled study: analyst speed/accuracy with and without AI summaries
-- Comparative benchmark: rule-only vs hybrid AI-assisted workflow
-- False-positive reduction experiments by tactic category
 
 ---
 
@@ -274,10 +231,13 @@ This backlog lists candidate additions not mandatory for Phase 2 completion but 
  - Product: Mirage
  - Framework: Chronos
 - AI features are accepted only if they preserve deterministic truth and improve operator clarity
+- New features require a concrete answer to: **"Does this increase attacker dwell time?"**
 
 ---
 
 ## Next Review Checkpoint
 
 - **Roadmap review cadence:** bi-weekly during Phase 2
-- **Immediate next checkpoint:** end of current sprint to validate M2.1 boundary freeze
+- **Immediate next checkpoint:** after SSH→FUSE routing is validated with a live attacker session
+
+*Last Updated: July 2026 — Strategic reprioritization based on external architecture review.*

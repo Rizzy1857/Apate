@@ -36,6 +36,8 @@ graph TD
     Templates[Static Template Fallbacks\nminimal Ubuntu-plausible content]
   end
 
+  SSHNote["⚠ SSH Gateway currently uses stub responses.\nSSH→FUSE routing (M2.H) is Tier 1 priority."]
+
   subgraph "Machine Definition"
     UbuntuYAML["config/ubuntu.yaml\n(state)"]
     PolicyYAML["config/generation_policy.yaml\n(behavior)"]
@@ -47,9 +49,8 @@ graph TD
     Redis[(Redis)]
   end
 
-  subgraph "Provenance & Lifecycle"
-    BlobMeta["fs:blob_meta:<hash>\nRedis hash"]
-    ColdStore[(PostgreSQL)]
+  subgraph "Provenance"
+    BlobMeta["fs:blob_meta:<hash>\nmodel, file_class, prompt_version,\ngenerated_at, validated"]
   end
 
   subgraph "Layer 5: Analysis"
@@ -78,7 +79,6 @@ graph TD
   Templates --> Redis
 
   Redis --> BlobMeta
-  Redis -.->|age out| ColdStore
 
   SkillDetector -->|detection evidence only| Watcher
   BlobMeta --> Watcher
@@ -124,18 +124,19 @@ All new Redis keys are additive to the existing schema in `docs/ARCHITECTURE.md 
 |---|---|---|---|
 | `fs:generating:<inode>` | String (lock) | Cross-thread generation dedup | 30s |
 | `chronos:machine_state:<session_id>` | Hash | Ubuntu machine state per session (packages, services, users, ports, …) | Session lifetime |
-| `fs:blob_meta:<hash>` | Hash | Provenance: ubuntu_version, kernel_version, model, file_class, category, generated_at, validated | Persists with blob |
+| `fs:blob_meta:<hash>` | Hash | Provenance: model, file_class, prompt_version, generated_at, validated | Persists with blob |
 | `chronos:metrics:latency:<model>` | JSON list | Rolling 50-sample latency window for adaptive timeout calculation | None |
 | `chronos:quota:<session_id>:<window>` | Integer | Per-session inference quota counter (token bucket) | 2× quota window |
 
-### Storage Tiering
+### Storage Lifecycle (Simplified)
+
+The storage model is intentionally simple. Add tiers only if Redis memory pressure becomes measurable.
 
 | Tier | Storage | Contents |
 |---|---|---|
-| Hot | Redis memory | Recently accessed blobs, active session MachineState |
-| Warm | Redis persistent | Standard `fs:blob:<hash>` for active sessions |
-| Cold | PostgreSQL | Blobs from sessions inactive > threshold |
-| Archive/Delete | — | Blobs from expired sessions, aged out |
+| Hot | Redis memory | Active blobs, session MachineState, generation locks |
+| Cold | PostgreSQL | Session evidence, audit logs |
+| Delete | — | Blobs from expired sessions, aged out |
 
 ---
 
