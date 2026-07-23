@@ -1,7 +1,7 @@
 import logging
 import json
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import redis
 
@@ -30,10 +30,10 @@ class EvidenceCollector:
 
         logger.info("[EvidenceCollector] Subscribed to AuditLogStreamer")
 
-    def _get_evidence(self, session_id: str, default_timestamp: str = None) -> Dict[str, Any]:
+    def _get_evidence(self, session_id: str, default_timestamp: str | None = None) -> Dict[str, Any]:
         key = f"chronos:evidence:{session_id}"
         data = self.redis.get(key)
-        if data:
+        if data and isinstance(data, (str, bytes, bytearray)):
             return json.loads(data)
         
         return {
@@ -63,7 +63,8 @@ class EvidenceCollector:
             return
 
         timestamp_str = event.get('timestamp')
-        evidence = self._get_evidence(session_id, timestamp_str)
+        timestamp_val = str(timestamp_str) if timestamp_str else None
+        evidence = self._get_evidence(session_id, timestamp_val)
         operation = event.get('operation')
 
         if operation == 'ssh_command':

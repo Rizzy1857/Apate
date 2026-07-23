@@ -570,12 +570,11 @@ impl From<usize> for DegradationLevel {
 
 impl AdaptiveCircuitBreaker {
     pub fn new(profile: ProfileFlags) -> Self {
-        const ATOMIC_ZERO: AtomicUsize = AtomicUsize::new(0);
         Self {
             state: AtomicUsize::new(0),
             failure_count: AtomicUsize::new(0),
             last_failure_time: AtomicU64::new(0),
-            latency_buckets: [ATOMIC_ZERO; 10],
+            latency_buckets: std::array::from_fn(|_| AtomicUsize::new(0)),
             degradation_level: AtomicUsize::new(0),
             profile,
         }

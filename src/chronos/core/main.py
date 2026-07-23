@@ -30,6 +30,11 @@ def main():
     db_layer = PersistenceLayer()
     db_layer.connect()
 
+    # 1.5 Start World Simulation Orchestrator
+    from chronos.simulation.orchestrator import world_simulation
+    world_simulation.start(tick_interval=60)
+    print("[+] World Simulation Orchestrator started.")
+
     # 2. Register Signal Handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -56,7 +61,7 @@ def main():
     try:
         from chronos.gateway.ssh_server import SSHHoneypot
 
-        ssh = SSHHoneypot(port=2222)
+        ssh = SSHHoneypot(port=2222, db_layer=db_layer)
         ssh_thread = threading.Thread(target=ssh.start, daemon=True)
         ssh_thread.start()
         print("[+] SSH Gateway started on port 2222.")
@@ -68,7 +73,7 @@ def main():
     try:
         # allow_other is crucial for Docker if accessed from host or other users
         # foreground=True simplifies debugging and signal handling
-        FUSE(ChronosFUSE(mount_point), mount_point, foreground=True, allow_other=True)
+        FUSE(ChronosFUSE(mount_point, db_layer=db_layer), mount_point, foreground=True, allow_other=True)
     except Exception as e:
         print(f"[!] FUSE Error: {e}")
         sys.exit(1)

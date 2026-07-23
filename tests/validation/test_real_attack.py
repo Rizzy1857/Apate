@@ -8,6 +8,7 @@ import time
 import sys
 import os
 from datetime import datetime
+import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
@@ -58,7 +59,19 @@ ATTACK_SCENARIOS = {
     ],
 }
 
+@pytest.fixture(scope="module")
+def analyzer():
+    return CommandAnalyzer()
 
+@pytest.fixture(scope="module")
+def library():
+    return ThreatLibrary()
+
+@pytest.fixture(scope="module")
+def detector():
+    return SkillDetector()
+
+@pytest.mark.parametrize("name, commands", list(ATTACK_SCENARIOS.items()))
 def test_scenario(name, commands, analyzer, library, detector):
     """Test a single attack scenario"""
     print(f"\n{'='*80}")
@@ -131,7 +144,7 @@ def test_scenario(name, commands, analyzer, library, detector):
     print(f"  Avg Latency:       {avg_latency:.2f}ms")
     print(f"  P95 Latency:       {p95_latency:.2f}ms")
     
-    return results
+    assert results["commands"] > 0, "No commands tested"
 
 
 def main():

@@ -6,7 +6,6 @@ import logging
 import time
 import threading
 import json
-from datetime import datetime
 from typing import Callable, Dict, Any, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -21,7 +20,7 @@ class AuditLogStreamer:
     Implements pub-sub pattern for real-time event processing
     """
     
-    def __init__(self, db_config: Dict[str, str], poll_interval: float = 1.0):
+    def __init__(self, db_config: Dict[str, Any], poll_interval: float = 1.0):
         """
         Args:
             db_config: PostgreSQL connection parameters
@@ -95,7 +94,7 @@ class AuditLogStreamer:
                     if 'metadata' in event and isinstance(event['metadata'], str):
                         try:
                             event['metadata'] = json.loads(event['metadata'])
-                        except:
+                        except Exception:
                             pass
                     
                     self._notify_subscribers(dict(event))

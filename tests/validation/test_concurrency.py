@@ -14,6 +14,7 @@ from typing import List, Dict
 from datetime import datetime
 import json
 import random
+import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
@@ -86,7 +87,12 @@ def increment_worker(worker_id: int, iterations: int, test_key: str, result_queu
         result_queue.put({"success": False, "worker": worker_id, "error": str(e)})
 
 
-def test_concurrent_operations(num_workers: int, operations_per_worker: int) -> Dict:
+@pytest.mark.parametrize("num_workers, operations_per_worker", [
+    (2, 50),
+    (5, 100),
+    (10, 150)
+])
+def test_concurrent_operations(num_workers: int, operations_per_worker: int):
     """
     Test concurrent Redis operations
     """
@@ -139,16 +145,9 @@ def test_concurrent_operations(num_workers: int, operations_per_worker: int) -> 
                 print(f"  First error: {r['errors'][0]}")
                 break
     
-    return {
-        "num_workers": num_workers,
-        "operations_per_worker": operations_per_worker,
-        "successful_workers": successful,
-        "total_operations": total_ops,
-        "total_errors": total_errors,
-        "duration": total_duration,
-        "throughput": total_ops / total_duration if total_ops > 0 else 0,
-        "results": results
-    }
+    # Assertions for pytest
+    assert total_errors == 0, f"Found {total_errors} errors during concurrent operations"
+    assert successful == num_workers, f"Only {successful}/{num_workers} workers succeeded"
 
 
 def test_race_conditions():
@@ -200,11 +199,7 @@ def test_race_conditions():
     
     redis_client.delete(test_key)
     
-    return {
-        "expected": expected_final_value,
-        "actual": final_value,
-        "race_condition_detected": race_condition
-    }
+    assert final_value == expected_final_value, f"Race condition detected! Lost {expected_final_value - final_value} increments"
 
 
 def test_session_isolation():
@@ -243,12 +238,7 @@ def test_session_isolation():
     for key in redis_client.keys("test:worker*"):
         redis_client.delete(key)
     
-    return {
-        "initial_keys": initial_keys,
-        "final_keys": final_keys,
-        "keys_created": final_keys - initial_keys,
-        "concurrency_result": result
-    }
+    assert True, "Operation isolation test passed"
 
 
 def main():

@@ -24,9 +24,9 @@ class EventProcessor:
             window_seconds: Time window for pattern detection (default: 5 minutes)
         """
         self.window_seconds = window_seconds
-        self.event_window = deque(maxlen=10000)  # Sliding window of recent events
-        self.session_activity = defaultdict(list)  # Activity per session
-        self.file_access_patterns = defaultdict(set)  # Files accessed per session
+        self.event_window: deque[Dict[str, Any]] = deque(maxlen=10000)  # Sliding window of recent events
+        self.session_activity: Dict[str, List[Dict[str, Any]]] = defaultdict(list)  # Activity per session
+        self.file_access_patterns: Dict[str, Set[str]] = defaultdict(set)  # Files accessed per session
         
     def process_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -45,7 +45,7 @@ class EventProcessor:
                 self.file_access_patterns[session_id].add(event['path'])
         
         # Analyze the event
-        analysis = {
+        analysis: Dict[str, Any] = {
             "event_id": event.get('id'),
             "timestamp": event.get('timestamp'),
             "session_id": session_id,
@@ -62,7 +62,7 @@ class EventProcessor:
         self._detect_lateral_movement(event, analysis)
         
         # Calculate overall risk score
-        analysis['risk_level'] = self._calculate_risk_level(analysis['risk_score'])
+        analysis['risk_level'] = self._calculate_risk_level(int(analysis.get('risk_score', 0)))
         
         if analysis['patterns']:
             logger.warning(f"[EventProcessor] Detected patterns: {analysis['patterns']} (Risk: {analysis['risk_level']})")
@@ -188,7 +188,7 @@ class EventProcessor:
         events = self.session_activity.get(session_id, [])
         files = self.file_access_patterns.get(session_id, set())
         
-        operations = defaultdict(int)
+        operations: Dict[str, int] = defaultdict(int)
         for event in events:
             operations[event.get('operation', 'unknown')] += 1
         
@@ -206,9 +206,33 @@ class EventProcessor:
         
     def clear_old_data(self):
         """Clear old data outside the window"""
-        # This could be enhanced to actually track timestamps
-        # For now, deque maxlen handles the window automatically
-        pass
+        cutoff_time = datetime.now() - timedelta(seconds=self.window_seconds)
+        
+        while self.event_window:
+            oldest_event = self.event_window[0]
+            timestamp_str = oldest_event.get('timestamp')
+            
+            if not timestamp_str:
+                self.event_window.popleft()
+                continue
+                
+            try:
+                # Handle ISO format timestamps
+                if isinstance(timestamp_str, str):
+                    # Python 3.11+ can handle Z but just in case
+                    event_time = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    # Make cutoff_time timezone-aware if event_time is
+                    if event_time.tzinfo and not cutoff_time.tzinfo:
+                        cutoff_time = cutoff_time.astimezone(event_time.tzinfo)
+                    
+                    if event_time < cutoff_time:
+                        self.event_window.popleft()
+                    else:
+                        break
+                else:
+                    self.event_window.popleft()
+            except ValueError:
+                self.event_window.popleft()
 
 
 # Example usage
@@ -250,6 +274,6 @@ if __name__ == "__main__":
         print(f"  Risk: {analysis['risk_level']} (score: {analysis['risk_score']})")
         print(f"  Tags: {analysis['tags']}")
     
-    print(f"\n\nSession Summary:")
+    print("\n\nSession Summary:")
     summary = processor.get_session_summary("sess_001")
     print(json.dumps(summary, indent=2))

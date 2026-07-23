@@ -41,6 +41,12 @@ pub struct CircuitBreaker {
     last_failure_time: AtomicU64,
 }
 
+impl Default for CircuitBreaker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CircuitBreaker {
     pub const fn new() -> Self {
         Self {

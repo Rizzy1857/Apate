@@ -3,7 +3,7 @@ use egui_extras::{Column, TableBuilder};
 use flume::{Receiver, Sender};
 use crate::backend::{
     AuditEvent, BackendMessage, BackendRequest,
-    SessionSummary, SessionDetail, CommandEntry,
+    SessionSummary, SessionDetail,
 };
 
 // ── Tab Enum ────────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ impl ChronosDashboard {
                     self.sessions = sessions;
                 }
                 BackendMessage::SessionDetailResult(detail) => {
-                    self.selected_session = detail;
+                    self.selected_session = *detail;
                     self.detail_loading = false;
                 }
             }

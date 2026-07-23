@@ -116,7 +116,7 @@ class CommandAnalyzer:
         techniques = []
         indicators = []
         risk_score = 0
-        metadata = {}
+        metadata: Dict[str, Any] = {}
         
         # Check all pattern categories
         for technique, pattern in self.recon_patterns.items():

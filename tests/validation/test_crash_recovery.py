@@ -11,6 +11,7 @@ import subprocess
 import redis
 import psycopg2
 from datetime import datetime
+import pytest
 import json
 
 def check_docker_container(container_name: str) -> bool:
@@ -111,6 +112,7 @@ def test_redis_crash_recovery():
     except Exception as e:
         print(f"  ❌ Failed: {e}")
     
+    assert results["success"], "Redis crash recovery failed"
     return results
 
 
@@ -143,9 +145,13 @@ def test_postgres_crash_recovery():
         print(f"  ✅ Connected: {version.split(',')[0]}")
         cursor.close()
         conn.close()
+    except psycopg2.OperationalError as e:
+        if "connection to server at" in str(e) or "role" in str(e) or "database" in str(e):
+            pytest.skip(f"PostgreSQL container is not reachable locally. Skipping test: {e}")
+        assert False, f"Failed to connect to postgres: {e}"
     except Exception as e:
         print(f"  ❌ Failed: {e}")
-        return results
+        assert False, f"Failed to connect to postgres: {e}"
     
     # Step 2: Stop PostgreSQL
     print(f"\n[2] Simulating PostgreSQL crash...")
@@ -196,7 +202,7 @@ def test_postgres_crash_recovery():
     except Exception as e:
         print(f"  ❌ Failed: {e}")
     
-    return results
+    assert results["success"], "Postgres crash recovery failed"
 
 
 def main():

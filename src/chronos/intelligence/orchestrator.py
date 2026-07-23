@@ -33,6 +33,9 @@ from chronos.intelligence.prompt_builder import PromptBuilder
 from chronos.intelligence.inference import InferenceRuntime, get_runtime
 from chronos.intelligence.ubuntu_profile import UbuntuProfile
 from chronos.intelligence.validator import SemanticValidator
+from chronos.intelligence.fallback import FallbackProvider
+from chronos.intelligence.inference import ModelUnreachableError
+from chronos.intelligence.provenance import ProvenanceRecord, GenerationSource
 
 # Generation priority levels (used for future prioritization)
 PRIORITY_HIGH = 1    # on create()
@@ -92,6 +95,7 @@ class GenerationOrchestrator:
         self.policy_engine = ArtifactPolicyEngine()
         self.prompt_builder = PromptBuilder()
         self.validator = SemanticValidator()
+        self.fallback_provider = FallbackProvider()
         self._pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="chronos-gen")
 
         # In-flight futures: inode → Future
@@ -129,7 +133,7 @@ class GenerationOrchestrator:
 
         # Check per-session inference quota
         if not self._check_and_decrement_quota(session_id, policy):
-            return self._get_static_template(filename, policy)
+            return self.fallback_provider.get_degraded_content(filename, policy)
 
         # Submit or attach to existing generation future
         future = self._get_or_submit(inode, path, filename, session_id, machine_state, policy, PRIORITY_HIGH)
@@ -221,25 +225,43 @@ class GenerationOrchestrator:
 
             retry_count = 0
             content_bytes = b""
-            while retry_count < 2:
-                raw = self.runtime.generate(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    model=policy.model,
-                    max_tokens=policy.max_lines * 10 if policy.max_lines else 1000,
-                )
-                result = self.validator.validate(raw, policy, machine_state)
-                if result.accepted:
-                    content_bytes = raw.encode("utf-8")
-                    break
-                retry_count += 1
+            
+            provenance = ProvenanceRecord(
+                model=policy.model,
+                generation_source=GenerationSource.LLM,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=True
+            )
+            
+            try:
+                while retry_count < 2:
+                    raw = self.runtime.generate(
+                        prompt=prompt,
+                        system_prompt=system_prompt,
+                        model=policy.model,
+                        max_tokens=policy.max_lines * 10 if policy.max_lines else 1000,
+                    )
+                    result = self.validator.validate(raw, policy, machine_state)
+                    if result.accepted:
+                        content_bytes = raw.encode("utf-8")
+                        break
+                    retry_count += 1
+            except ModelUnreachableError:
+                # Infrastructure failure: immediately fall back without validating
+                content_bytes = self.fallback_provider.get_degraded_content(filename, policy)
+                provenance.generation_source = GenerationSource.FALLBACK
+                provenance.validated = False
 
             if not content_bytes:
                 # Validator rejected twice — use static template
-                content_bytes = self._get_static_template(filename, policy)
+                content_bytes = self.fallback_provider.get_degraded_content(filename, policy)
+                provenance.generation_source = GenerationSource.TEMPLATE
+                provenance.validated = False
 
             # Persist blob + inode metadata + provenance
-            self._persist(inode, content_bytes, policy, machine_state)
+            self._persist(inode, content_bytes, policy, provenance)
 
             elapsed = time.monotonic() - start
             self._record_latency(policy.model, elapsed)
@@ -250,8 +272,16 @@ class GenerationOrchestrator:
 
         except Exception as e:
             print(f"[Orchestrator] Generation error for inode {inode} path={path}: {e}")
-            fallback = self._get_static_template(filename, policy)
-            self._persist(inode, fallback, policy, machine_state)
+            fallback = self.fallback_provider.get_degraded_content(filename, policy)
+            provenance = ProvenanceRecord(
+                model=policy.model,
+                generation_source=GenerationSource.FALLBACK,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=False
+            )
+            self._persist(inode, fallback, policy, provenance)
             return fallback
         finally:
             self.redis.delete(lock_key)
@@ -263,7 +293,7 @@ class GenerationOrchestrator:
         inode: int,
         content: bytes,
         policy: ArtifactPolicy,
-        machine_state: Dict[str, Any],
+        provenance: ProvenanceRecord,
     ) -> None:
         """Persist content blob, inode content_hash, and provenance metadata."""
         blob_hash = hashlib.sha256(content).hexdigest()
@@ -281,16 +311,7 @@ class GenerationOrchestrator:
         })
 
         # Provenance (M2.H)
-        self.redis.hset(f"fs:blob_meta:{blob_hash}", mapping={
-            "ubuntu_version":  machine_state.get("ubuntu_version", ""),
-            "kernel_version":  machine_state.get("kernel_version", ""),
-            "model":           policy.model,
-            "file_class":      policy.file_class,
-            "category":        policy.category,
-            "validation_strictness": policy.validation_strictness,
-            "generated_at":    str(time.time()),
-            "validated":       "true",
-        })
+        self.redis.hset(f"fs:blob_meta:{blob_hash}", mapping=provenance.to_dict())
 
     def _persist_empty(self, inode: int) -> None:
         """Persist an empty blob for files whose artifact policy is 'empty'."""
@@ -302,23 +323,6 @@ class GenerationOrchestrator:
             "mtime": time.time(),
             "artifact_category": "empty",
         })
-
-    def _get_static_template(self, filename: str, policy: ArtifactPolicy) -> bytes:
-        """
-        Returns a minimal static template for the file class.
-        Used when AI fails validation twice or quota is exhausted.
-        The template must never look like an AI fallback to an attacker.
-        """
-        templates = {
-            "config_file": b"# configuration file\n",
-            "log_file": b"",
-            "credential_file": b"",
-            "history_file": b"",
-            "notes_file": b"",
-            "script_file": b"#!/bin/bash\n",
-            "temp_file": b"",
-        }
-        return templates.get(policy.file_class, b"")
 
     # ------------------------------------------------------------------
     # Adaptive timeout

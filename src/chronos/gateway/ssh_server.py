@@ -18,6 +18,9 @@ import logging
 from io import StringIO
 
 from chronos.interface.fuse import fuse_context
+from chronos.gateway.shell_parser import ShellParser, ParserError
+from chronos.gateway.dispatcher import SessionEnvironment, ASTDispatcher
+import time
 
 try:
     from chronos.intelligence.ubuntu_profile import UbuntuProfile as _UbuntuProfile
@@ -84,10 +87,11 @@ class SSHServer(paramiko.ServerInterface):
 class SSHHoneypot:
     """Main SSH Honeypot Server"""
     
-    def __init__(self, host="0.0.0.0", port=2222, hostkey_path=None):
+    def __init__(self, host="0.0.0.0", port=2222, hostkey_path=None, db_layer=None):
         self.host = host
         self.port = port
         self.hostkey_path = hostkey_path or self._generate_hostkey()
+        self.db_layer = db_layer
         self.running = False
         
     def _generate_hostkey(self):
@@ -101,8 +105,10 @@ class SSHHoneypot:
         
     def audit_log(self, event_type, data):
         """Audit logging callback"""
-        # This would integrate with PostgreSQL audit system
         logger.info(f"[AUDIT] {event_type}: {data}")
+        session_id = data.get("session_id", getattr(fuse_context, "session_id", None))
+        if self.db_layer and session_id:
+            self.db_layer.log_operation(session_id, event_type, "", 0, data)
         
     def handle_client(self, client_socket, addr):
         """Handle individual SSH client connection."""
@@ -145,8 +151,13 @@ class SSHHoneypot:
             channel.send(b"individual files in /usr/share/doc/*/copyright.\r\n\r\n")
             channel.send(f"{primary_user}@{hostname}:~$ ".encode())
             
-            # Simple command loop (in production, this would integrate with FUSE)
+            # Simple command loop
             command_buffer = ""
+            
+            env = SessionEnvironment(username=primary_user)
+            parser = ShellParser()
+            dispatcher = ASTDispatcher(env)
+            
             while True:
                 data = channel.recv(1024)
                 if not data or len(data) == 0:
@@ -155,6 +166,7 @@ class SSHHoneypot:
                 char = data.decode('utf-8', errors='ignore')
                 
                 if char == "\r" or char == "\n":
+                    channel.send(b"\r\n")
                     if command_buffer.strip():
                         # Set session context before any potential FUSE operations
                         fuse_context.session_id = session_id
@@ -163,14 +175,45 @@ class SSHHoneypot:
                             "session_id": session_id,
                         })
                         logger.info(f"[SSH] [{session_id[:8]}] Command: {command_buffer.strip()}")
-                        response = self._execute_command(command_buffer.strip())
-                        channel.send(response.encode() + b"\r\n")
+                        
+                        try:
+                            # We import world_simulation here to avoid circular imports 
+                            # if it's imported at the top level
+                            from chronos.simulation.orchestrator import world_simulation
+                            from chronos.simulation.event_bus import CommandStarted, CommandSucceeded, CommandFailed, CommandParsed
+                            
+                            ts = time.time()
+                            world_simulation.event_bus.publish(CommandStarted(session_id, command_buffer.strip(), ts))
+                            
+                            sequence = parser.parse(command_buffer.strip())
+                            world_simulation.event_bus.publish(CommandParsed(session_id, command_buffer.strip(), time.time()))
+                            
+                            returncode, response = dispatcher.execute_sequence(sequence)
+                            
+                            if returncode == 0:
+                                world_simulation.event_bus.publish(CommandSucceeded(session_id, command_buffer.strip(), response, time.time()))
+                            else:
+                                world_simulation.event_bus.publish(CommandFailed(session_id, command_buffer.strip(), response, time.time()))
+                                
+                        except Exception as e:
+                            response = str(e) + "\n"
+                            # For parser failures or uncaught errors
+                            from chronos.simulation.orchestrator import world_simulation
+                            from chronos.simulation.event_bus import CommandFailed
+                            world_simulation.event_bus.publish(CommandFailed(session_id, command_buffer.strip(), response, time.time()))
+                            
+                        if response:
+                            if not response.endswith("\n"):
+                                response += "\n"
+                            channel.send(response.replace("\n", "\r\n").encode())
                     command_buffer = ""
-                    channel.send(f"{primary_user}@{hostname}:~$ ".encode())
+                    prompt_cwd = "~" if env.env["PWD"] == env.env["HOME"] else env.env["PWD"]
+                    channel.send(f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
                 elif char == '\x03':  # Ctrl+C
                     channel.send(b"^C\r\n")
                     command_buffer = ""
-                    channel.send(f"{primary_user}@{hostname}:~$ ".encode())
+                    prompt_cwd = "~" if env.env["PWD"] == env.env["HOME"] else env.env["PWD"]
+                    channel.send(f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
                 elif char == '\x7f':  # Backspace
                     if command_buffer:
                         command_buffer = command_buffer[:-1]
@@ -192,32 +235,6 @@ class SSHHoneypot:
                 "session_id": session_id,
             })
             logger.info(f"[SSH] Connection closed: {addr}")
-            
-    def _execute_command(self, command):
-        """
-        Execute command stub — to be fully replaced by FUSE routing in M2.H.
-        Currently returns realistic Ubuntu 24.04 responses derived from ubuntu.yaml.
-        """
-        parts = command.split()
-        cmd = parts[0] if parts else ""
-
-        hostname = _profile.hostname if _profile else "ubuntu"
-        ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
-        kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"
-        primary_user = _profile.primary_user if _profile else "ubuntu"
-
-        if cmd == "ls":
-            return "bin  boot  dev  etc  home  lib  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var"
-        elif cmd == "pwd":
-            return f"/home/{primary_user}"
-        elif cmd == "whoami":
-            return primary_user
-        elif cmd in ("uname", "uname -a"):
-            return f"Linux {hostname} {kernel_version} #62-Ubuntu SMP x86_64 GNU/Linux"
-        elif cmd == "hostname":
-            return hostname
-        else:
-            return f"-bash: {cmd}: command not found"
             
     def start(self):
         """Start the SSH honeypot server"""

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 // ── Data Structures ─────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AuditEvent {
     pub id: i64,
     pub session_id: Option<String>,
@@ -26,6 +27,7 @@ pub struct CommandEntry {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct SessionSummary {
     pub session_id: String,
     pub start_time: Option<NaiveDateTime>,
@@ -38,6 +40,7 @@ pub struct SessionSummary {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct SessionDetail {
     pub session_id: String,
     pub start_time: Option<NaiveDateTime>,
@@ -63,7 +66,7 @@ pub enum BackendMessage {
     TotalFiles(i32),
     ActiveSessionCount(i32),
     SessionList(Vec<SessionSummary>),
-    SessionDetailResult(Option<SessionDetail>),
+    SessionDetailResult(Box<Option<SessionDetail>>),
 }
 
 #[derive(Debug, Clone)]
@@ -269,20 +272,20 @@ pub async fn start_backend(
                                         traversal_graph,
                                         skill_assessment: row.get(11),
                                     };
-                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(Some(detail)));
+                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(Some(detail))));
                                 }
                                 Ok(None) => {
-                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(None));
+                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(None)));
                                 }
                                 Err(e) => {
                                     log::error!("Session detail query error: {}", e);
-                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(None));
+                                    let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(None)));
                                 }
                             }
                         }
                         Err(e) => {
                             log::error!("Detail postgres connection failed: {:?}", e);
-                            let _ = tx_detail.send(BackendMessage::SessionDetailResult(None));
+                            let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(None)));
                         }
                     }
                 }

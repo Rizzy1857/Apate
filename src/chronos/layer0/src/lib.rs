@@ -44,6 +44,7 @@ pub fn generate_fingerprint(data: &[u8]) -> String {
 }
 
 #[cfg(feature = "pyo3")]
+#[allow(clippy::useless_conversion)]
 mod python_bindings {
     use super::*;
     use crate::reducers::{classify_protocol_fast, NoiseDetector};
@@ -55,7 +56,7 @@ mod python_bindings {
     static NOISE_DETECTOR: OnceLock<NoiseDetector> = OnceLock::new();
 
     fn get_noise_detector() -> &'static NoiseDetector {
-        NOISE_DETECTOR.get_or_init(|| NoiseDetector::new())
+        NOISE_DETECTOR.get_or_init(NoiseDetector::new)
     }
 
     /// Python module for the Rust protocol library

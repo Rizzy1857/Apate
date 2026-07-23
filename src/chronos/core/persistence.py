@@ -1,5 +1,9 @@
 import os
+import time
+import queue
+import threading
 import psycopg2
+import psycopg2.extras
 from psycopg2.extras import Json
 from datetime import datetime
 
@@ -10,6 +14,9 @@ class PersistenceLayer:
         self.password = os.environ.get("POSTGRES_PASSWORD", "chronos_dev_password")
         self.dbname = os.environ.get("POSTGRES_DB", "chronos")
         self.conn = None
+        self.audit_queue = queue.Queue()
+        self.worker_thread = None
+        self.running = False
 
     def connect(self):
         try:
@@ -21,6 +28,12 @@ class PersistenceLayer:
             )
             print("Connected to PostgreSQL persistence layer.")
             self._init_schema()
+            
+            if not self.running:
+                self.running = True
+                self.worker_thread = threading.Thread(target=self._audit_worker, daemon=True)
+                self.worker_thread.start()
+                print("Audit worker thread started.")
         except Exception as e:
             print(f"Failed to connect to PostgreSQL: {e}")
 
@@ -73,19 +86,54 @@ class PersistenceLayer:
             """)
             self.conn.commit()
 
+    def _audit_worker(self):
+        """Background thread to process audit logs in batches"""
+        while self.running:
+            batch = []
+            try:
+                item = self.audit_queue.get(timeout=1.0)
+                batch.append(item)
+                while len(batch) < 100:
+                    try:
+                        item = self.audit_queue.get_nowait()
+                        batch.append(item)
+                    except queue.Empty:
+                        break
+            except queue.Empty:
+                pass
+                
+            if batch and self.conn:
+                try:
+                    with self.conn.cursor() as cur:
+                        psycopg2.extras.execute_batch(
+                            cur,
+                            """
+                            INSERT INTO audit_log (session_id, timestamp, operation, path, inode, metadata)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            batch
+                        )
+                    self.conn.commit()
+                except Exception as e:
+                    print(f"Failed to batch insert audit logs: {e}")
+                    self.conn.rollback()
+                finally:
+                    for _ in batch:
+                        self.audit_queue.task_done()
+
     def log_operation(self, session_id: str, operation: str, path: str, inode: int, metadata: dict = {}):
-        if not self.conn: return
-        
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO audit_log (session_id, timestamp, operation, path, inode, metadata)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (session_id, datetime.utcnow(), operation, path, inode, Json(metadata)))
-                self.conn.commit()
-        except Exception as e:
-            print(f"Failed to log operation: {e}")
-            self.conn.rollback()
+        """Queue an operation for background logging (non-blocking)"""
+        if not session_id:
+            return
+            
+        self.audit_queue.put((
+            session_id,
+            datetime.utcnow(),
+            operation,
+            path,
+            inode,
+            Json(metadata)
+        ))
 
     def flush_evidence(self, session_id: str, evidence_data: dict):
         if not self.conn: return

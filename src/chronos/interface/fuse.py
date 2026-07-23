@@ -37,8 +37,9 @@ _PREWARM_LIMIT = 5  # max children to prewarm per readdir()
 
 
 class ChronosFUSE(Operations):
-    def __init__(self, root):
+    def __init__(self, root, db_layer=None):
         self.root = root
+        self.db_layer = db_layer
         self.hv = StateHypervisor()
         self.redis = self.hv.redis
 
@@ -57,6 +58,7 @@ class ChronosFUSE(Operations):
         self.fd_table: dict = {}
         self.next_fd = 10
         self._fd_lock = threading.Lock()
+
 
     # ------------------------------------------------------------------
     # Session context helpers
@@ -105,15 +107,20 @@ class ChronosFUSE(Operations):
     def getattr(self, path, fh=None):
         inode = self._resolve_path(path)
         meta = self._get_inode_meta(inode)
+        
+        # Apply lazy entropy aging via the simulation orchestrator
+        from chronos.simulation.orchestrator import world_simulation
+        meta = world_simulation.metadata.apply_lazy_aging(path, meta)
+        
         return {
-            "st_mode":  int(meta["mode"]),
-            "st_nlink": int(meta.get("nlink", 1)),
-            "st_size":  int(meta["size"]),
-            "st_atime": float(meta["atime"]),
-            "st_mtime": float(meta["mtime"]),
-            "st_ctime": float(meta["ctime"]),
-            "st_uid":   int(meta["uid"]),
-            "st_gid":   int(meta["gid"]),
+            'st_mode': int(meta['mode']),
+            'st_nlink': int(meta.get('nlink', 1)),
+            'st_uid': int(meta['uid']),
+            'st_gid': int(meta['gid']),
+            'st_size': int(meta['size']),
+            'st_ctime': float(meta.get('ctime', 0)),
+            'st_mtime': float(meta.get('mtime', 0)),
+            'st_atime': float(meta.get('atime', 0))
         }
 
     def readdir(self, path, fh):
@@ -122,6 +129,10 @@ class ChronosFUSE(Operations):
 
         # Bounded prewarm: submit background generation for ungenerated children
         session_id = self._current_session_id()
+        
+        if self.db_layer:
+            self.db_layer.log_operation(session_id, "readdir", path, inode, {})
+            
         machine_state = self._get_machine_state(session_id)
         prewarm_count = 0
 
@@ -165,6 +176,10 @@ class ChronosFUSE(Operations):
 
     def unlink(self, path):
         parent_inode, name = self._get_parent_and_name(path)
+        inode = self._resolve_path(path)
+        session_id = self._current_session_id()
+        if self.db_layer:
+            self.db_layer.log_operation(session_id, "unlink", path, inode, {})
         self.redis.zrem(f"fs:dir:{parent_inode}", name)
 
     def create(self, path, mode, fi=None):
@@ -178,6 +193,10 @@ class ChronosFUSE(Operations):
         fd = self.open(path, 0)
         entry = self.fd_table[fd]
         session_id = entry["session_id"]
+        
+        if self.db_layer:
+            self.db_layer.log_operation(session_id, "create", path, entry["inode"], {})
+            
         machine_state = self._get_machine_state(session_id)
         self.orchestrator.submit_background(
             inode=entry["inode"],
@@ -210,6 +229,9 @@ class ChronosFUSE(Operations):
         entry = self.fd_table[fh]
         inode = entry["inode"]
         session_id = entry["session_id"]
+        
+        if offset == 0 and self.db_layer:
+            self.db_layer.log_operation(session_id, "read", path, inode, {"size": size})
 
         meta = self._get_inode_meta(inode)
         content_hash = meta.get("content_hash")
@@ -243,7 +265,12 @@ class ChronosFUSE(Operations):
     def write(self, path, buf, offset, fh):
         if fh not in self.fd_table:
             raise FuseOSError(errno.EBADF)
-        inode = self.fd_table[fh]["inode"]
+        entry = self.fd_table[fh]
+        inode = entry["inode"]
+        session_id = entry["session_id"]
+        
+        if offset == 0 and self.db_layer:
+            self.db_layer.log_operation(session_id, "write", path, inode, {"size": len(buf)})
 
         meta = self._get_inode_meta(inode)
         content_hash = meta.get("content_hash")
