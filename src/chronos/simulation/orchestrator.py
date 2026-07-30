@@ -8,11 +8,13 @@ logger = logging.getLogger("chronos.simulation.orchestrator")
 
 class SimulationOrchestrator:
     def __init__(self, db_layer=None):
-        self.event_bus = EventBus()
         self.db_layer = db_layer
         
         # We instantiate a StateHypervisor to get access to Redis for the plugins
         self.hv = StateHypervisor()
+        
+        # EventBus needs redis to bridge events between containers
+        self.event_bus = EventBus(redis_client=self.hv.redis)
         
         self._running = False
         self._tick_thread = None
@@ -27,8 +29,12 @@ class SimulationOrchestrator:
         from chronos.simulation.logs.auth import AuthLogPlugin
         from chronos.simulation.logs.syslog import SyslogPlugin
         from chronos.simulation.logs.journal import JournalPlugin
+        from chronos.simulation.metadata.entropy import SystemEntropyPlugin
+        from chronos.simulation.services.user_simulator import UserSimulatorPlugin
         
         self.metadata = MetadataAgingPlugin(self.hv.redis, self.event_bus)
+        self.entropy = SystemEntropyPlugin(self.hv.redis, self.event_bus)
+        self.user_simulator = UserSimulatorPlugin(self.hv.redis, self.event_bus)
         self.cron_service = CronServicePlugin(self.hv.redis, self.event_bus)
         self.apt_service = AptServicePlugin(self.hv.redis, self.event_bus)
         

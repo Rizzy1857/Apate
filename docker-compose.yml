@@ -56,7 +56,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # The Core Engine: FUSE Filesystem + State Hypervisor
+  # The Core Engine: FUSE Filesystem + SSH Gateway
   core-engine:
     build:
       context: .
@@ -87,7 +87,28 @@ services:
         condition: service_healthy
     networks:
       - chronos-net
-    # command: tail -f /dev/null  # Removed to allow auto-start
+
+  # The World Engine: Simulation Orchestrator & Plugins (No exposed ports)
+  world-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronos_world
+    environment:
+      - REDIS_HOST=redis-store
+      - POSTGRES_HOST=db-store
+      - OLLAMA_HOST=ollama
+      - PYTHONPATH=/app/src
+    command: ["python3", "-m", "chronos.core.world_main"]
+    volumes:
+      - .:/app
+    depends_on:
+      redis-store:
+        condition: service_healthy
+      db-store:
+        condition: service_healthy
+    networks:
+      - chronos-net
 
 networks:
   chronos-net:

@@ -27,6 +27,8 @@ from chronos.core.state import StateHypervisor
 from chronos.intelligence.inference import get_runtime
 from chronos.intelligence.ubuntu_profile import UbuntuProfile
 from chronos.intelligence.orchestrator import GenerationOrchestrator, posix_timeout_error
+from chronos.simulation.orchestrator import world_simulation
+from chronos.simulation.event_bus import FileCreated, FileModified, FileDeleted
 
 # Thread-local storage for session context injection from the SSH gateway.
 # Usage: fuse_context.session_id = <str>
@@ -160,39 +162,71 @@ class ChronosFUSE(Operations):
         parent_inode, name = self._get_parent_and_name(path)
         mode = (mode & 0o777) | stat.S_IFDIR
         try:
-            self.hv.create_file(parent_inode, name, mode)
+            self.hv.atomic_mkdir(parent_inode, name, mode)
         except FileExistsError:
             raise FuseOSError(errno.EEXIST)
-        inode = int(self.redis.zscore(f"fs:dir:{parent_inode}", name))
-        self.redis.zadd(f"fs:dir:{inode}", {"." : inode, "..": parent_inode})
+            
+        world_simulation.event_bus.publish(FileCreated(
+            path=path,
+            session_id=self._current_session_id(),
+            timestamp=time.time()
+        ))
 
     def rmdir(self, path):
         parent_inode, name = self._get_parent_and_name(path)
-        inode = self._resolve_path(path)
-        count = self.redis.zcard(f"fs:dir:{inode}")
-        if count > 2:
+        session_id = self._current_session_id()
+        try:
+            self.hv.atomic_rmdir(parent_inode, name)
+        except FileNotFoundError:
+            raise FuseOSError(errno.ENOENT)
+        except OSError:
             raise FuseOSError(errno.ENOTEMPTY)
-        self.redis.zrem(f"fs:dir:{parent_inode}", name)
+            
+        world_simulation.event_bus.publish(FileDeleted(
+            path=path,
+            session_id=session_id,
+            timestamp=time.time()
+        ))
 
     def unlink(self, path):
         parent_inode, name = self._get_parent_and_name(path)
-        inode = self._resolve_path(path)
         session_id = self._current_session_id()
+        inode = self._resolve_path(path)
+        
         if self.db_layer:
             self.db_layer.log_operation(session_id, "unlink", path, inode, {})
-        self.redis.zrem(f"fs:dir:{parent_inode}", name)
+            
+        try:
+            self.hv.atomic_unlink(parent_inode, name)
+        except FileNotFoundError:
+            raise FuseOSError(errno.ENOENT)
+            
+        world_simulation.event_bus.publish(FileDeleted(
+            path=path,
+            session_id=session_id,
+            timestamp=time.time()
+        ))
 
     def create(self, path, mode, fi=None):
         parent_inode, name = self._get_parent_and_name(path)
+        session_id = self._current_session_id()
+        created = False
         try:
             self.hv.create_file(parent_inode, name, mode)
+            created = True
         except FileExistsError:
             pass  # open existing
+
+        if created:
+            world_simulation.event_bus.publish(FileCreated(
+                path=path,
+                session_id=session_id,
+                timestamp=time.time()
+            ))
 
         # Fire-and-forget background generation (HIGH priority)
         fd = self.open(path, 0)
         entry = self.fd_table[fd]
-        session_id = entry["session_id"]
         
         if self.db_layer:
             self.db_layer.log_operation(session_id, "create", path, entry["inode"], {})
@@ -291,11 +325,23 @@ class ChronosFUSE(Operations):
             "size": len(new_content),
             "mtime": time.time(),
         })
+        
+        world_simulation.event_bus.publish(FileModified(
+            path=path,
+            session_id=session_id,
+            timestamp=time.time()
+        ))
+        
         return len(buf)
 
     def chmod(self, path, mode):
         inode = self._resolve_path(path)
         self.redis.hset(f"fs:inode:{inode}", "mode", mode)
+        world_simulation.event_bus.publish(FileModified(
+            path=path,
+            session_id=self._current_session_id(),
+            timestamp=time.time()
+        ))
 
     def chown(self, path, uid, gid):
         inode = self._resolve_path(path)
@@ -304,10 +350,20 @@ class ChronosFUSE(Operations):
         if gid != -1: mapping["gid"] = gid
         if mapping:
             self.redis.hset(f"fs:inode:{inode}", mapping=mapping)
+            world_simulation.event_bus.publish(FileModified(
+                path=path,
+                session_id=self._current_session_id(),
+                timestamp=time.time()
+            ))
 
     def truncate(self, path, length, fh=None):
         inode = self._resolve_path(path)
         self.redis.hset(f"fs:inode:{inode}", mapping={"size": length, "mtime": time.time()})
+        world_simulation.event_bus.publish(FileModified(
+            path=path,
+            session_id=self._current_session_id(),
+            timestamp=time.time()
+        ))
 
     def release(self, path, fh):
         """Called when the last reference to an fd is closed."""

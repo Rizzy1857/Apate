@@ -1,6 +1,8 @@
 import os
 import subprocess
 import re
+import redis
+import json
 from typing import Dict, Any, List, Optional, Tuple
 from chronos.gateway.shell_parser import SequenceNode, PipelineNode, CommandNode
 
@@ -18,6 +20,10 @@ class SessionEnvironment:
             "PWD": f"/home/{username}",
             "OLDPWD": f"/home/{username}"
         }
+        
+        # Connect to Redis for entropy state
+        redis_host = os.environ.get("REDIS_HOST", "localhost")
+        self.redis_client = redis.Redis(host=redis_host, port=6379, db=0, decode_responses=True)
 
     def expand_vars(self, arg: str) -> str:
         # Replace $VAR with env value
@@ -50,6 +56,9 @@ class CommandRegistry:
             "id": self._handle_id,
             "hostname": self._handle_hostname,
             "uname": self._handle_uname,
+            "free": self._handle_free,
+            "top": self._handle_top,
+            "iostat": self._handle_iostat,
         }
 
     def handle(self, cmd: str, args: List[str], stdin: bytes = b"") -> Tuple[int, bytes, bytes]:
@@ -110,6 +119,80 @@ class CommandRegistry:
         if "-a" in args:
             return 0, b"Linux ubuntu 6.8.0-51-generic #62-Ubuntu SMP x86_64 GNU/Linux\n", b""
         return 0, b"Linux\n", b""
+
+    def _get_entropy(self) -> Dict[str, Any]:
+        try:
+            state = self.env.redis_client.hgetall("env:entropy")
+            if not state:
+                raise ValueError("No state")
+            return state
+        except Exception:
+            return {
+                "uptime": "1209600",
+                "cpu_usage": "2.0",
+                "load1": "0.02",
+                "load5": "0.04",
+                "load15": "0.05",
+                "mem_total": str(16384 * 1024),
+                "mem_free": str(8192 * 1024),
+                "mem_cached": str(4096 * 1024),
+                "io_tps": "12.5",
+                "io_read_kb": "120.0",
+                "io_write_kb": "45.0"
+            }
+
+    def _handle_free(self, args, stdin):
+        state = self._get_entropy()
+        total = int(state['mem_total'])
+        free = int(state['mem_free'])
+        cached = int(state['mem_cached'])
+        used = total - free - cached
+        
+        # Simple rendering for now. In real life, `free -h` has different alignment.
+        # We output in MB for realism since args parsing is complex for this demo
+        total_mb = total // 1024
+        used_mb = used // 1024
+        free_mb = free // 1024
+        shared_mb = 12
+        buff_cache_mb = cached // 1024
+        available_mb = free_mb + buff_cache_mb
+        
+        out = f"               total        used        free      shared  buff/cache   available\n"
+        out += f"Mem:           {total_mb}Mi       {used_mb}Mi       {free_mb}Mi        {shared_mb}Mi       {buff_cache_mb}Mi       {available_mb}Mi\n"
+        out += f"Swap:             0B          0B          0B\n"
+        return 0, out.encode(), b""
+
+    def _handle_top(self, args, stdin):
+        state = self._get_entropy()
+        # A realistic "one-shot" top output (batch mode) since interactive mode breaks pseudo-shells
+        # normally unless terminal is fully emulated. We simulate `top -b -n 1`
+        uptime_days = int(state['uptime']) // 86400
+        load1, load5, load15 = state['load1'], state['load5'], state['load15']
+        
+        total_kb = int(state['mem_total'])
+        free_kb = int(state['mem_free'])
+        used_kb = total_kb - free_kb - int(state['mem_cached'])
+        
+        out = f"top - 14:02:44 up {uptime_days} days,  1 user,  load average: {load1}, {load5}, {load15}\n"
+        out += f"Tasks: 124 total,   1 running, 123 sleeping,   0 stopped,   0 zombie\n"
+        out += f"%Cpu(s):  {state['cpu_usage']} us,  0.5 sy,  0.0 ni, 97.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st\n"
+        out += f"MiB Mem :  {total_kb//1024:.1f} total,   {free_kb//1024:.1f} free,   {used_kb//1024:.1f} used,   {int(state['mem_cached'])//1024:.1f} buff/cache\n"
+        out += f"MiB Swap:      0.0 total,      0.0 free,      0.0 used.  {(free_kb + int(state['mem_cached']))//1024:.1f} avail Mem\n"
+        out += f"\n"
+        out += f"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND\n"
+        out += f"      1 root      20   0  167524  11440   8280 S   0.0   0.1   2:12.33 systemd\n"
+        out += f"   1022 ubuntu    20   0   21232   5124   3452 R   {state['cpu_usage']}   0.0   0:00.01 top\n"
+        out += f"    822 www-data  20   0  145220  24212  14200 S   0.3   0.2   1:42.11 nginx\n"
+        return 0, out.encode(), b""
+        
+    def _handle_iostat(self, args, stdin):
+        state = self._get_entropy()
+        out = f"Linux 6.8.0-51-generic (ubuntu) \t_x86_64_\t(2 CPU)\n\n"
+        out += f"avg-cpu:  %user   %nice %system %iowait  %steal   %idle\n"
+        out += f"           {state['cpu_usage']}    0.00    0.50    0.02    0.00   97.48\n\n"
+        out += f"Device             tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn\n"
+        out += f"sda              {state['io_tps']}       {state['io_read_kb']}        {state['io_write_kb']}    1421042    3121004\n"
+        return 0, out.encode(), b""
 
 class ASTDispatcher:
     def __init__(self, env: SessionEnvironment):

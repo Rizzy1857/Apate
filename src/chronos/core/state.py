@@ -51,3 +51,52 @@ class StateHypervisor:
             raise FileExistsError(f"File {filename} already exists")
         
         return result
+
+    def atomic_mkdir(self, parent_inode: int, filename: str, mode: int = 16877):
+        """
+        Create a new directory in the given parent directory.
+        Default mode: 040755 (Directory + 755)
+        """
+        timestamp = time.time()
+        result = self.db.run_script(
+            "atomic_mkdir",
+            keys=[],
+            args=[parent_inode, filename, mode, timestamp]
+        )
+        
+        if result == -1:
+            raise FileExistsError(f"Directory {filename} already exists")
+            
+        return result
+
+    def atomic_unlink(self, parent_inode: int, filename: str):
+        """
+        Atomically unlink a file and clean up its inode/blob if nlink is 0.
+        """
+        result = self.db.run_script(
+            "atomic_unlink",
+            keys=[],
+            args=[parent_inode, filename]
+        )
+        
+        if result == -1:
+            raise FileNotFoundError(f"File {filename} not found in directory {parent_inode}")
+            
+        return result
+
+    def atomic_rmdir(self, parent_inode: int, filename: str):
+        """
+        Atomically remove an empty directory.
+        """
+        result = self.db.run_script(
+            "atomic_rmdir",
+            keys=[],
+            args=[parent_inode, filename]
+        )
+        
+        if result == -1:
+            raise FileNotFoundError(f"Directory {filename} not found in directory {parent_inode}")
+        if result == -2:
+            raise OSError("Directory not empty")
+            
+        return result

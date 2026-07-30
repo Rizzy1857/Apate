@@ -30,10 +30,6 @@ def main():
     db_layer = PersistenceLayer()
     db_layer.connect()
 
-    # 1.5 Start World Simulation Orchestrator
-    from chronos.simulation.orchestrator import world_simulation
-    world_simulation.start(tick_interval=60)
-    print("[+] World Simulation Orchestrator started.")
 
     # 2. Register Signal Handlers
     signal.signal(signal.SIGINT, signal_handler)
