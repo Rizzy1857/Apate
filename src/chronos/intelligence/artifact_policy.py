@@ -83,11 +83,23 @@ class ArtifactPolicyEngine:
             "quota_exhausted_behavior": "template",
         })
 
-    def resolve(self, filename: str, path: str) -> "ArtifactPolicy":
+    def resolve(self, filename: str, path: str, machine_state: Optional[Dict[str, Any]] = None) -> "ArtifactPolicy":
         """
         Resolve the full artifact policy for a given file.
         The returned object describes what the AI should produce and how.
         """
+        manifest_class = "runtime"
+        if machine_state and "filesystem_manifest" in machine_state:
+            import json
+            try:
+                manifest = json.loads(machine_state["filesystem_manifest"])
+                for entry in manifest.get("entries", []):
+                    if entry.get("path") == path:
+                        manifest_class = entry.get("class", "ai_backed")
+                        break
+            except Exception:
+                pass
+
         file_class = infer_file_class(filename, path)
         class_policy = self._artifact_policy.get(file_class, {})
 
@@ -103,6 +115,7 @@ class ArtifactPolicyEngine:
             validation_strictness=class_policy.get("validation_strictness", "medium"),
             regeneration=class_policy.get("regeneration", "static"),
             model=self._model_routing.get(file_class, self._model_routing.get("default", "llama3:8b")),
+            manifest_class=manifest_class,
         )
 
     def quota_config(self) -> Dict[str, Any]:
@@ -127,6 +140,7 @@ class ArtifactPolicy:
         validation_strictness: str,
         regeneration: str,
         model: str,
+        manifest_class: str = "ai_backed",
     ):
         self.file_class = file_class
         self.category = category            # e.g. "valid", "empty", "abandoned", "corrupted"
@@ -136,6 +150,7 @@ class ArtifactPolicy:
         self.validation_strictness = validation_strictness
         self.regeneration = regeneration    # "static" | "dynamic"
         self.model = model
+        self.manifest_class = manifest_class
 
     @property
     def skip_generation(self) -> bool:
@@ -144,8 +159,8 @@ class ArtifactPolicy:
 
     def __repr__(self) -> str:
         return (
-            f"ArtifactPolicy(class={self.file_class!r}, category={self.category!r}, "
-            f"model={self.model!r}, max_lines={self.max_lines}, skip={self.skip_generation})"
+            f"ArtifactPolicy(class={self.file_class!r}, manifest_class={self.manifest_class!r}, "
+            f"category={self.category!r}, model={self.model!r}, skip={self.skip_generation})"
         )
 
 

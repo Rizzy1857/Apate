@@ -36,7 +36,7 @@ graph TD
     Templates[Static Template Fallbacks\nminimal Ubuntu-plausible content]
   end
 
-  SSHNote["⚠ SSH Gateway currently uses stub responses.\nSSH→FUSE routing (M2.H) is Tier 1 priority."]
+  SSHNote["SSH Gateway uses the local shell dispatcher over the mounted honeypot root.\nSession context is injected into FUSE via threading.local()."]
 
   subgraph "Machine Definition"
     UbuntuYAML["config/ubuntu.yaml\n(state)"]

@@ -55,7 +55,7 @@ class UbuntuProfile:
                 "mounted_drives": [],
                 "ssh_config": {},
                 "cron_jobs": [],
-                "filesystem_layout": [],
+                "filesystem": {"entries": []},
             }
         except yaml.YAMLError as e:
             raise RuntimeError(f"[UbuntuProfile] Malformed ubuntu.yaml: {e}")
@@ -109,8 +109,8 @@ class UbuntuProfile:
         return self._raw.get("cron_jobs", [])
 
     @property
-    def filesystem_layout(self) -> list:
-        return self._raw.get("filesystem_layout", [])
+    def filesystem_manifest(self) -> dict:
+        return self._raw.get("filesystem", {"entries": []})
 
     def package_version(self, name: str) -> Optional[str]:
         """Return the installed version for a package, or None if not installed."""
@@ -146,7 +146,7 @@ class UbuntuProfile:
             "mounted_drives":      json.dumps(self._raw.get("mounted_drives", [])),
             "ssh_config":          json.dumps(self.ssh_config),
             "cron_jobs":           json.dumps(self.cron_jobs),
-            "filesystem_layout":   json.dumps(self.filesystem_layout),
+            "filesystem_manifest": json.dumps(self.filesystem_manifest),
             "created_at":          str(time.time()),
         }
 

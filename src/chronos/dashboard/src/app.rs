@@ -1,9 +1,11 @@
 use eframe::egui;
 use egui_extras::{Column, TableBuilder};
 use flume::{Receiver, Sender};
+use std::collections::BTreeMap;
 use crate::backend::{
     AuditEvent, BackendMessage, BackendRequest,
     SessionSummary, SessionDetail,
+    ProvenanceSummary,
 };
 
 // ── Tab Enum ────────────────────────────────────────────────────────────────
@@ -44,6 +46,9 @@ pub struct ChronosDashboard {
     selected_session: Option<SessionDetail>,
     selected_session_id: Option<String>,
     detail_loading: bool,
+
+    // View 4: Provenance
+    provenance_snapshot: Option<ProvenanceSummary>,
 }
 
 impl ChronosDashboard {
@@ -72,6 +77,7 @@ impl ChronosDashboard {
             selected_session: None,
             selected_session_id: None,
             detail_loading: false,
+            provenance_snapshot: None,
         }
     }
 
@@ -98,6 +104,9 @@ impl ChronosDashboard {
                 BackendMessage::SessionDetailResult(detail) => {
                     self.selected_session = *detail;
                     self.detail_loading = false;
+                }
+                BackendMessage::ProvenanceSnapshot(snapshot) => {
+                    self.provenance_snapshot = Some(snapshot);
                 }
             }
         }
@@ -532,21 +541,344 @@ impl ChronosDashboard {
         });
     }
 
-    // ── Stub views ──────────────────────────────────────────────────────
+    fn render_metric_card(
+        ui: &mut egui::Ui,
+        label: &str,
+        value: String,
+        detail: String,
+        color: egui::Color32,
+    ) {
+        egui::Frame::group(ui.style())
+            .fill(egui::Color32::from_rgba_premultiplied(255, 255, 255, 8))
+            .show(ui, |ui| {
+                ui.set_min_width(170.0);
+                ui.vertical(|ui| {
+                    ui.label(egui::RichText::new(label).color(egui::Color32::GRAY).size(11.0));
+                    ui.label(egui::RichText::new(value).color(color).strong().size(20.0));
+                    ui.label(egui::RichText::new(detail).color(egui::Color32::GRAY).size(10.0));
+                });
+            });
+    }
 
-    fn render_stub(ui: &mut egui::Ui, title: &str, description: &str) {
-        ui.centered_and_justified(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.add_space(80.0);
-                ui.heading(egui::RichText::new(title).size(20.0));
-                ui.add_space(8.0);
-                ui.label(egui::RichText::new(description)
-                    .color(egui::Color32::GRAY).size(13.0));
-                ui.add_space(8.0);
-                ui.label(egui::RichText::new("🚧 Coming soon")
-                    .color(egui::Color32::from_rgb(241, 196, 15)).size(12.0));
+    fn render_threat_analytics(&mut self, ui: &mut egui::Ui) {
+        let total_sessions = self.sessions.len();
+        let detected_sessions = self
+            .sessions
+            .iter()
+            .filter(|session| session.detection_status.as_deref() == Some("detected"))
+            .count();
+        let avg_duration = if total_sessions == 0 {
+            0.0
+        } else {
+            self.sessions
+                .iter()
+                .map(|session| session.duration_seconds.unwrap_or(0) as f32)
+                .sum::<f32>()
+                / total_sessions as f32
+        };
+        let read_events = self
+            .audit_logs
+            .iter()
+            .filter(|event| event.operation.as_deref() == Some("READ"))
+            .count();
+        let write_events = self
+            .audit_logs
+            .iter()
+            .filter(|event| matches!(event.operation.as_deref(), Some("WRITE") | Some("CREATE") | Some("DELETE")))
+            .count();
+
+        ui.horizontal_wrapped(|ui| {
+            Self::render_metric_card(
+                ui,
+                "Sessions",
+                total_sessions.to_string(),
+                "tracked in session_evidence".to_string(),
+                egui::Color32::from_rgb(52, 152, 219),
+            );
+            Self::render_metric_card(
+                ui,
+                "Detected",
+                format!("{}", detected_sessions),
+                if total_sessions == 0 {
+                    "no completed sessions yet".to_string()
+                } else {
+                    format!("{:.0}% detection rate", (detected_sessions as f32 / total_sessions as f32) * 100.0)
+                },
+                egui::Color32::from_rgb(231, 76, 60),
+            );
+            Self::render_metric_card(
+                ui,
+                "Avg Duration",
+                if avg_duration >= 60.0 {
+                    format!("{:0.1}m", avg_duration / 60.0)
+                } else {
+                    format!("{:0.0}s", avg_duration)
+                },
+                "mean session length".to_string(),
+                egui::Color32::from_rgb(46, 204, 113),
+            );
+            Self::render_metric_card(
+                ui,
+                "Audit Events",
+                self.audit_logs.len().to_string(),
+                format!("{} read / {} write-family", read_events, write_events),
+                egui::Color32::from_rgb(241, 196, 15),
+            );
+        });
+
+        ui.add_space(12.0);
+        ui.heading(egui::RichText::new("Operation Mix").size(14.0));
+        ui.separator();
+
+        let mut operation_counts: BTreeMap<String, usize> = BTreeMap::new();
+        for event in &self.audit_logs {
+            let key = event.operation.as_deref().unwrap_or("UNKNOWN").to_string();
+            *operation_counts.entry(key).or_insert(0) += 1;
+        }
+
+        let mut operations: Vec<(String, usize)> = operation_counts.into_iter().collect();
+        operations.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+
+        let available_height = ui.available_height() * 0.45;
+        TableBuilder::new(ui)
+            .striped(true)
+            .resizable(true)
+            .min_scrolled_height(available_height)
+            .max_scroll_height(available_height)
+            .column(Column::initial(160.0).at_least(100.0))
+            .column(Column::initial(100.0).at_least(60.0))
+            .column(Column::remainder())
+            .header(18.0, |mut header| {
+                header.col(|ui| { ui.strong("Operation"); });
+                header.col(|ui| { ui.strong("Count"); });
+                header.col(|ui| { ui.strong("Share"); });
+            })
+            .body(|body| {
+                body.rows(20.0, operations.len(), |mut row| {
+                    let (operation, count) = &operations[row.index()];
+                    row.col(|ui| {
+                        ui.label(egui::RichText::new(operation).monospace().size(11.0));
+                    });
+                    row.col(|ui| {
+                        ui.label(egui::RichText::new(count.to_string()).size(11.0));
+                    });
+                    row.col(|ui| {
+                        let share = if self.audit_logs.is_empty() {
+                            0.0
+                        } else {
+                            (*count as f32 / self.audit_logs.len() as f32) * 100.0
+                        };
+                        ui.label(egui::RichText::new(format!("{:.1}%", share)).size(11.0));
+                    });
+                });
+            });
+    }
+
+    fn render_ai_provenance(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.heading("AI Provenance Snapshot");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(egui::RichText::new("Redis fs:blob_meta:*" ).color(egui::Color32::GRAY).size(11.0));
             });
         });
+        ui.separator();
+
+        let snapshot = match &self.provenance_snapshot {
+            Some(snapshot) => snapshot,
+            None => {
+                ui.centered_and_justified(|ui| {
+                    ui.label(egui::RichText::new("Waiting for provenance data from Redis...")
+                        .color(egui::Color32::GRAY).size(14.0));
+                });
+                return;
+            }
+        };
+
+        ui.horizontal_wrapped(|ui| {
+            Self::render_metric_card(
+                ui,
+                "Blobs",
+                snapshot.total_blobs.to_string(),
+                "tracked provenance records".to_string(),
+                egui::Color32::from_rgb(52, 152, 219),
+            );
+            Self::render_metric_card(
+                ui,
+                "Validated",
+                snapshot.validated_blobs.to_string(),
+                if snapshot.total_blobs == 0 {
+                    "no generated blobs yet".to_string()
+                } else {
+                    format!("{:.0}% validated", (snapshot.validated_blobs as f32 / snapshot.total_blobs as f32) * 100.0)
+                },
+                egui::Color32::from_rgb(46, 204, 113),
+            );
+            Self::render_metric_card(
+                ui,
+                "LLM",
+                snapshot.llm_blobs.to_string(),
+                "direct model generations".to_string(),
+                egui::Color32::from_rgb(155, 89, 182),
+            );
+            Self::render_metric_card(
+                ui,
+                "Fallbacks",
+                format!("{}/{}", snapshot.fallback_blobs, snapshot.template_blobs),
+                "fallback/template paths".to_string(),
+                egui::Color32::from_rgb(241, 196, 15),
+            );
+        });
+
+        ui.add_space(12.0);
+
+        ui.columns(2, |columns| {
+            columns[0].heading(egui::RichText::new("File Class Distribution").size(14.0));
+            columns[0].separator();
+            let available_height = columns[0].available_height();
+            TableBuilder::new(&mut columns[0])
+                .striped(true)
+                .resizable(true)
+                .min_scrolled_height(available_height)
+                .max_scroll_height(available_height)
+                .column(Column::initial(160.0).at_least(100.0))
+                .column(Column::initial(80.0).at_least(50.0))
+                .header(18.0, |mut header| {
+                    header.col(|ui| { ui.strong("Class"); });
+                    header.col(|ui| { ui.strong("Count"); });
+                })
+                .body(|body| {
+                    body.rows(18.0, snapshot.by_file_class.len(), |mut row| {
+                        let (class, count) = &snapshot.by_file_class[row.index()];
+                        row.col(|ui| { ui.label(egui::RichText::new(class).monospace().size(11.0)); });
+                        row.col(|ui| { ui.label(egui::RichText::new(count.to_string()).size(11.0)); });
+                    });
+                });
+
+            columns[1].heading(egui::RichText::new("Recent Provenance Records").size(14.0));
+            columns[1].separator();
+            let available_height = columns[1].available_height();
+            TableBuilder::new(&mut columns[1])
+                .striped(true)
+                .resizable(true)
+                .min_scrolled_height(available_height)
+                .max_scroll_height(available_height)
+                .column(Column::initial(84.0).at_least(70.0))
+                .column(Column::initial(88.0).at_least(70.0))
+                .column(Column::initial(88.0).at_least(70.0))
+                .column(Column::initial(72.0).at_least(60.0))
+                .column(Column::remainder())
+                .header(18.0, |mut header| {
+                    header.col(|ui| { ui.strong("Blob"); });
+                    header.col(|ui| { ui.strong("Model"); });
+                    header.col(|ui| { ui.strong("Class"); });
+                    header.col(|ui| { ui.strong("Src"); });
+                    header.col(|ui| { ui.strong("Generated"); });
+                })
+                .body(|body| {
+                    body.rows(20.0, snapshot.recent_entries.len(), |mut row| {
+                        let entry = &snapshot.recent_entries[row.index()];
+                        row.col(|ui| {
+                            let short = if entry.blob_hash.len() > 8 { &entry.blob_hash[..8] } else { &entry.blob_hash };
+                            ui.label(egui::RichText::new(short).monospace().size(10.0));
+                        });
+                        row.col(|ui| {
+                            ui.label(egui::RichText::new(&entry.model).size(10.0));
+                        });
+                        row.col(|ui| {
+                            ui.label(egui::RichText::new(&entry.file_class).size(10.0));
+                        });
+                        row.col(|ui| {
+                            let color = match entry.generation_source.as_str() {
+                                "llm" => egui::Color32::from_rgb(46, 204, 113),
+                                "fallback" => egui::Color32::from_rgb(231, 76, 60),
+                                "template" => egui::Color32::from_rgb(241, 196, 15),
+                                _ => egui::Color32::GRAY,
+                            };
+                            ui.label(egui::RichText::new(&entry.generation_source).color(color).size(10.0));
+                        });
+                        row.col(|ui| {
+                            let short_time = if entry.generated_at.len() > 11 {
+                                &entry.generated_at[..11]
+                            } else {
+                                &entry.generated_at
+                            };
+                            let validated = if entry.validated { "validated" } else { "fallback" };
+                            ui.label(egui::RichText::new(format!("{} · {}", short_time, validated)).size(10.0));
+                        });
+                    });
+                });
+        });
+    }
+
+    fn render_configuration(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.heading("Runtime Configuration");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(egui::RichText::new("Read-only operational summary").color(egui::Color32::GRAY).size(11.0));
+            });
+        });
+        ui.separator();
+
+        let redis_host = std::env::var("REDIS_HOST").unwrap_or_else(|_| "localhost".to_string());
+        let postgres_host = std::env::var("POSTGRES_HOST").unwrap_or_else(|_| "localhost".to_string());
+        let postgres_user = std::env::var("POSTGRES_USER").unwrap_or_else(|_| "chronos".to_string());
+        let ollama_host = std::env::var("OLLAMA_HOST").unwrap_or_else(|_| "localhost".to_string());
+        let mount_point = std::env::var("CHRONOS_MOUNT_POINT").unwrap_or_else(|_| "/mnt/honeypot".to_string());
+
+        ui.horizontal_wrapped(|ui| {
+            Self::render_metric_card(
+                ui,
+                "FUSE Mount",
+                mount_point,
+                "filesystem entrypoint".to_string(),
+                egui::Color32::from_rgb(52, 152, 219),
+            );
+            Self::render_metric_card(
+                ui,
+                "Redis",
+                redis_host,
+                "state + provenance store".to_string(),
+                egui::Color32::from_rgb(46, 204, 113),
+            );
+            Self::render_metric_card(
+                ui,
+                "Postgres",
+                format!("{}@{}", postgres_user, postgres_host),
+                "audit + session evidence".to_string(),
+                egui::Color32::from_rgb(241, 196, 15),
+            );
+            Self::render_metric_card(
+                ui,
+                "Ollama",
+                ollama_host,
+                "local inference runtime".to_string(),
+                egui::Color32::from_rgb(155, 89, 182),
+            );
+        });
+
+        ui.add_space(12.0);
+        ui.heading(egui::RichText::new("Live Feature Matrix").size(14.0));
+        ui.separator();
+
+        let features = [
+            ("SSH shell", "local dispatcher on the mounted honeypot root"),
+            ("Generation", "non-blocking, background, adaptive timeout"),
+            ("Circuit breaker", "per-model degrade and backoff"),
+            ("Entropy / aging", "runtime drift for logs, caches, and timestamps"),
+            ("Provenance", "Redis blob metadata snapshot"),
+            ("Evidence", "session_evidence + audit_log persistence"),
+        ];
+
+        egui::Grid::new("feature_matrix")
+            .striped(true)
+            .num_columns(2)
+            .show(ui, |ui| {
+                for (name, description) in features {
+                    ui.label(egui::RichText::new(name).strong().size(11.0));
+                    ui.label(egui::RichText::new(description).size(11.0));
+                    ui.end_row();
+                }
+            });
     }
 }
 
@@ -562,18 +894,9 @@ impl eframe::App for ChronosDashboard {
                 Tab::LiveOps => self.render_live_ops(ui),
                 Tab::Sessions => self.render_sessions(ui),
                 Tab::SessionDetail => self.render_session_detail(ui),
-                Tab::ThreatAnalytics => Self::render_stub(ui,
-                    "Threat & Skill Analytics",
-                    "Technique frequency, attack-phase funnels, and skill-level distributions.\nBlocked until SkillDetector persistence is verified with live data."
-                ),
-                Tab::AIProvenance => Self::render_stub(ui,
-                    "AI Provenance",
-                    "Track which files were AI-generated vs static template, model used,\nvalidation pass/fail, and generation latency."
-                ),
-                Tab::Configuration => Self::render_stub(ui,
-                    "Configuration",
-                    "Edit Ubuntu Profile (ubuntu.yaml) and Generation Policy (generation_policy.yaml).\nRequires core-engine restart to apply changes."
-                ),
+                Tab::ThreatAnalytics => self.render_threat_analytics(ui),
+                Tab::AIProvenance => self.render_ai_provenance(ui),
+                Tab::Configuration => self.render_configuration(ui),
             }
         });
 

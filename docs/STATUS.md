@@ -1,7 +1,7 @@
 # Mirage (Chronos Framework) — Implementation Status
 
 **Date:** July 2026 
-**Status:** Phase 1 Complete | Phase 2 In Progress (M2.A–M2.F complete)
+**Status:** Phase 1 Complete | Phase 2 In Progress (core AI pipeline, SSH routing, circuit breaker, entropy/aging, provenance, and dashboard live; storage lifecycle remains)
 
 ---
 
@@ -49,7 +49,8 @@
  - SSH server implementation using Paramiko
  - Accepts any credentials (deception behavior)
  - Command logging and session tracking
- - Session ID injection into FUSE context via threading.local (Phase 2 update)
+ - Session ID injection into FUSE context via threading.local
+ - Local shell dispatcher routes commands against the mounted honeypot root
  
 - **HTTP Gateway** (`src/chronos/gateway/http_server.py`)
  - Simulates vulnerable web application
@@ -146,22 +147,16 @@
 - Live Ops: health strip, pause/resume stream, operation filter, active session count
 - Sessions: sortable table with click-through to detail view
 - Session Detail: command timeline with per-command risk coloring, traversal tree, skill assessment card
-- Threat Analytics, AI Provenance, Configuration: stubbed for future implementation
+- Threat Analytics, AI Provenance, Configuration: live read-only panels backed by session metrics, Redis provenance snapshots, and runtime config summary
 - Bidirectional channel architecture (UI→backend requests, backend→UI messages)
 
 ### Upcoming Milestones (Tier-Prioritized)
 
-**Tier 1 — Must-Have:**
-- **M2.H** SSH → FUSE Routing — full command routing through FUSE (CRITICAL: SSH currently uses stub shell)
-- **M2.J** Circuit Breaker — graceful Ollama degradation
-
-**Tier 2 — Important:**
-- Entropy Engine — filesystem entropy simulation for realism
-- Aging System — realistic timestamp distribution across filesystem
-- Provenance (simplified) — model, file_class, prompt_version, generated_at, validated
-
 **Tier 3 — Later:**
 - Storage Lifecycle (simplified) — Redis → PostgreSQL → Delete
+
+**Implemented but still worth hardening:**
+- SSH → FUSE routing, circuit breaker, entropy engine, aging system, and provenance are present in the repo and wired into the current runtime.
 
 **Removed:**
 - ~~M2.G Policy Engine & A/B Testing~~ — replaced with operational KPIs (see ROADMAP.md)
@@ -209,7 +204,7 @@ Apate/
 │  │  └── inference.py     ← local Ollama client
 │  │
 │  ├── gateway/      SSH/HTTP entry points
-│  │  ├── ssh_server.py    ← session_id injection (⚠ stub shell — M2.H pending)
+│  │  ├── ssh_server.py    ← session_id injection + shell dispatcher over mounted honeypot root
 │  │  └── http_server.py
 │  │
 │  ├── watcher/      Audit log monitoring
@@ -291,4 +286,4 @@ Apate/
 
 ---
 
-*Last Updated: July 2026 — Phase 2 M2.A–M2.F complete, Overseer Dashboard live, strategic reprioritization applied*
+*Last Updated: August 2026 — Phase 2 core runtime, SSH routing, circuit breaker, entropy/aging, provenance, and dashboard live*

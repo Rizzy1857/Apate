@@ -117,50 +117,58 @@ The following concepts have been **deliberately removed**:
 - Flush to PostgreSQL `session_evidence` table on session close
 - `skill_assessment` JSONB column added to persistence layer
 
+### M2.H — SSH → FUSE Routing ✅
+
+**Goal:** Route SSH sessions through the mounted honeypot root.
+
+**Completed:**
+- SSH sessions use the local dispatcher against the mounted honeypot root
+- Session IDs are injected into FUSE context via `threading.local()`
+- Core shell commands already traverse the FUSE-backed filesystem path
+
+### M2.J — LLM Circuit Breaker ✅
+
+**Goal:** Make Ollama degradation invisible to the attacker.
+
+**Completed:**
+- Implemented in `src/chronos/intelligence/inference.py`
+- Per-model failure tracking and exponential backoff are active in the local runtime
+
+### Entropy Engine ✅
+
+**Goal:** Make the filesystem feel alive through drift.
+
+**Completed:**
+- Implemented in `src/chronos/simulation/metadata/entropy.py`
+- System entropy now feeds `top`, `free`, and `iostat` output from Redis
+
+### Aging System ✅
+
+**Goal:** Make metadata timestamps feel plausible.
+
+**Completed:**
+- Implemented in `src/chronos/simulation/metadata/aging.py`
+- Lazy metadata aging updates timestamps and growth patterns by file profile
+
+### Provenance ✅
+
+**Goal:** Persist only the provenance fields that matter.
+
+**Completed:**
+- Implemented in `src/chronos/intelligence/orchestrator.py`
+- Persisted blob metadata includes model, file_class, prompt_version, generated_at, and validated
+
 ---
 
 ## 3. Remaining Milestones (Prioritized)
-
-### Tier 1: Must-Have
-
-#### M2.H — SSH → FUSE Routing (CRITICAL)
-
-**Why Tier 1:** The SSH gateway currently returns hardcoded stub responses. The entire Chronos architecture is bypassed during SSH sessions. This is like building a Ferrari engine and connecting it to bicycle pedals.
-
-**Plan:**
-- Route SSH commands through the FUSE-mounted filesystem at `/mnt/honeypot`
-- Track CWD per session
-- Support core commands: `cd`, `ls`, `cat`, `pwd`, `find`, `stat`, `touch`, `mkdir`, `rm`, `echo >`, `grep`
-- Pipe and semicolon chaining
-- Error responses matching real Ubuntu behavior
-
-#### M2.J — LLM Circuit Breaker
-
-**Plan:**
-- Track per-model failure rate and latency percentile
-- Auto-degrade to static templates after N consecutive failures
-- Time-based backoff recovery with exponential delay
-- No FUSE-level errors visible to attacker during degradation
-
-### Tier 2: Important
-
-#### Entropy Engine (NEW)
-
-Filesystem entropy simulation — makes the filesystem feel alive with gradual log growth, cache churn, and service-realistic patterns.
-
-#### Aging System (NEW)
-
-Realistic `mtime`/`atime`/`ctime` distribution — OS files dated to installation, config to setup, logs to recent activity.
-
-#### Provenance (Simplified from original M2.H)
-
-Track only: model, file_class, prompt_version, generated_at, validated. ~~Removed:~~ temperature, top_p, seed, prompt hash, model hash, persona.
 
 ### Tier 3: Later
 
 #### Storage Lifecycle (Simplified from M2.I)
 
 Redis → PostgreSQL → Delete. No 4-tier storage system until Redis memory pressure is measurable.
+
+**Implemented but worth hardening:** SSH routing, circuit breaker, entropy, aging, and provenance are now in the codebase and wired into the runtime.
 
 ---
 
@@ -192,11 +200,11 @@ M2.D Non-Blocking Orchestrator         Done ✅
 M2.E Semantic Validator            Done ✅
 M2.F Evidence Collector            Done ✅
 ──────────────────────────────────────────────────────
-M2.H SSH → FUSE Routing            ← Tier 1 (Next)
-M2.J Circuit Breaker              ← Tier 1
-     Entropy Engine              ← Tier 2
-     Aging System               ← Tier 2
-     Provenance               ← Tier 2
+M2.H SSH → FUSE Routing            Done ✅
+M2.J Circuit Breaker              Done ✅
+     Entropy Engine              Done ✅
+     Aging System               Done ✅
+     Provenance               Done ✅
      Storage Lifecycle (simplified)      ← Tier 3
 ```
 
@@ -216,4 +224,4 @@ M2.J Circuit Breaker              ← Tier 1
 
 ---
 
-*Last updated: July 2026. Reprioritized based on external architecture review — features ranked by impact on attacker deception quality.*
+*Last updated: August 2026. Reconciled with the current repository state — features ranked by impact on attacker deception quality.*

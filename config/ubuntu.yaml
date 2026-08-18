@@ -67,17 +67,55 @@ cron_jobs:
   - { user: ubuntu, schedule: "*/15 * * * *",  command: "/home/ubuntu/scripts/health_check.sh" }
   - { user: root,   schedule: "0 0 * * 0",     command: "apt-get autoremove -y > /dev/null 2>&1" }
 
-# Filesystem layout — directories that must exist in the FUSE tree.
-# Used by the PromptBuilder to validate path-level facts.
-filesystem_layout:
-  - /etc/nginx/
-  - /etc/nginx/sites-available/
-  - /etc/nginx/sites-enabled/
-  - /etc/ssh/
-  - /etc/fail2ban/
-  - /var/log/nginx/
-  - /var/log/auth.log
-  - /home/ubuntu/
-  - /home/ubuntu/.ssh/
-  - /home/ubuntu/scripts/
-  - /var/www/html/
+# Filesystem Manifest — the baseline reality of the simulated machine.
+# FUSE will ONLY allow reads for paths explicitly defined here or created dynamically by the attacker.
+filesystem:
+  entries:
+    # Baseline directory structure (static)
+    - { path: "/", type: directory, class: static }
+    - { path: "/bin", type: directory, class: static }
+    - { path: "/boot", type: directory, class: static }
+    - { path: "/dev", type: directory, class: static }
+    - { path: "/etc", type: directory, class: static }
+    - { path: "/etc/nginx", type: directory, class: static }
+    - { path: "/etc/nginx/sites-available", type: directory, class: static }
+    - { path: "/etc/nginx/sites-enabled", type: directory, class: static }
+    - { path: "/etc/ssh", type: directory, class: static }
+    - { path: "/etc/fail2ban", type: directory, class: static }
+    - { path: "/home", type: directory, class: static }
+    - { path: "/home/ubuntu", type: directory, class: static }
+    - { path: "/home/ubuntu/.ssh", type: directory, class: static }
+    - { path: "/home/ubuntu/scripts", type: directory, class: static }
+    - { path: "/lib", type: directory, class: static }
+    - { path: "/opt", type: directory, class: static }
+    - { path: "/proc", type: directory, class: static }
+    - { path: "/root", type: directory, class: static }
+    - { path: "/run", type: directory, class: static }
+    - { path: "/sbin", type: directory, class: static }
+    - { path: "/sys", type: directory, class: static }
+    - { path: "/tmp", type: directory, class: static }
+    - { path: "/usr", type: directory, class: static }
+    - { path: "/var", type: directory, class: static }
+    - { path: "/var/log", type: directory, class: static }
+    - { path: "/var/log/nginx", type: directory, class: static }
+    - { path: "/var/www", type: directory, class: static }
+    - { path: "/var/www/html", type: directory, class: static }
+
+    # Deterministic Identity & Config files (no AI)
+    - { path: "/etc/passwd", type: file, class: deterministic }
+    - { path: "/etc/group", type: file, class: deterministic }
+    - { path: "/etc/hostname", type: file, class: deterministic }
+    - { path: "/etc/hosts", type: file, class: deterministic }
+    - { path: "/etc/os-release", type: file, class: deterministic }
+    - { path: "/etc/fstab", type: file, class: deterministic }
+    - { path: "/etc/resolv.conf", type: file, class: deterministic }
+    - { path: "/etc/ssh/sshd_config", type: file, class: deterministic }
+
+    # AI-Backed Contextual files (Lazy generated, constrained by budget)
+    - { path: "/var/log/auth.log", type: file, class: ai_backed }
+    - { path: "/var/log/syslog", type: file, class: ai_backed }
+    - { path: "/home/ubuntu/.bash_history", type: file, class: ai_backed }
+    - { path: "/home/ubuntu/notes.txt", type: file, class: ai_backed }
+    - { path: "/etc/nginx/nginx.conf", type: file, class: ai_backed }
+    - { path: "/var/www/html/index.html", type: file, class: ai_backed }
+

@@ -168,7 +168,7 @@ make logs
 ```bash
 ssh -p 2222 ubuntu@localhost  # any password
 ```
-> **Note:** The SSH gateway currently uses a stub shell (Tier 1 roadmap gap). Commands entered here are not yet routed to the FUSE filesystem.
+> **Note:** The SSH gateway now uses the local shell dispatcher against the mounted honeypot root, so commands exercise the FUSE-backed filesystem path.
 
 **Run intelligence verification:**
 ```bash

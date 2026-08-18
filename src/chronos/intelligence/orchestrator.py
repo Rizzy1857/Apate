@@ -34,6 +34,7 @@ from chronos.intelligence.inference import InferenceRuntime, get_runtime
 from chronos.intelligence.ubuntu_profile import UbuntuProfile
 from chronos.intelligence.validator import SemanticValidator
 from chronos.intelligence.fallback import FallbackProvider
+from chronos.intelligence.deterministic_renderer import DeterministicRenderer
 from chronos.intelligence.inference import ModelUnreachableError
 from chronos.intelligence.provenance import ProvenanceRecord, GenerationSource
 
@@ -96,7 +97,18 @@ class GenerationOrchestrator:
         self.prompt_builder = PromptBuilder()
         self.validator = SemanticValidator()
         self.fallback_provider = FallbackProvider()
+        self.deterministic_renderer = DeterministicRenderer()
         self._pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="chronos-gen")
+
+        self._reserve_ai_slot = self.redis.register_script("""
+            local current = tonumber(redis.call('GET', KEYS[1]) or '0')
+            if current < tonumber(ARGV[1]) then
+                redis.call('INCR', KEYS[1])
+                return 1
+            else
+                return 0
+            end
+        """)
 
         # In-flight futures: inode → Future
         self._futures: Dict[int, Future] = {}
@@ -113,32 +125,68 @@ class GenerationOrchestrator:
         session_id: str,
         machine_state: Dict[str, Any],
     ) -> Optional[bytes]:
-        """
-        Called from FUSE read() on a cache-miss.
-
-        Returns content bytes if generation completes within the adaptive timeout.
-        Returns None if the timeout is exceeded (caller should raise FuseOSError).
-        Generation continues in the background regardless of the return value.
-        """
         import os
         filename = os.path.basename(path)
 
-        # Resolve artifact policy before anything else
-        policy = self.policy_engine.resolve(filename, path)
+        policy = self.policy_engine.resolve(filename, path, machine_state)
 
-        # Fast path: empty category — no AI needed
+        if policy.manifest_class == "static":
+            self._persist_empty(inode)
+            return b""
+            
+        if policy.manifest_class == "runtime":
+            # For attacker-created files without content, just return empty.
+            # Do not persist empty, as they might be actively writing to it.
+            return b""
+            
+        if policy.manifest_class == "deterministic":
+            content = self.deterministic_renderer.render(path, machine_state)
+            self._persist(inode, content, policy, ProvenanceRecord(
+                model="deterministic",
+                generation_source=GenerationSource.TEMPLATE,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=True
+            ))
+            return content
+
         if policy.skip_generation:
             self._persist_empty(inode)
             return b""
 
+        # Attempt to reserve AI budget (limit 15)
+        budget_key = "chronos:ai_budget:global"
+        if not self._reserve_ai_slot(keys=[budget_key], args=[15]):
+            fallback = self.fallback_provider.get_degraded_content(filename, policy)
+            provenance = ProvenanceRecord(
+                model=policy.model,
+                generation_source=GenerationSource.FALLBACK,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=False
+            )
+            self._persist(inode, fallback, policy, provenance, content_state="fallback")
+            return fallback
+
         # Check per-session inference quota
         if not self._check_and_decrement_quota(session_id, policy):
-            return self.fallback_provider.get_degraded_content(filename, policy)
+            fallback = self.fallback_provider.get_degraded_content(filename, policy)
+            provenance = ProvenanceRecord(
+                model=policy.model,
+                generation_source=GenerationSource.FALLBACK,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=False
+            )
+            self._persist(inode, fallback, policy, provenance, content_state="fallback")
+            return fallback
 
-        # Submit or attach to existing generation future
+        self.redis.hset(f"fs:inode:{inode}", "content_state", "generating")
         future = self._get_or_submit(inode, path, filename, session_id, machine_state, policy, PRIORITY_HIGH)
 
-        # Adaptive wait
         timeout = self._adaptive_timeout(policy.model)
         try:
             result = future.result(timeout=timeout)
@@ -146,7 +194,7 @@ class GenerationOrchestrator:
         except FutureTimeoutError:
             if _PROMETHEUS_AVAILABLE:
                 _timeout_counter.labels(model=policy.model).inc()
-            return None   # caller raises a randomized POSIX error
+            return None
 
     def submit_background(
         self,
@@ -156,18 +204,54 @@ class GenerationOrchestrator:
         machine_state: Dict[str, Any],
         priority: int = PRIORITY_MEDIUM,
     ) -> None:
-        """
-        Called from FUSE create() and readdir() for fire-and-forget prewarm.
-        Does not block. Does not return a result.
-        """
         import os
         filename = os.path.basename(path)
-        policy = self.policy_engine.resolve(filename, path)
+        policy = self.policy_engine.resolve(filename, path, machine_state)
+
+        if policy.manifest_class == "static":
+            self._persist_empty(inode)
+            return
+            
+        if policy.manifest_class == "runtime":
+            return
+            
+        if policy.manifest_class == "deterministic":
+            content = self.deterministic_renderer.render(path, machine_state)
+            self._persist(inode, content, policy, ProvenanceRecord(
+                model="deterministic",
+                generation_source=GenerationSource.TEMPLATE,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=True
+            ))
+            return
 
         if policy.skip_generation:
             self._persist_empty(inode)
             return
+            
+        # Check if already generated or fallback
+        meta = self.redis.hgetall(f"fs:inode:{inode}")
+        content_state = meta.get("content_state")
+        if content_state in ["generated", "fallback", "generating"]:
+            return
 
+        budget_key = "chronos:ai_budget:global"
+        if not self._reserve_ai_slot(keys=[budget_key], args=[15]):
+            fallback = self.fallback_provider.get_degraded_content(filename, policy)
+            provenance = ProvenanceRecord(
+                model=policy.model,
+                generation_source=GenerationSource.FALLBACK,
+                file_class=policy.file_class,
+                prompt_version="1.0",
+                generated_at=str(time.time()),
+                validated=False
+            )
+            self._persist(inode, fallback, policy, provenance, content_state="fallback")
+            return
+
+        self.redis.hset(f"fs:inode:{inode}", "content_state", "generating")
         self._get_or_submit(inode, path, filename, session_id, machine_state, policy, priority)
 
     # ------------------------------------------------------------------
@@ -255,13 +339,11 @@ class GenerationOrchestrator:
                 provenance.validated = False
 
             if not content_bytes:
-                # Validator rejected twice — use static template
                 content_bytes = self.fallback_provider.get_degraded_content(filename, policy)
                 provenance.generation_source = GenerationSource.TEMPLATE
                 provenance.validated = False
 
-            # Persist blob + inode metadata + provenance
-            self._persist(inode, content_bytes, policy, provenance)
+            self._persist(inode, content_bytes, policy, provenance, content_state="generated")
 
             elapsed = time.monotonic() - start
             self._record_latency(policy.model, elapsed)
@@ -281,7 +363,7 @@ class GenerationOrchestrator:
                 generated_at=str(time.time()),
                 validated=False
             )
-            self._persist(inode, fallback, policy, provenance)
+            self._persist(inode, fallback, policy, provenance, content_state="fallback")
             return fallback
         finally:
             self.redis.delete(lock_key)
@@ -294,6 +376,7 @@ class GenerationOrchestrator:
         content: bytes,
         policy: ArtifactPolicy,
         provenance: ProvenanceRecord,
+        content_state: str = "generated"
     ) -> None:
         """Persist content blob, inode content_hash, and provenance metadata."""
         blob_hash = hashlib.sha256(content).hexdigest()
@@ -308,6 +391,7 @@ class GenerationOrchestrator:
             "mtime": time.time(),
             "artifact_category": policy.category,
             "artifact_class": policy.file_class,
+            "content_state": content_state,
         })
 
         # Provenance (M2.H)
@@ -322,6 +406,7 @@ class GenerationOrchestrator:
             "size": 0,
             "mtime": time.time(),
             "artifact_category": "empty",
+            "content_state": "static",
         })
 
     # ------------------------------------------------------------------

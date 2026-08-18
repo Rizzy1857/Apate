@@ -3,6 +3,30 @@ use tokio_postgres::NoTls;
 use std::time::Duration;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, HashMap};
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ProvenanceEntry {
+    pub blob_hash: String,
+    pub model: String,
+    pub file_class: String,
+    pub generation_source: String,
+    pub prompt_version: String,
+    pub generated_at: String,
+    pub validated: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ProvenanceSummary {
+    pub total_blobs: i32,
+    pub validated_blobs: i32,
+    pub llm_blobs: i32,
+    pub fallback_blobs: i32,
+    pub template_blobs: i32,
+    pub by_file_class: Vec<(String, i32)>,
+    pub recent_entries: Vec<ProvenanceEntry>,
+}
 
 // ── Data Structures ─────────────────────────────────────────────────────────
 
@@ -67,6 +91,7 @@ pub enum BackendMessage {
     ActiveSessionCount(i32),
     SessionList(Vec<SessionSummary>),
     SessionDetailResult(Box<Option<SessionDetail>>),
+    ProvenanceSnapshot(ProvenanceSummary),
 }
 
 #[derive(Debug, Clone)]
@@ -301,6 +326,7 @@ pub async fn start_backend(
                 Ok(client) => {
                     if let Ok(mut con) = client.get_multiplexed_tokio_connection().await {
                         let _ = tx_rd.send(BackendMessage::RedisConnected(true));
+                        let mut provenance_tick = 0u32;
                         loop {
                             let count: redis::RedisResult<Option<i32>> = con.get("fs:next_inode").await;
                             match count {
@@ -312,6 +338,19 @@ pub async fn start_backend(
                                     break;
                                 }
                             }
+
+                            provenance_tick = provenance_tick.wrapping_add(1);
+                            if provenance_tick % 5 == 0 {
+                                match collect_provenance_snapshot(&mut con).await {
+                                    Ok(snapshot) => {
+                                        let _ = tx_rd.send(BackendMessage::ProvenanceSnapshot(snapshot));
+                                    }
+                                    Err(e) => {
+                                        log::error!("Provenance snapshot error: {}", e);
+                                    }
+                                }
+                            }
+
                             tokio::time::sleep(Duration::from_secs(2)).await;
                         }
                     }
@@ -322,4 +361,70 @@ pub async fn start_backend(
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });
+}
+
+async fn collect_provenance_snapshot(
+    con: &mut redis::aio::MultiplexedConnection,
+) -> redis::RedisResult<ProvenanceSummary> {
+    let keys: Vec<String> = con.keys("fs:blob_meta:*").await?;
+
+    let mut by_file_class: BTreeMap<String, i32> = BTreeMap::new();
+    let mut entries: Vec<(f64, ProvenanceEntry)> = Vec::new();
+    let mut total_blobs = 0i32;
+    let mut validated_blobs = 0i32;
+    let mut llm_blobs = 0i32;
+    let mut fallback_blobs = 0i32;
+    let mut template_blobs = 0i32;
+
+    for key in keys {
+        let meta: HashMap<String, String> = con.hgetall(&key).await.unwrap_or_default();
+        if meta.is_empty() {
+            continue;
+        }
+
+        total_blobs += 1;
+        let validated = meta.get("validated").map(|value| value == "true").unwrap_or(false);
+        if validated {
+            validated_blobs += 1;
+        }
+
+        match meta.get("generation_source").map(|s| s.as_str()).unwrap_or("llm") {
+            "llm" => llm_blobs += 1,
+            "fallback" => fallback_blobs += 1,
+            "template" => template_blobs += 1,
+            _ => {}
+        }
+
+        let file_class = meta.get("file_class").cloned().unwrap_or_else(|| "unknown".to_string());
+        *by_file_class.entry(file_class.clone()).or_insert(0) += 1;
+
+        let generated_at = meta.get("generated_at").cloned().unwrap_or_default();
+        let generated_at_ts = generated_at.parse::<f64>().unwrap_or(0.0);
+        let blob_hash = key.strip_prefix("fs:blob_meta:").unwrap_or(&key).to_string();
+
+        entries.push((
+            generated_at_ts,
+            ProvenanceEntry {
+                blob_hash,
+                model: meta.get("model").cloned().unwrap_or_default(),
+                file_class,
+                generation_source: meta.get("generation_source").cloned().unwrap_or_default(),
+                prompt_version: meta.get("prompt_version").cloned().unwrap_or_default(),
+                generated_at,
+                validated,
+            },
+        ));
+    }
+
+    entries.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+
+    Ok(ProvenanceSummary {
+        total_blobs,
+        validated_blobs,
+        llm_blobs,
+        fallback_blobs,
+        template_blobs,
+        by_file_class: by_file_class.into_iter().collect(),
+        recent_entries: entries.into_iter().take(12).map(|(_, entry)| entry).collect(),
+    })
 }

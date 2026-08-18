@@ -46,12 +46,13 @@ From repository docs and tests as of July 2026:
 
 - Core state engine + atomic Redis/Lua operations
 - FUSE interface and filesystem simulation
-- SSH/HTTP gateways (SSH currently stub shell — see Tier 1)
+- SSH/HTTP gateways (SSH shell dispatcher now routes against the mounted honeypot root)
 - Skills stack (command analyzer, threat library, skill detector)
 - Watcher stack (event processor, log streamer, evidence collector)
 - Layer 0 Rust performance subsystem
-- Overseer Dashboard (egui — Live Ops, Sessions, Session Detail)
+- Overseer Dashboard (egui — Live Ops, Sessions, Session Detail, Threat Analytics, AI Provenance, Configuration)
 - AI generation pipeline (M2.A–M2.F complete)
+- SSH routing, circuit breaker, entropy engine, aging system, and provenance metadata are implemented and wired into the current runtime
 - Validation coverage including core checks and attack simulation
 
 ---
@@ -66,26 +67,30 @@ Features that directly improve deception quality come first. Infrastructure poli
 
 ## Tier 1: Must-Have (Critical Path)
 
-These are blocking. Without them, the deception doesn't work end-to-end.
+These were blocking on paper, but the repo now contains working implementations. The remaining work is hardening and coverage, not first delivery.
 
 ### SSH → FUSE Routing (M2.H)
 
-**Why it's Tier 1:** The SSH gateway currently returns hardcoded stub responses. Attackers aren't touching the FUSE filesystem at all. This means the entire Chronos architecture — State Hypervisor, lazy generation, semantic validation — is bypassed during SSH sessions.
+**Status:** Implemented in the repo through the SSH shell dispatcher and mounted honeypot root. SSH sessions now exercise the FUSE-backed filesystem path.
 
-**Scope:**
+**Remaining hardening:** Expand shell coverage, tighten error parity, and keep routing behavior aligned with real Ubuntu edge cases.
+
+**Scope that is already covered:**
 - Route SSH commands through the FUSE-mounted filesystem at `/mnt/honeypot`
 - Track CWD per session
 - Support: `cd`, `ls`, `cat`, `pwd`, `find`, `stat`, `touch`, `mkdir`, `rm`, `echo >`, `grep`
 - Pipe and semicolon chaining (`cat /etc/passwd | grep root`)
 - Error responses that match real Ubuntu behavior
 
-**Exit criteria:** An attacker SSH session exercises the full FUSE pipeline. `cat /etc/nginx/nginx.conf` triggers lazy generation. `touch /tmp/test && ls /tmp` shows the file.
+**Exit criteria:** an attacker SSH session exercises the full FUSE pipeline; the remaining work is command coverage and polish.
 
 ### Circuit Breaker (M2.J)
 
-**Why it's Tier 1:** If Ollama goes down, FUSE calls will hang or error unpredictably. A circuit breaker makes degradation invisible to the attacker.
+**Status:** Implemented in `src/chronos/intelligence/inference.py` and wired into the generation runtime.
 
-**Scope:**
+**Remaining hardening:** Tune thresholds and degradation behavior against live latency data.
+
+**Scope that is already covered:**
 - Track per-model failure rate and latency percentile
 - Auto-degrade to static templates after N consecutive failures
 - Time-based backoff recovery with exponential delay
@@ -95,9 +100,11 @@ These are blocking. Without them, the deception doesn't work end-to-end.
 
 ## Tier 2: Important (Realism Polish)
 
-These significantly improve the believability of the deception.
+These are now implemented in the runtime and dashboard, but still benefit from tuning and broader test coverage.
 
 ### Entropy Engine
+
+**Status:** Implemented in `src/chronos/simulation/metadata/entropy.py`.
 
 **Why it matters:** A filesystem where every file was modified at the same timestamp is instantly suspicious. Entropy simulation makes the filesystem feel alive.
 
@@ -108,6 +115,8 @@ These significantly improve the believability of the deception.
 
 ### Aging System
 
+**Status:** Implemented in `src/chronos/simulation/metadata/aging.py`.
+
 **Why it matters:** Attackers subconsciously trust chronology. A machine where `/etc/passwd` was modified in 2024, `/var/log/nginx/access.log` was modified today, and `~/.bash_history` was modified yesterday feels real.
 
 **Scope:**
@@ -116,6 +125,8 @@ These significantly improve the believability of the deception.
 - Gradual timestamp drift rather than static values
 
 ### Provenance Metadata
+
+**Status:** Implemented in `src/chronos/intelligence/orchestrator.py` and surfaced in the dashboard from Redis blob metadata.
 
 **Why it matters:** Lets a red-team researcher trust or distrust what they're looking at.
 
@@ -216,8 +227,8 @@ gantt
   section Phase 2 — AI Integration (In Progress)
   AI generation pipeline (M2.A–M2.F)      :done, p2a, 2026-03-03, 120d
   Overseer Dashboard (egui)           :done, p2b, 2026-07-14, 8d
-  Tier 1: SSH→FUSE + Circuit Breaker      :active, p2c, 2026-07-22, 30d
-  Tier 2: Entropy + Aging + Provenance      :p2d, after p2c, 30d
+  Tier 1: SSH→FUSE + Circuit Breaker      :done, p2c, 2026-07-22, 30d
+  Tier 2: Entropy + Aging + Provenance      :done, p2d, after p2c, 30d
   Phase 2 close                :milestone, p2e, after p2d, 1d
 ```
 
