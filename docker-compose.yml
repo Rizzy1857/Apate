@@ -1,14 +1,12 @@
-version: "3.9"
-
 services:
   # The Hot State: Single Source of Truth for Filesystem Metadata
   redis-store:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
     container_name: chronos_redis
     command: >
       redis-server --appendonly yes --appendfsync everysec --maxmemory 2gb --maxmemory-policy noeviction
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     networks:
@@ -21,14 +19,14 @@ services:
 
   # The Cold Storage: Audit Logs, Content Blobs, Session Replay
   db-store:
-    image: postgres:15-alpine
+    image: postgres:15-alpine@sha256:1d1095b0503145be79c79239372aefadfacf6b7c33c9245bbf99ce4b6b89c737
     container_name: chronos_db
     environment:
       POSTGRES_DB: chronos
       POSTGRES_USER: chronos
-      POSTGRES_PASSWORD: chronos_dev_password # Dev only
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # We will mount init scripts later
@@ -40,7 +38,23 @@ services:
       timeout: 5s
       retries: 5
 
-  # The Core Engine: FUSE Filesystem + State Hypervisor
+  # The Inference Runtime: Local LLMs
+  ollama:
+    image: ollama/ollama@sha256:57f573b47f1f71ebb445789f279fe3e596a8beab182f7cf486db9205bad87c5a
+    container_name: chronos_ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - chronos-net
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The Core Engine: FUSE Filesystem + SSH Gateway
   core-engine:
     build:
       context: .
@@ -48,19 +62,62 @@ services:
     container_name: chronos_core
     cap_add:
       - SYS_ADMIN
+      - SYS_CHROOT
+      - SETUID
+      - SETGID
+      - KILL
+    cap_drop: [ALL]
+    read_only: true
+    pids_limit: 192
+    mem_limit: 2g
+    cpus: 2
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,mode=1777
     devices:
       - /dev/fuse
     security_opt:
       - apparmor=unconfined
+      - no-new-privileges:true
     environment:
       - REDIS_HOST=redis-store
       - POSTGRES_HOST=db-store
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      - OLLAMA_HOST=ollama
       - PYTHONPATH=/app/src
     ports:
-      - "2222:2222"  # SSH honeypot
+      - "127.0.0.1:2222:2222"  # Research-only default
     volumes:
-      - .:/app
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
       - fuse-mount:/mnt/honeypot
+      - audit-spool:/var/lib/chronos
+    depends_on:
+      redis-store:
+        condition: service_healthy
+      db-store:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - chronos-net
+
+  # The World Engine: Simulation Orchestrator & Plugins (No exposed ports)
+  world-engine:
+    profiles: [experimental]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronos_world
+    environment:
+      - REDIS_HOST=redis-store
+      - POSTGRES_HOST=db-store
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      - OLLAMA_HOST=ollama
+      - PYTHONPATH=/app/src
+    command: ["python3", "-m", "chronos.core.world_main"]
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
     depends_on:
       redis-store:
         condition: service_healthy
@@ -68,13 +125,74 @@ services:
         condition: service_healthy
     networks:
       - chronos-net
-    # command: tail -f /dev/null  # Removed to allow auto-start
+
+  # Dashboard metrics exporter: exposes KPIs derived from Postgres + Redis
+  dashboard-exporter:
+    profiles: [monitoring]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronos_dashboard_exporter
+    environment:
+      - PYTHONPATH=/app/src
+      - CHRONOS_DASHBOARD_METRICS_PORT=9100
+      - CHRONOS_PG_HOST=db-store
+      - CHRONOS_PG_PORT=5432
+      - CHRONOS_PG_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      - CHRONOS_REDIS_HOST=redis-store
+    command: ["python3", "-m", "chronos.core.dashboard_metrics_exporter"]
+    ports:
+      - "127.0.0.1:9100:9100"
+    volumes:
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+    depends_on:
+      redis-store:
+        condition: service_healthy
+      db-store:
+        condition: service_healthy
+    networks:
+      - chronos-net
+
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v2.53.0
+    container_name: chronos_prometheus
+    restart: always
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - chronos-net
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.1.0
+    container_name: chronos_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - chronos-net
+    depends_on:
+      - prometheus
 
 networks:
   chronos-net:
     driver: bridge
+    internal: true
 
 volumes:
   redis-data:
   postgres-data:
   fuse-mount:
+  audit-spool:
+  ollama-data:
+  prometheus_data:
+  grafana_data:

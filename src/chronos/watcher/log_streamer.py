@@ -6,7 +6,6 @@ import logging
 import time
 import threading
 import json
-from datetime import datetime
 from typing import Callable, Dict, Any, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -21,7 +20,7 @@ class AuditLogStreamer:
     Implements pub-sub pattern for real-time event processing
     """
     
-    def __init__(self, db_config: Dict[str, str], poll_interval: float = 1.0):
+    def __init__(self, db_config: Dict[str, Any], poll_interval: float = 1.0):
         """
         Args:
             db_config: PostgreSQL connection parameters
@@ -56,7 +55,7 @@ class AuditLogStreamer:
             cursor.execute("""
                 SELECT 
                     id, timestamp, inode, operation, path, 
-                    pid, uid, metadata, session_id
+                    metadata, session_id
                 FROM audit_log
                 WHERE id > %s
                 ORDER BY id ASC
@@ -64,8 +63,6 @@ class AuditLogStreamer:
             """, (self.last_id,))
             
             events = cursor.fetchall()
-            if events:
-                self.last_id = events[-1]['id']
             return events
             
     def _notify_subscribers(self, event: Dict[str, Any]):
@@ -75,6 +72,8 @@ class AuditLogStreamer:
                 subscriber(event)
             except Exception as e:
                 logger.error(f"[Watcher] Subscriber {subscriber.__name__} error: {e}")
+                return False
+        return True
                 
     def _poll_loop(self):
         """Main polling loop"""
@@ -95,10 +94,12 @@ class AuditLogStreamer:
                     if 'metadata' in event and isinstance(event['metadata'], str):
                         try:
                             event['metadata'] = json.loads(event['metadata'])
-                        except:
+                        except Exception:
                             pass
                     
-                    self._notify_subscribers(dict(event))
+                    if not self._notify_subscribers(dict(event)):
+                        break  # Retry this event on the next poll.
+                    self.last_id = event['id']
                     
                 if events:
                     logger.debug(f"[Watcher] Processed {len(events)} new events")
@@ -134,8 +135,7 @@ class AuditLogStreamer:
                 cursor.execute("""
                     SELECT 
                         id, timestamp, inode, operation, path,
-                        pid, uid, metadata, session_id
-                    FROM audit_log
+                        metadata, session_id                    FROM audit_log
                     ORDER BY id DESC
                     LIMIT %s
                 """, (limit,))

@@ -159,12 +159,12 @@ async fn process_data(data: &str, connection_id: &str, peer_addr: SocketAddr) ->
     // Log potential attack patterns
     if data_trimmed.contains("GET /") || data_trimmed.contains("POST /") {
         warn!("HTTP request detected on TCP port from {}: {}", peer_addr, data_trimmed);
-        return format!("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+        return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n".to_string();
     }
     
     if data_trimmed.starts_with("SSH-") {
         warn!("SSH handshake attempt from {}: {}", peer_addr, data_trimmed);
-        return format!("SSH-2.0-OpenSSH_8.9p1\r\n");
+        return "SSH-2.0-OpenSSH_8.9p1\r\n".to_string();
     }
     
     // Check for common network scanning patterns
@@ -175,7 +175,7 @@ async fn process_data(data: &str, connection_id: &str, peer_addr: SocketAddr) ->
     
     if data_trimmed.len() == 1 && data_trimmed.as_bytes()[0] < 32 {
         debug!("Binary probe from {}", peer_addr);
-        return format!("ECHO_SRV_v1.0\n");
+        return "ECHO_SRV_v1.0\n".to_string();
     }
     
     // Check for malicious payloads
@@ -188,14 +188,14 @@ async fn process_data(data: &str, connection_id: &str, peer_addr: SocketAddr) ->
         if data_trimmed.to_lowercase().contains(pattern) {
             warn!("Suspicious payload detected from {}: {}", peer_addr, pattern);
             // Return misleading response to waste attacker time
-            return format!("Command not recognized. Use 'help' for available commands.\n");
+            return "Command not recognized. Use 'help' for available commands.\n".to_string();
         }
     }
     
     // Handle specific commands that might be sent to probe services
     match data_trimmed.to_lowercase().as_str() {
         "help" => {
-            format!("Available commands: echo, status, info, quit\n")
+            "Available commands: echo, status, info, quit\n".to_string()
         }
         "status" => {
             format!("Server status: Online | Uptime: {} seconds\n", 
@@ -208,7 +208,7 @@ async fn process_data(data: &str, connection_id: &str, peer_addr: SocketAddr) ->
             format!("TCP Echo Server v1.0 | Connection: {}\n", connection_id)
         }
         "quit" | "exit" => {
-            format!("Goodbye!\n")
+            "Goodbye!\n".to_string()
         }
         _ => {
             // Default echo behavior with timestamp

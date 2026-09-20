@@ -1,3 +1,7 @@
+"""
+Skill Detector
+Determines attacker skill level based on observed behavior patterns
+"""
 import logging
 from typing import Dict, List, Any
 from collections import defaultdict
@@ -8,8 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class SkillDetector:
-    """Analyzes attacker behavior to estimate skill level"""
-
+    """
+    Analyzes attacker behavior to estimate skill level
+    Tracks progression through attack phases
+    """
+    
     SKILL_LEVELS = {
         "script_kiddie": 0,
         "opportunistic": 1,
@@ -17,12 +24,22 @@ class SkillDetector:
         "advanced": 3,
         "expert": 4
     }
-
+    
     def __init__(self):
         self.session_data: Dict[str, Dict[str, Any]] = {}
         
     def analyze_session(self, session_id: str, command_analyses: List[Any]) -> Dict[str, Any]:
-        """Analyze session to determine attacker skill level"""
+        """
+        Analyze a session to determine attacker skill level
+        
+        Args:
+            session_id: Session identifier
+            command_analyses: List of CommandAnalysis objects
+            
+        Returns:
+            Skill assessment with level and reasoning
+        """
+        # Initialize session if needed
         if session_id not in self.session_data:
             self.session_data[session_id] = {
                 "commands": [],
@@ -33,94 +50,110 @@ class SkillDetector:
                 "start_time": datetime.now(),
                 "unique_techniques_count": 0
             }
-
+        
         session = self.session_data[session_id]
-
+        
+        # Aggregate data
         for analysis in command_analyses:
             session["commands"].append(analysis.command)
             session["techniques"].update(analysis.techniques)
+            
+            # Extract attack phases
             for technique in analysis.techniques:
                 phase = technique.split('.')[0]
                 session["phases"].add(phase)
-
+        
         session["unique_techniques_count"] = len(session["techniques"])
-
+        
+        # Analyze behavior patterns
         skill_score = 0
         indicators = []
-
-        # Tool sophistication
+        
+        # 1. Tool sophistication
         sophisticated_tools = ['metasploit', 'empire', 'cobalt', 'linpeas', 'pspy']
         basic_tools = ['nc', 'netcat', 'wget', 'curl']
+        
         command_text = ' '.join(session["commands"]).lower()
-
+        
         for tool in sophisticated_tools:
             if tool in command_text:
                 session["tools_used"].add(tool)
                 skill_score += 15
-                indicators.append(f"Uses: {tool}")
-
+                indicators.append(f"Uses sophisticated tool: {tool}")
+        
         for tool in basic_tools:
             if tool in command_text:
                 session["tools_used"].add(tool)
-
-        # Attack phase progression
+        
+        # 2. Attack phase progression (following kill chain)
         expected_progression = [
-            'reconnaissance', 'execution', 'persistence', 'privilege_escalation',
-            'credential_access', 'lateral_movement', 'exfiltration'
+            'reconnaissance',
+            'execution',
+            'persistence',
+            'privilege_escalation',
+            'credential_access',
+            'lateral_movement',
+            'exfiltration'
         ]
-
-        phases_in_order = [p for p in expected_progression if p in session["phases"]]
-
+        
+        phases_in_order = []
+        for phase in expected_progression:
+            if phase in session["phases"]:
+                phases_in_order.append(phase)
+        
         if len(phases_in_order) >= 4:
             skill_score += 20
-            indicators.append(f"Follows methodology ({len(phases_in_order)} phases)")
-
-        # Command complexity
-        complex_commands = sum(1 for cmd in session["commands"]
-                              if '|' in cmd or ';' in cmd or '&&' in cmd)
-
+            indicators.append(f"Follows attack methodology ({len(phases_in_order)} phases)")
+        
+        # 3. Command complexity
+        complex_commands = 0
+        for cmd in session["commands"]:
+            if '|' in cmd or ';' in cmd or '&&' in cmd:
+                complex_commands += 1
+                
         if complex_commands > 3:
             skill_score += 10
-            indicators.append(f"Complex chaining ({complex_commands})")
-
-        # Evasion techniques
+            indicators.append(f"Uses complex command chaining ({complex_commands} commands)")
+        
+        # 4. Obfuscation and evasion
         evasion_count = len([t for t in session["techniques"] if 'defense_evasion' in t])
         if evasion_count >= 2:
             skill_score += 15
-            indicators.append(f"Evasion ({evasion_count})")
-
-        # Diverse techniques
+            indicators.append(f"Multiple evasion techniques ({evasion_count})")
+        
+        # 5. Diverse techniques
         if session["unique_techniques_count"] >= 10:
             skill_score += 15
-            indicators.append(f"Diverse ({session['unique_techniques_count']})")
+            indicators.append(f"Diverse technique set ({session['unique_techniques_count']})")
         elif session["unique_techniques_count"] >= 5:
             skill_score += 5
-
-        # Timing analysis
-        time_pattern = self._analyze_timing(session["commands"])
-        if time_pattern == "automated":
+        
+        # 6. Automated vs manual behavior
+        time_between_commands = self._analyze_timing(session["commands"])
+        if time_between_commands == "automated":
             skill_score -= 10
-            indicators.append("Automated pattern")
-        elif time_pattern == "deliberate":
+            indicators.append("Automated attack pattern detected")
+        elif time_between_commands == "deliberate":
             skill_score += 10
-            indicators.append("Manual pattern")
-
-        # Error handling
+            indicators.append("Deliberate, manual attack pattern")
+        
+        # 7. Error handling
         error_patterns = ['2>/dev/null', '2>&1', 'try', 'catch']
-        error_handling = sum(1 for cmd in session["commands"]
+        error_handling = sum(1 for cmd in session["commands"] 
                             if any(p in cmd for p in error_patterns))
         if error_handling >= 3:
             skill_score += 10
-            indicators.append("Error handling")
-
-        # Reconnaissance depth
+            indicators.append("Proper error handling")
+        
+        # 8. Reconnaissance depth
         recon_count = len([t for t in session["techniques"] if 'reconnaissance' in t])
         if recon_count >= 5:
             skill_score += 10
-            indicators.append(f"Recon ({recon_count})")
-
+            indicators.append(f"Thorough reconnaissance ({recon_count} techniques)")
+        
+        # Determine skill level
         skill_level = self._score_to_level(skill_score)
-
+        
         assessment = {
             "session_id": session_id,
             "skill_level": skill_level,
@@ -136,9 +169,9 @@ class SkillDetector:
             },
             "characteristics": self._get_characteristics(skill_level)
         }
-
-        logger.info(f"Session {session_id}: {skill_level} (score: {skill_score})")
-
+        
+        logger.info(f"[SkillDetector] Session {session_id}: {skill_level} (score: {skill_score})")
+        
         return assessment
     
     def _analyze_timing(self, commands: List[str]) -> str:

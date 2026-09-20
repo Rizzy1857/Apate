@@ -1,0 +1,126 @@
+# Ubuntu Machine Profile
+# ========================
+# This file defines what the simulated machine *is*.
+# Role is implied by installed packages and running services — not by a separate "persona".
+# State and behavior are kept strictly separate (see config/generation_policy.yaml for behavior).
+
+ubuntu_version: "24.04"
+codename: "noble"
+kernel_version: "6.8.0-51-generic"
+
+hostname: "web01"
+primary_user: "ubuntu"
+timezone: "UTC"
+
+# Installed packages — these are the ground truth for validator and prompt builder.
+# The role of the machine (web server, DB, etc.) is inferred from this list.
+installed_packages:
+  - { name: nginx,           version: "1.24.0" }
+  - { name: openssh-server,  version: "9.6p1"  }
+  - { name: curl,            version: "8.5.0"  }
+  - { name: vim,             version: "9.1.0"  }
+  - { name: git,             version: "2.43.0" }
+  - { name: ufw,             version: "0.36.2" }
+  - { name: fail2ban,        version: "1.0.2"  }
+  - { name: python3,         version: "3.12.3" }
+
+running_services:
+  - nginx
+  - ssh
+  - cron
+  - ufw
+  - fail2ban
+
+open_ports:
+  - { port: 22,  proto: tcp, service: ssh   }
+  - { port: 80,  proto: tcp, service: nginx }
+  - { port: 443, proto: tcp, service: nginx }
+
+users:
+  - { name: ubuntu, uid: 1000, gid: 1000, shell: /bin/bash, home: /home/ubuntu }
+  - { name: www-data, uid: 33, gid: 33,   shell: /usr/sbin/nologin, home: /var/www }
+  - { name: root,   uid: 0,    gid: 0,    shell: /bin/bash, home: /root }
+
+groups:
+  - { name: root,     gid: 0,    members: [root] }
+  - { name: ubuntu,   gid: 1000, members: [ubuntu] }
+  - { name: www-data, gid: 33,   members: [www-data, ubuntu] }
+  - { name: sudo,     gid: 27,   members: [ubuntu] }
+  - { name: docker,   gid: 998,  members: [ubuntu] }
+
+network_interfaces:
+  - { name: eth0, ip: "10.0.1.42", netmask: "255.255.255.0", gateway: "10.0.1.1" }
+  - { name: lo,   ip: "127.0.0.1", netmask: "255.0.0.0"                          }
+
+mounted_drives:
+  - { device: /dev/sda1, mountpoint: /,     fstype: ext4,  size_gb: 50  }
+  - { device: /dev/sda2, mountpoint: /boot, fstype: vfat,  size_gb: 1   }
+  - { device: tmpfs,     mountpoint: /tmp,  fstype: tmpfs, size_gb: 2   }
+
+ssh_config:
+  permit_root_login: false
+  password_authentication: true
+  pubkey_authentication: true
+  port: 22
+
+cron_jobs:
+  - { user: root,   schedule: "0 2 * * *",     command: "/usr/bin/certbot renew --quiet" }
+  - { user: ubuntu, schedule: "*/15 * * * *",  command: "/home/ubuntu/scripts/health_check.sh" }
+  - { user: root,   schedule: "0 0 * * 0",     command: "apt-get autoremove -y > /dev/null 2>&1" }
+
+# Filesystem Manifest — the baseline reality of the simulated machine.
+# FUSE will ONLY allow reads for paths explicitly defined here or created dynamically by the attacker.
+filesystem:
+  entries:
+    # Baseline directory structure (static)
+    - { path: "/", type: directory, class: static }
+    - { path: "/bin", type: directory, class: static }
+    - { path: "/boot", type: directory, class: static }
+    - { path: "/dev", type: directory, class: static }
+    - { path: "/etc", type: directory, class: static }
+    - { path: "/etc/nginx", type: directory, class: static }
+    - { path: "/etc/nginx/sites-available", type: directory, class: static }
+    - { path: "/etc/nginx/sites-enabled", type: directory, class: static }
+    - { path: "/etc/ssh", type: directory, class: static }
+    - { path: "/etc/fail2ban", type: directory, class: static }
+    - { path: "/etc/ssl", type: directory, class: static }
+    - { path: "/etc/ssl/certs", type: directory, class: static }
+    - { path: "/etc/ssl/private", type: directory, class: static, mode: "0700", uid: 0, gid: 0 }
+    - { path: "/home", type: directory, class: static }
+    - { path: "/home/ubuntu", type: directory, class: static }
+    - { path: "/home/ubuntu/.ssh", type: directory, class: static }
+    - { path: "/home/ubuntu/scripts", type: directory, class: static }
+    - { path: "/lib", type: directory, class: static }
+    - { path: "/opt", type: directory, class: static }
+    - { path: "/proc", type: directory, class: static }
+    - { path: "/root", type: directory, class: static }
+    - { path: "/run", type: directory, class: static }
+    - { path: "/sbin", type: directory, class: static }
+    - { path: "/sys", type: directory, class: static }
+    - { path: "/tmp", type: directory, class: static }
+    - { path: "/usr", type: directory, class: static }
+    - { path: "/var", type: directory, class: static }
+    - { path: "/var/log", type: directory, class: static }
+    - { path: "/var/log/nginx", type: directory, class: static }
+    - { path: "/var/www", type: directory, class: static }
+    - { path: "/var/www/html", type: directory, class: static }
+
+    # Deterministic Identity & Config files (no AI)
+    - { path: "/etc/passwd", type: file, class: deterministic }
+    - { path: "/etc/group", type: file, class: deterministic }
+    - { path: "/etc/hostname", type: file, class: deterministic }
+    - { path: "/etc/hosts", type: file, class: deterministic }
+    - { path: "/etc/os-release", type: file, class: deterministic }
+    - { path: "/etc/fstab", type: file, class: deterministic }
+    - { path: "/etc/resolv.conf", type: file, class: deterministic }
+    - { path: "/etc/ssh/sshd_config", type: file, class: deterministic }
+    - { path: "/etc/ssl/certs/ssl-cert-snakeoil.pem", type: file, class: deterministic }
+    - { path: "/etc/ssl/private/ssl-cert-snakeoil.key", type: file, class: deterministic, mode: "0600", uid: 0, gid: 0 }
+
+    # AI-Backed Contextual files (Lazy generated, constrained by budget)
+    - { path: "/var/log/auth.log", type: file, class: ai_backed }
+    - { path: "/var/log/syslog", type: file, class: ai_backed }
+    - { path: "/home/ubuntu/.bash_history", type: file, class: ai_backed }
+    - { path: "/home/ubuntu/notes.txt", type: file, class: ai_backed }
+    - { path: "/etc/nginx/nginx.conf", type: file, class: ai_backed }
+    - { path: "/var/www/html/index.html", type: file, class: ai_backed }

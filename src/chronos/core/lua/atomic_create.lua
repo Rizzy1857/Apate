@@ -7,12 +7,23 @@ local filename = ARGV[2]
 local mode = ARGV[3]
 local timestamp = ARGV[4]
 
+-- Validate relationships atomically with the mutation.
+if filename == '.' or filename == '..' or filename == '' or string.find(filename, '/', 1, true) then
+    return redis.error_reply('EINVAL')
+end
+local parent_mode = tonumber(redis.call('HGET', 'fs:inode:' .. parent_inode, 'mode') or '0')
+if bit.band(parent_mode, 61440) ~= 16384 then
+    return redis.error_reply('ENOTDIR')
+end
 -- 1. Check if file already exists in parent directory
 local existing_file = redis.call('ZSCORE', 'fs:dir:' .. parent_inode, filename)
 if existing_file then
     return -1  -- EEXIST
 end
 
+if tonumber(redis.call('GET', 'fs:next_inode') or '0') >= 10000 then
+    return redis.error_reply('ENOSPC')
+end
 -- 2. Allocate new inode
 local inode_counter = redis.call('INCR', 'fs:next_inode')
 
@@ -45,4 +56,5 @@ redis.call('ZADD', 'fs:dir:' .. parent_inode, inode_counter, filename)
 -- Caller should handle .. link or we do it if we passed a flag.
 -- For now, generic create.
 
+redis.call('HSET', 'fs:inode:' .. parent_inode, 'mtime', timestamp, 'ctime', timestamp)
 return inode_counter

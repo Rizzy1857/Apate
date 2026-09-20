@@ -63,7 +63,7 @@ pub fn calculate_entropy(data: &str) -> f64 {
 
 /// Check if data looks like base64 encoded content
 pub fn is_likely_base64(data: &str) -> bool {
-    if data.is_empty() || data.len() % 4 != 0 {
+    if data.is_empty() || !data.len().is_multiple_of(4) {
         return false;
     }
     

@@ -1,178 +1,42 @@
-name: CI Pipeline
-
+name: CI
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
 jobs:
-  python-tests:
+  linux-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/integration/run_linux.sh
+  python:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]  # Remove 3.13 due to pydantic incompatibility
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-    
-    - name: Lint with ruff
-      run: |
-        ruff check . --output-format=github || true
-    
-    - name: Format check with black
-      run: |
-        black --check --diff . || true
-    
-    - name: Type check with mypy  
-      run: |
-        mypy backend/ --ignore-missing-imports || true
-    
-    - name: Run Python tests
-      env:
-        APATE_DB_URL: sqlite+aiosqlite:///./apate_ci.db
-      run: |
-        pytest tests/ -v --tb=short || true  # Allow tests to fail for now
-
-  rust-tests:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        components: rustfmt, clippy
-    
-    - name: Cache Rust dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          rust-protocol/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('rust-protocol/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-
-    
-    - name: Format check
-      run: |
-        cd rust-protocol
-        cargo fmt --all -- --check
-    
-    - name: Lint with clippy
-      run: |
-        cd rust-protocol
-        cargo clippy -- -D warnings
-    
-    - name: Run Rust tests
-      run: |
-        cd rust-protocol
-        cargo test --verbose
-
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: [python-tests, rust-tests]
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-    
-    - name: Run integration tests
-      env:
-        APATE_DB_URL: sqlite+aiosqlite:///./apate_ci.db
-      run: |
-        python test_integration.py || true  # Allow to fail for now
-
-  security-scan:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-    
-    - name: Install security tools and dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety
-        pip install -r requirements.txt || true
-    
-    - name: Security scan with bandit
-      run: |
-        bandit -r backend/ -f json -o bandit-report.json || true
-    
-    - name: Check dependencies with safety
-      run: |
-        safety check --json --output safety-report.json || true
-    
-    - name: Upload security reports
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
-
-  rust:
-    if: ${{ hashFiles('rust-protocol/Cargo.toml') != '' }}
-    runs-on: ubuntu-latest
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Cargo test
-        working-directory: rust-protocol
-        run: cargo test --all --quiet
-
-  go:
-    if: ${{ hashFiles('go-services/go.mod') != '' || hashFiles('go-services/main.go') != '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-python@v5
         with:
-          go-version: '1.21'
-      - name: Go build
-        working-directory: go-services
-        run: |
-          if [ -f go.mod ]; then
-            go build ./...
-          elif [ -f main.go ]; then
-            go build main.go
-          fi
+          python-version: ${{ matrix.python-version }}
+      - run: sudo apt-get update && sudo apt-get install -y libfuse2 redis-server
+      - run: python -m pip install -r requirements.txt pytest pytest-asyncio
+      - run: python -m compileall -q src
+      - run: python -m pytest tests -q
+        env:
+          PYTHONPATH: src
+      - run: docker compose config --quiet
+        env:
+          POSTGRES_PASSWORD: ci-config-validation-only
+          GRAFANA_PASSWORD: ci-config-validation-only
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pip-audit
+      - run: pip-audit -r requirements.txt

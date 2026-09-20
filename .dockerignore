@@ -1,0 +1,15 @@
+.git
+**/target
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.env
+.env.*
+data
+logs
+report_workspace
+.pytest_cache
+.codex
+.agents
+**/*.log

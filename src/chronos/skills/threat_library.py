@@ -1,3 +1,7 @@
+"""
+Threat Library
+Database of known attack patterns, tools, and signatures
+"""
 import json
 import logging
 from typing import Dict, List, Any, Optional
@@ -18,15 +22,18 @@ class ThreatSignature:
     indicators: List[str]
     mitre_attack_id: Optional[str] = None
     references: Optional[List[str]] = None
-
+    
     def __post_init__(self):
         if self.references is None:
             self.references = []
 
 
 class ThreatLibrary:
-    """Repository of known attack signatures and patterns"""
-
+    """
+    Repository of known attack signatures and patterns
+    Provides matching and lookup capabilities
+    """
+    
     def __init__(self):
         self.signatures: Dict[str, ThreatSignature] = {}
         self._load_default_signatures()

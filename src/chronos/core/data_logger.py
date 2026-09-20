@@ -9,10 +9,10 @@ SESSIONS_CSV = os.path.join(DATA_DIR, "sessions.csv")
 SEQUENCES_CSV = os.path.join(DATA_DIR, "sequences.csv")
 OUTCOMES_CSV = os.path.join(DATA_DIR, "outcomes.csv")
 
-os.makedirs(DATA_DIR, exist_ok=True)
 
 
 def _append_csv(path: str, header: List[str], row: List[str]) -> None:
+    os.makedirs(DATA_DIR, mode=0o700, exist_ok=True)
     exists = os.path.exists(path)
     with open(path, "a", newline="") as f:
         writer = csv.writer(f)
