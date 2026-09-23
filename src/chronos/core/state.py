@@ -6,11 +6,11 @@ class StateHypervisor:
         self.db = Database(prefix=prefix)
         self.redis = self.db.get_connection()
 
-    def initialize_filesystem(self):
+    def initialize_filesystem(self, use_prepared=True):
         with self.redis.lock("fs:initialize", timeout=30, blocking_timeout=5):
-            self._initialize_filesystem()
+            self._initialize_filesystem(use_prepared=use_prepared)
 
-    def _initialize_filesystem(self):
+    def _initialize_filesystem(self, use_prepared=True):
         """Initialize the root filesystem from the manifest if it doesn't exist"""
         if not self.redis.exists("fs:initialized"):
             print("Initializing root filesystem from manifest...")
@@ -35,6 +35,9 @@ class StateHypervisor:
             from chronos.intelligence.ubuntu_profile import UbuntuProfile
             import os
             profile = UbuntuProfile()
+            import json
+            from chronos.intelligence.prepared_artifacts import bundle_key, install
+            prepared = json.loads(self.redis.get(bundle_key(profile)) or '{}') if use_prepared else {}
             manifest = profile.filesystem_manifest
             
             # Sort entries by depth to ensure parent directories are created first
@@ -69,6 +72,8 @@ class StateHypervisor:
                     content_state = "missing" if entry_class in ["ai_backed", "deterministic"] else "static"
                     self.redis.hsetnx(f"fs:inode:{inode}", "content_state", content_state)
                     self.redis.hsetnx(f"fs:inode:{inode}", "manifest_class", entry_class)
+                    if entry_class == 'ai_backed' and path in prepared:
+                        install(self.redis, inode, prepared[path])
                 # Apply profile ownership during baseline initialization only.
                 user_home = f"/home/{profile.primary_user}"
                 user_owned = path == user_home or path.startswith(user_home + "/")

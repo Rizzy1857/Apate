@@ -1,44 +1,34 @@
-import sys
-import time
+"""Run the supported resource-world subset; legacy file-mutating plugins stay disabled."""
+import os
 import signal
-from chronos.simulation.orchestrator import world_simulation
+import threading
+import uuid
+from chronos.core.state import StateHypervisor
 from chronos.core.persistence import PersistenceLayer
 from chronos.core.metrics import start_metrics_server
+from chronos.simulation.world_state import publish_tick
 
-def signal_handler(sig, frame):
-    print("\n[!] Received shutdown signal, stopping world simulation...")
-    world_simulation.stop()
-    sys.exit(0)
 
 def main():
-    print("[*] Starting World Engine...")
-    
-    # Initialize DB Layer if needed by plugins (like evidence collector or loggers)
-    # The world engine might need persistence to write audit logs from events.
-    db_layer = PersistenceLayer()
-    db_layer.connect()
-    
-    # Give orchestrator the db_layer
-    world_simulation.db_layer = db_layer
-    
-    # Register Signal Handlers
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Start metrics endpoint for world engine
-    print("[*] Starting Metrics Server for World Engine...")
+    stopped = threading.Event()
+    signal.signal(signal.SIGINT, lambda *_: stopped.set())
+    signal.signal(signal.SIGTERM, lambda *_: stopped.set())
+    client = StateHypervisor().redis
+    persistence = PersistenceLayer()
+    persistence.connect()
+    seed = os.environ.get('APATE_WORLD_SEED', 'research-v1')
+    world_id = str(uuid.uuid5(uuid.NAMESPACE_URL, 'apate:world:' + seed))
     start_metrics_server()
-
-    world_simulation.start(tick_interval=60)
-    
-    print("[+] World Engine started.")
-    
-    # Keep the main thread alive while background threads run
     try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        signal_handler(signal.SIGINT, None)
+        while not stopped.is_set():
+            state = publish_tick(client, seed, 60)
+            persistence.log_operation(world_id, 'world_tick', '', 0, {
+                'origin': 'synthetic', 'schema_version': 1, 'world_snapshot': state,
+            })
+            stopped.wait(60)
+    finally:
+        persistence.close()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()

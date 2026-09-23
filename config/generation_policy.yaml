@@ -40,7 +40,7 @@ artifact_policy:
       archived:  0.20   # Old log, entries from weeks ago
       empty:     0.05   # Rotated out / never written
       corrupted: 0.05   # Partial write / binary noise at end
-    max_lines: 500
+    max_lines: 16
     max_days: 7         # Entries span no more than 7 days into the past
     validation_strictness: medium
     regeneration: dynamic
@@ -93,7 +93,7 @@ model_routing:
   temp_file:     "llama3.2:3b"
   config_file:   "llama3:8b"
   script_file:   "llama3:8b"
-  log_file:      "llama3:8b"
+  log_file:      "llama3.2:3b"
   credential_file: "llama3:8b"
   default:       "llama3:8b"
 

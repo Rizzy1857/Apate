@@ -90,8 +90,13 @@ class PromptBuilder:
         detail = ''
         if policy.file_class in ('log_file', 'history_file'):
             detail = '- Produce a short excerpt of 3 to 8 entries, not a full archive. Stop generating after the excerpt.\n'
+        if policy.file_class == 'log_file':
+            from datetime import datetime, timezone
+            now = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)
+            detail += f'- Simulation reference time is {now.isoformat()}. Use dates within the previous 7 days, never future dates.\n'
         if path == '/etc/nginx/nginx.conf':
-            detail = ('- Serve static files from /var/www/html with index index.html.\n'
+            detail = ('- This is the COMPLETE main nginx.conf, not a server snippet. Begin with events { worker_connections 1024; } followed by http { server { ... } }.\n'
+                      '- Serve static files from /var/www/html with index index.html.\n'
                       '- Listen on port 80 and 443 ssl.\n'
                       '- Use ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem and ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key.\n'
                       '- CRITICAL: DO NOT use proxy_pass, upstream, fastcgi_pass, or include. Only static file serving.\n')

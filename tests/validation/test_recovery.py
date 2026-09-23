@@ -179,7 +179,7 @@ def test_malformed_http_model_results(monkeypatch, response):
     monkeypatch.setattr('chronos.intelligence.inference.requests.post', Mock(return_value=reply))
     runtime = InferenceRuntime()
     with pytest.raises(ModelUnreachableError):
-        runtime.generate('trusted prompt')
+        runtime._generate_inline('trusted prompt')
     reply.close.assert_called_once()
     assert runtime.circuit_breaker.models['llama3:8b'].failures == 1
 
@@ -190,7 +190,7 @@ def test_streamed_model_completion(monkeypatch):
                                        b'{"response":" world", "done":true}\n']
     post = Mock(return_value=reply)
     monkeypatch.setattr('chronos.intelligence.inference.requests.post', post)
-    assert InferenceRuntime().generate('trusted prompt') == 'hello world'
+    assert InferenceRuntime()._generate_inline('trusted prompt') == 'hello world'
     assert post.call_args.kwargs['json']['stream'] is True
     reply.close.assert_called_once()
 
@@ -204,6 +204,7 @@ def test_nginx_rejects_invented_backend_and_missing_include():
     machine = {**UbuntuProfile().build_machine_state(), 'artifact_path': path}
     policy = ArtifactPolicyEngine().resolve('nginx.conf', path, machine)
     validator = SemanticValidator()
+    assert not validator.validate('http { server { root /var/www/html; } }', policy, machine).accepted
     assert not validator.validate('http { upstream backend { server web01:8080; } }', policy, machine).accepted
     assert not validator.validate('include /missing.conf; root /var/www/html;', policy, machine).accepted
     fallback = FallbackProvider().get_degraded_content('nginx.conf', policy, path, machine)
@@ -217,4 +218,4 @@ def test_incomplete_stream_not_committed(monkeypatch, body):
     reply.iter_content.return_value = [body]
     monkeypatch.setattr('chronos.intelligence.inference.requests.post', Mock(return_value=reply))
     with pytest.raises(ModelUnreachableError):
-        InferenceRuntime().generate('trusted prompt')
+        InferenceRuntime()._generate_inline('trusted prompt')

@@ -25,6 +25,7 @@ from io import StringIO
 import time
 import redis
 import codecs
+import json
 
 try:
     from chronos.intelligence.ubuntu_profile import UbuntuProfile as _UbuntuProfile
@@ -109,6 +110,8 @@ def session_worker(session_id, primary_user, pipe_conn):
                     # Session-scoped TTL prevents stale attribution after a crash.
                     command_key = f"session:{session_id}:active_command"
                     r.setex(command_key, 120, command_id)
+                    world_raw = r.get('env:world')
+                    env.world_state = json.loads(world_raw) if world_raw else None
                     try:
                         from chronos.simulation.orchestrator import world_simulation
                         from chronos.simulation.event_bus import (
@@ -169,6 +172,7 @@ def session_worker(session_id, primary_user, pipe_conn):
                             "returncode": returncode,
                             "response": response,
                             "cwd": prompt_cwd,
+                            "world_snapshot": env.world_state,
                         }
                     )
     except Exception as e:
@@ -266,6 +270,12 @@ class SSHHoneypot:
         worker_proc = None
         parent_conn = None
         transport = None
+        pending_command = None
+        session_origin = os.environ.get('APATE_SESSION_ORIGIN',
+                                        'scripted_test' if os.environ.get('CHRONOS_TEST_AUDIT') == '1' else 'participant')
+        if session_origin not in ('participant', 'scripted_test'):
+            client_socket.close()
+            raise ValueError('Invalid APATE_SESSION_ORIGIN')
 
         try:
             transport = paramiko.Transport(client_socket)
@@ -356,12 +366,13 @@ class SSHHoneypot:
                                     "session_id": session_id,
                                     "command_id": command_id,
                                     "schema_version": 1,
-                                    "origin": "participant",
+                                    "origin": session_origin,
                                 },
                             )
                             logger.info(
                                 f"[SSH] [{session_id[:8]}] Command: {command_buffer.strip()}"
                             )
+                            pending_command = (command_id, command_started)
 
                             parent_conn.send(
                                 {"action": "execute", "command": command_buffer.strip(),
@@ -373,6 +384,7 @@ class SSHHoneypot:
                                     "outcome": "unknown", "reason": "worker_timeout",
                                     "server_elapsed_seconds": time.monotonic() - command_started,
                                 })
+                                pending_command = None
                                 raise TimeoutError("Session worker command timed out")
                             result = parent_conn.recv()
                             response = result.get("response", "")
@@ -382,7 +394,9 @@ class SSHHoneypot:
                                 "outcome": "emulated_success" if result.get("returncode") == 0 else "command_failed",
                                 "server_elapsed_seconds": time.monotonic() - command_started,
                                 "response_bytes": len(response.encode("utf-8")),
+                                "world_snapshot": result.get("world_snapshot"),
                             })
+                            pending_command = None
                             prompt_cwd = result.get("cwd", prompt_cwd)
 
                             if response:
@@ -417,6 +431,15 @@ class SSHHoneypot:
             if transport is not None:
                 transport.close()
             client_socket.close()
+            if pending_command is not None:
+                try:
+                    self.audit_log("ssh_command_result", {
+                        "session_id": session_id, "command_id": pending_command[0],
+                        "outcome": "unknown", "reason": "session_interrupted",
+                        "server_elapsed_seconds": time.monotonic() - pending_command[1],
+                    })
+                except Exception:
+                    logger.exception('Unable to persist interrupted command outcome')
             if parent_conn:
                 try:
                     parent_conn.send("QUIT")

@@ -107,6 +107,10 @@ class PersistenceLayer:
                     self.conn = psycopg2.connect(host=self.host, user=self.user,
                         password=self.password, dbname=self.dbname, connect_timeout=5)
                 with self.conn.cursor() as cur:
+                    # All Apate audit writers acquire this transaction lock
+                    # BEFORE allocating sequence IDs. Thus a later ID cannot
+                    # commit ahead of an earlier writer and escape UI cursors.
+                    cur.execute('SELECT pg_advisory_xact_lock(1095778644, 1)')
                     psycopg2.extras.execute_batch(cur, """
                         INSERT INTO audit_log (event_id, session_id, timestamp, operation, path, inode, metadata)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)

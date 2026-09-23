@@ -83,6 +83,7 @@ def test_real_manifest_files(isolated_redis, tmp_path, caplog):
             report = {'trial': trial, 'files': rows}
             reports.append(report)
             print(json.dumps(report, indent=2))
+            (tmp_path / 'evaluation.json').write_text(json.dumps({'models': available['models'], 'trials': reports, 'artifacts': str(tmp_path)}, indent=2))
             
             failures = [r['path'] for r in rows if r['source'] != 'llm']
             assert not failures, f"Trial {trial+1} failed LLM generation for: {failures}"

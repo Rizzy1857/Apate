@@ -384,9 +384,15 @@ pub async fn start_backend(
     // ── Redis: inode count ──────────────────────────────────────────────
     let tx_rd = tx.clone();
     tokio::spawn(async move {
+        let redis_url = match std::env::var("REDIS_URL") {
+            Ok(url) => url,
+            Err(_) => {
+                let _ = tx_rd.send(BackendMessage::RedisConnected(false));
+                return; // Never inspect an unrelated host Redis by default.
+            }
+        };
         loop {
-            match redis::Client::open(std::env::var("REDIS_URL")
-                .unwrap_or_else(|_| "redis://127.0.0.1:6379/".into())) {
+            match redis::Client::open(redis_url.clone()) {
                 Ok(client) => {
                     if let Ok(mut con) = client.get_multiplexed_tokio_connection().await {
                         let _ = tx_rd.send(BackendMessage::RedisConnected(true));

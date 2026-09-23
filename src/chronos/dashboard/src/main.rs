@@ -8,10 +8,10 @@ fn main() -> eframe::Result<()> {
     env_logger::init();
 
     // Backend → UI message channel
-    let (tx, rx) = flume::unbounded();
+    let (tx, rx) = flume::bounded(32);
 
     // UI → Backend request channel
-    let (tx_req, rx_req) = flume::unbounded();
+    let (tx_req, rx_req) = flume::bounded(32);
 
     // Spawn the tokio runtime in a background thread so it doesn't block the UI thread
     std::thread::spawn(move || {

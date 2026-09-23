@@ -143,6 +143,13 @@ class ChronosFUSE(Operations):
             raise FuseOSError(errno.ENOENT)
         return meta
 
+    def _refresh_world(self, path, inode):
+        if path == '/var/log/syslog':
+            from chronos.simulation.world_files import refresh_syslog
+            if refresh_syslog(self.redis, inode) and self.db_layer:
+                self.db_layer.log_operation(self._current_session_id(), 'world_file_update', path,
+                                            inode, {'origin': 'synthetic', 'schema_version': 1})
+
     # ------------------------------------------------------------------
     # Filesystem Methods — state operations (unchanged, deterministic)
     # ------------------------------------------------------------------
@@ -153,6 +160,7 @@ class ChronosFUSE(Operations):
             return {'st_mode': stat.S_IFDIR | 0o755, 'st_nlink': 2, 'st_size': 4096,
                     'st_uid': 0, 'st_gid': 0, 'st_ino': 1}
         inode = self._resolve_path(path)
+        self._refresh_world(path, inode)
         meta = self._get_inode_meta(inode)
 
         # Report persisted metadata; random synthetic sizes break read/stat consistency.
@@ -278,7 +286,7 @@ class ChronosFUSE(Operations):
             raise FuseOSError(errno.EACCES)
         inode = entry["inode"]
         session_id = entry["session_id"]
-        
+        self._refresh_world(path, inode)
         def completed(data):
             self._audit(session_id, "read", path, inode, {
                 "requested_bytes": size, "offset": offset,

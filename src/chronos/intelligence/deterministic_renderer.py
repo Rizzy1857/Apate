@@ -97,64 +97,33 @@ class DeterministicRenderer:
         pwd_auth = "yes" if ssh_config.get("password_authentication") else "no"
         return f"Port {port}\nPermitRootLogin {permit_root}\nPasswordAuthentication {pwd_auth}\n".encode("utf-8")
 
-    def _render_snakeoil_cert(self, ms: Dict[str, Any]) -> bytes:
-        return (
-            b"-----BEGIN CERTIFICATE-----\n"
-            b"MIIDBzCCAe+gAwIBAgIUBbXyG8oO+0/J5tDq6eQ8y6L+OQwwDQYJKoZIhvcNAQEL\n"
-            b"BQAwFjEUMBIGA1UEAwwLd2ViMDEubG9jYWwwHhcNMjMwOTA1MDAwMDAwWhcNMzMw\n"
-            b"OTA1MDAwMDAwWjAWMRQwEgYDVQQDDAt3ZWIwMS5sb2NhbDCCASIwDQYJKoZIhvcN\n"
-            b"AQEBBQADggEPADCCAQoCggEBALk/0e6K9vO8WlGqJ3n6lDkH9gZ5r2m6mQz+B5xM\n"
-            b"9tQ4b+O1rC5k6R3lY/qPq9qY+pW9zZ9x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q\n"
-            b"1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE\n"
-            b"2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7\n"
-            b"lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x\n"
-            b"0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W\n"
-            b"6FqE2wM0+D/7lJqG/ZAgMBAAGjUzBRMB0GA1UdDgQWBBQy9s7q+3T7w9y1mO9w2s\n"
-            b"8M7Q4Q6jAfBgNVHSMEGDAWgBQy9s7q+3T7w9y1mO9w2s8M7Q4Q6jAPBgNVHRMBAf8E\n"
-            b"BTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQC0+O8WlGqJ3n6lDkH9gZ5r2m6mQz+B\n"
-            b"5xM9tQ4b+O1rC5k6R3lY/qPq9qY+pW9zZ9x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x\n"
-            b"0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W\n"
-            b"6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0\n"
-            b"+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7lJq\n"
-            b"G/Z5x0o8Q1p8W6FqE2wM0+D/7lJqG/Z5x0o8Q1p8W6FqE2wM0+D/7l\n"
-            b"-----END CERTIFICATE-----\n"
-        )
-        
-    def _render_snakeoil_key(self, ms: Dict[str, Any]) -> bytes:
-        return (
-            b"-----BEGIN PRIVATE KEY-----\n"
-            b"MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5P9HuivbzvFpR\n"
-            b"qid5+pQ5B/YGea9pupkM/gecTPbUOG/jtawuZOkd5WP6j6vamPqVvc2fcdKPEPaf\n"
-            b"FuhahNsDNPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sahv2ecdKPEPafFuhahNsD\n"
-            b"NPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sa\n"
-            b"hv2ecdKPEPafFuhahNsDNPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sahv2ecdKP\n"
-            b"EPafFuhahNsDNPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sahv2ecdKPEPafFuha\n"
-            b"hNsDNPg/+5Sahv2ecdKPEPafFuhahNsDNPg/+5Sahv2QIBAQKBgQC3/X8Y3V6T9\n"
-            b"8J9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L\n"
-            b"6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T\n"
-            b"9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T\n"
-            b"4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F\n"
-            b"4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O\n"
-            b"3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6QKBgQ\n"
-            b"Dz3L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0\n"
-            b"L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3\n"
-            b"G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9\n"
-            b"N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8\n"
-            b"L1H5N9V9L6QKBgQDC9L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5\n"
-            b"N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8\n"
-            b"H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9\n"
-            b"V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3\n"
-            b"X6QKBgQDS+L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4\n"
-            b"O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4\n"
-            b"W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3\n"
-            b"H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6QKBgQC3PL1H5N9V9L6T4O3H2B0\n"
-            b"L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3\n"
-            b"G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9\n"
-            b"N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8\n"
-            b"L1H5N9V9L6QKBgQCmAL1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5\n"
-            b"N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8\n"
-            b"H3X6T9F4W0Y5O3G8L1H5N9V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9\n"
-            b"V9L6T4O3H2B0L9N5J9V8H3X6T9F4W0Y5O3G8L1H5N9V9L6\n"
-            b"-----END PRIVATE KEY-----\n"
-        )
+    def _snakeoil_pair(self, ms):
+        """Public, reproducible decoy material. NEVER use for real TLS services."""
+        import hashlib
+        from datetime import datetime, timezone
+        from cryptography import x509
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from cryptography.x509.oid import NameOID
+        hostname = ms.get("hostname", "ubuntu")
+        seed = hashlib.sha256(("apate-public-decoy-v1:" + hostname).encode()).digest()
+        key = Ed25519PrivateKey.from_private_bytes(seed)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname)])
+        cert = (x509.CertificateBuilder().subject_name(subject).issuer_name(subject)
+                .public_key(key.public_key())
+                .serial_number(int.from_bytes(seed[:19], "big") or 1)
+                .not_valid_before(datetime(2024, 1, 1, tzinfo=timezone.utc))
+                .not_valid_after(datetime(2034, 1, 1, tzinfo=timezone.utc))
+                .add_extension(x509.SubjectAlternativeName([x509.DNSName(hostname)]), critical=False)
+                .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+                .sign(key, algorithm=None))
+        return (cert.public_bytes(serialization.Encoding.PEM),
+                key.private_bytes(serialization.Encoding.PEM,
+                                  serialization.PrivateFormat.PKCS8,
+                                  serialization.NoEncryption()))
 
+    def _render_snakeoil_cert(self, ms: Dict[str, Any]) -> bytes:
+        return self._snakeoil_pair(ms)[0]
+
+    def _render_snakeoil_key(self, ms: Dict[str, Any]) -> bytes:
+        return self._snakeoil_pair(ms)[1]

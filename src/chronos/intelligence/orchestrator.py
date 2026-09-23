@@ -156,8 +156,8 @@ class GenerationOrchestrator:
                                 machine
                             ),
                             model=policy.model,
-                            max_tokens=min(2000, max(1, policy.max_lines or 80) * 10),
-                            timeout=time_left
+                            max_tokens=min(1200, max(512, (policy.max_lines or 80) * 10)),
+                            timeout=min(30.0, time_left)
                         )
                         result = self.validator.validate(raw, policy, {**machine, 'artifact_path': path})
                         if result.accepted:

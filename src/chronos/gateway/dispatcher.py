@@ -24,6 +24,7 @@ class SessionEnvironment:
         self.username = username
         self.profile = UbuntuProfile()
         self.started = time.monotonic()
+        self.world_state = None
         self.env = {
             "HOME": f"/home/{username}",
             "USER": username,
@@ -222,6 +223,8 @@ class CommandRegistry:
         return 0, b"Linux\n", b""
 
     def _get_entropy(self) -> Dict[str, Any]:
+        if self.env.world_state is not None:
+            return self.env.world_state
         return {
             "uptime": str(1209600 + int(time.monotonic() - self.env.started)),
             "cpu_usage": "2.0", "load1": "0.02", "load5": "0.04", "load15": "0.05",
@@ -260,7 +263,7 @@ class CommandRegistry:
         total, free, cached = (int(state[k]) // 1024 for k in ('mem_total', 'mem_free', 'mem_cached'))
         out = f"top - {time.strftime('%H:%M:%S', time.gmtime())} up {int(state['uptime'])//86400} days, 1 user, load average: {state['load1']}, {state['load5']}, {state['load15']}\n"
         out += f"Tasks: {len(rows)} total, 1 running, {len(rows)-1} sleeping, 0 stopped, 0 zombie\n"
-        out += "%Cpu(s): 2.0 us, 0.5 sy, 0.0 ni, 97.5 id, 0.0 wa, 0.0 hi, 0.0 si, 0.0 st\n"
+        out += f"%Cpu(s): {state['cpu_usage']} us, 0.5 sy, 0.0 ni, {state.get('cpu_idle', 97.5)} id, 0.0 wa, 0.0 hi, 0.0 si, 0.0 st\n"
         out += f"MiB Mem : {total:.1f} total, {free:.1f} free, {total-free-cached:.1f} used, {cached:.1f} buff/cache\n"
         out += f"MiB Swap: 0.0 total, 0.0 free, 0.0 used. {free+cached:.1f} avail Mem\n"
         out += "PID USER S COMMAND\n"

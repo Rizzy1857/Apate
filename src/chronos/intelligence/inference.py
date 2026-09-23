@@ -11,6 +11,8 @@ import random
 import threading
 import json
 import logging
+import subprocess
+import sys
 from typing import Optional, Dict
 from dataclasses import dataclass
 from enum import Enum
@@ -95,10 +97,54 @@ class CircuitBreaker:
 class InferenceRuntime:
     def __init__(self, host: Optional[str] = None):
         self.host = host or os.environ.get("OLLAMA_HOST", "localhost")
-        self.base_url = f"http://{self.host}:11434/api/generate"
+        self.port = int(os.environ.get('OLLAMA_PORT', '11434'))
+        self.base_url = f"http://{self.host}:{self.port}/api/generate"
         self.circuit_breaker = CircuitBreaker()
 
     def generate(
+        self, prompt: str, system_prompt: Optional[str] = None,
+        model: str = "llama3:8b", max_tokens: int = 1000, timeout: float = 30.0,
+    ) -> str:
+        """Bound the complete HTTP operation with a killable transport process.
+
+        Closing a response from another thread does not reliably interrupt DNS,
+        headers, or a blocked stream. No inference transport thread survives a
+        deadline. This process belongs to the trusted core, never an SSH worker.
+        """
+        if timeout <= 0:
+            raise ModelUnreachableError('Generation budget exhausted')
+        if not self.circuit_breaker.can_execute(model):
+            raise ModelUnreachableError(f'Circuit breaker is OPEN for model {model}')
+        started = time.monotonic()
+        request = dict(prompt=prompt, system_prompt=system_prompt, model=model,
+                       max_tokens=max_tokens, timeout=timeout)
+        process = None
+        try:
+            process = subprocess.Popen(
+                [sys.executable, '-m', 'chronos.intelligence.inference'],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            )
+            output, _ = process.communicate(
+                json.dumps({'host': self.host, 'request': request}).encode(),
+                timeout=max(.001, timeout - (time.monotonic() - started)),
+            )
+            if process.returncode or len(output) > 262144:
+                raise ModelUnreachableError('Inference transport failed or exceeded output limit')
+            result = json.loads(output)
+            if not isinstance(result, str):
+                raise ModelUnreachableError('Invalid inference transport result')
+            self.circuit_breaker.record_success(model, time.monotonic() - started)
+            return result
+        except (subprocess.TimeoutExpired, OSError, ValueError, ModelUnreachableError) as exc:
+            self.circuit_breaker.record_failure(model)
+            raise ModelUnreachableError(f'Bounded inference failed: {type(exc).__name__}') from exc
+        finally:
+            if process is not None:
+                if process.poll() is None:
+                    process.kill()
+                process.communicate()
+
+    def _generate_inline(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
@@ -194,7 +240,7 @@ class InferenceRuntime:
     def health_check(self) -> bool:
         try:
             response = requests.get(
-                f"http://{self.host}:11434/api/tags", timeout=5.0
+                f"http://{self.host}:{self.port}/api/tags", timeout=5.0
             )
             return response.status_code == 200
         except requests.exceptions.RequestException:
@@ -202,3 +248,10 @@ class InferenceRuntime:
 
 def get_runtime() -> InferenceRuntime:
     return InferenceRuntime()
+
+
+if __name__ == '__main__':
+    # Fixed trusted entry point, JSON data only, no shell or attacker-supplied code.
+    data = json.loads(sys.stdin.buffer.read(131073))
+    content = InferenceRuntime(host=data['host'])._generate_inline(**data['request'])
+    sys.stdout.write(json.dumps(content))

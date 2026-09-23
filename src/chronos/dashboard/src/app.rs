@@ -358,15 +358,14 @@ impl ChronosDashboard {
                     });
                     row.col(|ui| {
                         let cmd = session.first_suspicious_command.as_deref().unwrap_or("-");
-                        let truncated = if cmd.len() > 40 { format!("{}…", &cmd[..40]) } else { cmd.to_string() };
+                        let truncated = if cmd.chars().count() > 40 { format!("{}…", cmd.chars().take(40).collect::<String>()) } else { cmd.to_string() };
                         ui.label(egui::RichText::new(truncated).size(11.0));
                     });
 
                     if row.response().clicked() {
                         self.selected_session_id = Some(sid.clone());
-                        self.detail_loading = true;
+                        self.detail_loading = self.tx_req.try_send(BackendRequest::FetchSessionDetail(sid.clone())).is_ok();
                         self.selected_session = None;
-                        let _ = self.tx_req.send(BackendRequest::FetchSessionDetail(sid.clone()));
                         self.active_tab = Tab::SessionDetail;
                     }
                 });
@@ -409,7 +408,7 @@ impl ChronosDashboard {
             ui.text_edit_singleline(&mut self.export_destination);
             if ui.add_enabled(!self.export_busy && !self.export_destination.trim().is_empty(),
                               egui::Button::new("Export evidence")).clicked() {
-                self.export_busy = self.tx_req.send(BackendRequest::ExportSession {
+                self.export_busy = self.tx_req.try_send(BackendRequest::ExportSession {
                     session_id: detail.session_id.clone(),
                     destination: self.export_destination.clone(),
                 }).is_ok();
@@ -467,7 +466,7 @@ impl ChronosDashboard {
                             ui.horizontal(|ui| {
                                 // Timestamp
                                 let ts = cmd.timestamp.as_deref().unwrap_or("");
-                                let short_ts = if ts.len() > 19 { &ts[11..19] } else { ts };
+                                let short_ts = ts.get(11..19).unwrap_or(ts);
                                 ui.label(egui::RichText::new(short_ts)
                                     .color(egui::Color32::GRAY).size(10.0).monospace());
 

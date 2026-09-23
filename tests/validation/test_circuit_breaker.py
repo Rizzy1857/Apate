@@ -79,14 +79,14 @@ def test_inference_runtime_integration(mock_post):
     mock_post.side_effect = RequestException("Timeout")
     
     with pytest.raises(ModelUnreachableError, match="Ollama unreachable"):
-        runtime.generate("test prompt", model="llama3")
+        runtime._generate_inline("test prompt", model="llama3")
         
     with pytest.raises(ModelUnreachableError, match="Ollama unreachable"):
-        runtime.generate("test prompt", model="llama3")
+        runtime._generate_inline("test prompt", model="llama3")
         
     # Third request should be short-circuited
     with pytest.raises(ModelUnreachableError, match="Circuit breaker is OPEN"):
-        runtime.generate("test prompt", model="llama3")
+        runtime._generate_inline("test prompt", model="llama3")
         
     # Verify requests.post was only called twice!
     assert mock_post.call_count == 2
@@ -101,7 +101,7 @@ def test_inference_runtime_integration(mock_post):
     mock_response.iter_content.return_value = [b'{"response": "Success!", "done": true}\n']
     mock_post.return_value = mock_response
     
-    res = runtime.generate("test prompt", model="llama3")
+    res = runtime._generate_inline("test prompt", model="llama3")
     assert res == "Success!"
     assert mock_post.call_count == 3
     assert runtime.circuit_breaker._get_health("llama3").state == BreakerState.CLOSED

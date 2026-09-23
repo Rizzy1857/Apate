@@ -62,6 +62,8 @@ def main():
 
             import redis
             control = redis.Redis(host=os.environ['REDIS_HOST'], decode_responses=True)
+            from chronos.simulation.world_state import publish_tick
+            world = publish_tick(control, seed='integration')
             for key in control.scan_iter(match='session_pid:*'):
                 pid = key.split(':')[1]
                 with open(f'/proc/{pid}/status') as status_file:
@@ -78,6 +80,8 @@ def main():
                 return result
 
             assert "ubuntu:x:1000:" in command(0, "cat /etc/passwd")
+            assert f"{world['cpu_usage']} us" in command(0, 'top')
+            assert f"{world['mem_free'] // 1024}Mi" in command(0, 'free')
             assert "web01" in command(0, "cat /etc/hostname")
             command(0, "echo private-data > /tmp/secret")
             assert "private-data\r\n" in command(0, "cat /tmp/secret")
@@ -132,6 +136,23 @@ def main():
                     assert len(rows) >= 2, "No durable session evidence"
                     assert any("/etc/passwd" in row[2] for row in rows)
                     assert all(row[0] and row[1] for row in rows)
+                    from chronos.watcher.export_report import load_session, write_bundle
+                    conn.rollback()
+                    for row in rows:
+                        events, snapshot = load_session(conn, str(row[0]))
+                        with tempfile.TemporaryDirectory() as folder:
+                            report = write_bundle(os.path.join(folder, 'bundle'), events,
+                                                  {'database_snapshot_at': snapshot})
+                        conn.rollback()
+                        assert report['commands'], 'Export lost submitted commands'
+                        assert not report['unmatched_result_event_ids']
+                        assert not report['unmatched_file_event_ids']
+                        assert all(command['result_event_ids'] for command in report['commands']), [
+                            (command['command'], command['command_id']) for command in report['commands']
+                            if not command['result_event_ids']]
+                        assert any(command['outcome'] == 'emulated_success'
+                                   for command in report['commands'])
+                    print('PASS: real database exports reconcile command outcomes and file correlation')
                     print(
                         "PASS: session-tagged file operations and command evidence persisted in PostgreSQL"
                     )

@@ -72,9 +72,30 @@ class SemanticValidator:
             return ValidationResult(accepted=False, reason="invalid_content_type")
         if len(content.encode('utf-8')) > 65536 or '\x00' in content:
             return ValidationResult(accepted=False, reason="invalid_content_size_or_nul")
+        if policy.file_class == 'log_file' and content.strip() and machine_state.get('created_at'):
+            from datetime import datetime, timezone, timedelta
+            reference = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)
+            dates = re.findall(r'(?m)^([A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})', content)
+            for stamp in dates:
+                try:
+                    candidates = [datetime.strptime(f'{year} {stamp}', '%Y %b %d %H:%M:%S').replace(tzinfo=timezone.utc)
+                                  for year in (reference.year - 1, reference.year, reference.year + 1)]
+                except ValueError:
+                    return ValidationResult(False, 'log: invalid timestamp')
+                if not any(reference - timedelta(days=7) <= date <= reference for date in candidates):
+                    return ValidationResult(False, 'log: timestamp outside simulation window')
         if machine_state.get('artifact_path') == '/etc/nginx/nginx.conf':
+            if not re.search(r'\bevents\s*\{', content) or not re.search(r'\bhttp\s*\{', content):
+                return ValidationResult(False, 'nginx: complete events and http contexts required')
+            if content.count('{') != content.count('}'):
+                return ValidationResult(False, 'nginx: unbalanced contexts')
+            for required in (r'\blisten\s+80\s*;', r'\blisten\s+443\s+ssl\s*;',
+                             r'\bssl_certificate\s+/etc/ssl/certs/ssl-cert-snakeoil.pem\s*;',
+                             r'\bssl_certificate_key\s+/etc/ssl/private/ssl-cert-snakeoil.key\s*;'):
+                if not re.search(required, content):
+                    return ValidationResult(False, 'nginx: advertised HTTP/TLS configuration missing')
             # The profile describes a static web root, not an invented backend.
-            if re.search(r'\b(proxy_pass|upstream)\b', content):
+            if re.search(r'\b(proxy_pass|upstream|fastcgi_pass|include)\b', content):
                 return ValidationResult(False, 'nginx: backend is not defined in the profile')
             manifest = json.loads(machine_state.get('filesystem_manifest', '{}'))
             paths = {entry['path'] for entry in manifest.get('entries', [])}
