@@ -1,62 +1,107 @@
-# Apate / Mirage / Chronos
+# Mirage (Chronos Framework)
 
-Apate is a research SSH honeypot with a focused Ubuntu command emulator, a FUSE filesystem backed by Redis, and local AI artifact generation. Mirage is the product name; Chronos is the implementation package.
+> Repository codename: **Apate**
+>
+> Product name: **Mirage**
+>
+> Framework name: **Chronos**
 
-This remains a research MVP. Removing subprocess execution closes one escape route; it does not establish a hardened container or a complete Ubuntu emulator.
+Mirage is a state-consistent honeypot platform built on the Chronos framework. The goal is simple enough to state and demanding enough to deserve the work: preserve believable attacker interaction without letting the environment contradict itself.
 
-## Actual execution path
+Chronos combines a FUSE-backed filesystem, Redis-based atomic state, PostgreSQL audit storage, and optional LLM-assisted content generation. The LLM is used for texture, not truth. State remains deterministic; the interesting part is that it stays interesting.
 
-An SSH connection gets a persistent worker process. The gateway registers its PID and session UUID in Redis. Emulated commands issue filesystem calls against the FUSE mount. FUSE resolves the caller PID and selects that session's Redis filesystem namespace, initialized from `config/ubuntu.yaml`.
+## Program Phases
 
-A session cannot read or mutate another session's filesystem. FUSE data and attribute caching are disabled to preserve that boundary. Session filesystem namespaces are ephemeral and normally removed after disconnect; audit evidence is stored separately in PostgreSQL.
+- Phase 1: Core deception platform engineering and validation, completed.
+- Phase 2: AI integration that improves realism and analysis without adding unnecessary complexity, in progress.
 
-Known AI-backed files generate on their first read. The generator claims a Redis lease, applies policy, validates output, and atomically commits only if the inode has not changed and it still owns the lease. Writes and deletion supersede generation. Listings do not generate content; attacker-created files remain empty until written, even if they reuse a manifest filename.
+## What It Does
 
-The model receives trusted profile facts, not arbitrary session history or environment variables. Its output is file bytes only.
+- Presents a realistic filesystem through a FUSE interface.
+- Persists filesystem state atomically in Redis.
+- Records audit and session data in PostgreSQL.
+- Classifies commands, threats, and attacker behavior.
+- Generates missing file content on demand, then persists it for consistent reuse.
+- Exposes SSH and HTTP entry points for attacker interaction.
+- Uses a Rust layer for high-speed protocol analysis and early threat tagging.
 
-## Run locally
+For the technical case behind the design, see [Problem Validation Analysis](PROBLEM_VALIDATION_ANALYSIS.md).
 
-Requires Linux FUSE support through Docker and Docker Compose:
+## Quick Start
 
-```sh
+### Prerequisites
+
+- Docker and Docker Compose
+- Optional: an OpenAI or Anthropic API key for content generation features
+
+### Run the stack
+
+```bash
+git clone https://github.com/Rizzy1857/Apate.git chronos
+cd chronos
 docker compose up --build -d
-ssh -p 2222 ubuntu@localhost
 ```
 
-Ports bind to localhost by default. PostgreSQL must be available at startup. Ollama must have the models named in `config/generation_policy.yaml` installed to exercise real inference; otherwise eligible files receive a bounded fallback. The repository does not automatically download models.
+Check the core service logs:
 
-Examples:
-
-```sh
-cat /etc/passwd
-echo example > /tmp/note
-cat /tmp/note
-cat /etc/nginx/nginx.conf
+```bash
+docker compose logs -f core-engine
 ```
 
-The shell supports a limited subset of common commands and flags. SSH exec channels, arbitrary binaries, interpreters and network tools are rejected.
+Open the container and explore the mounted filesystem:
+
+```bash
+docker exec -it chronos_core /bin/bash
+cd /mnt/honeypot
+ls -la
+```
 
 ## Verification
 
-Install `requirements.txt`, pytest, pytest-asyncio, Redis server, and the native FUSE library, then:
+Run the core validation and verification targets from the repository root:
 
-```sh
-PYTHONPATH=src python3 -m pytest tests -q
-docker compose config --quiet
+```bash
+make up
+make validate-core
+make validate-attacks
+make verify
 ```
 
-Regression tests start disposable Redis instances over Unix sockets. Seven legacy tests are skipped by default because they mutate localhost services or stop named Docker containers; opting in with `--legacy-infrastructure` requires a disposable environment.
+You can also run the phase scripts directly:
 
-`tests/integration/verify_linux_ssh.py` exercises real Linux SSH workers, FUSE, session isolation, truncation, and optionally PostgreSQL evidence inside a disposable container. See `docs/HARDENING_REVIEW.md` for findings, verification and remaining gaps.
+```bash
+python3 tests/verification/verify_phase1.py
+python3 tests/verification/verify_phase2.py
+python3 tests/verification/verify_phase3.py
+python3 tests/verification/verify_phase4.py
+```
 
-## Scope and limits
+For a lighter demonstration, use the standalone demo:
 
-HTTP gateway code has been removed. Rust Layer 0 still exists under `src/chronos/layer0` but is not integrated into deployment. The native dashboard and world simulation remain experimental.
+```bash
+python3 tests/integration/demo_standalone.py
+```
 
-Current limits include 32 accepted connections, 8 KiB command input, 1,000 commands per session, 1 MiB files, a conservative 16 MiB write allocation budget per session, bounded generation admission, and per-session/global inference quotas. These are safeguards, not load-test certification.
+## Documentation
 
-Outstanding work includes fuller shell/permission semantics, durable audit delivery across crashes, orphan namespace recovery after process death, reproducible image/model pinning, and a stronger runtime isolation boundary. Default credentials and mutable image tags are for local research only.
+- [Architecture](docs/ARCHITECTURE.md)
+- [Developer Onboarding](docs/ONBOARDING.md)
+- [How To Use Chronos](docs/HOW_TO.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Current Status](docs/STATUS.md)
+- [Test Suite Guide](tests/README.md)
+
+## Configuration
+
+Environment variables in `docker-compose.yml`:
+
+| Variable | Description | Default |
+|---|---|---|
+| `REDIS_HOST` | Redis service host | `redis-store` |
+| `POSTGRES_HOST` | PostgreSQL service host | `db-store` |
+| `LLM_PROVIDER` | `openai`, `anthropic`, or `mock` | `mock` |
+| `OPENAI_API_KEY` | OpenAI API key, if used | unset |
 
 ## License
 
-[MIT](LICENSE).
+MIT License.

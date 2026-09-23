@@ -12,7 +12,7 @@ def test_fuse_interface():
     hv = StateHypervisor()
     hv.initialize_filesystem()
     
-    fs = ChronosFUSE("/")
+    fs = ChronosFUSE(hv)
     
     print("[-] Testing mkdir /foo...")
     try:
