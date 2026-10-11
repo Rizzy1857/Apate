@@ -24,7 +24,7 @@ from chronos.intelligence.prompt_builder import PromptBuilder
 # Skills (monitoring only — not coupled to generation)
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
-from chronos.skills.skill_detector import SkillDetector
+from chronos.skills.skill_detector import PatternSummarizer
 
 # Watcher
 from chronos.watcher.event_processor import EventProcessor
@@ -54,7 +54,7 @@ class ChronosDemo:
         print("[3/5] Initializing Skills (monitoring / detection)...")
         self.command_analyzer = CommandAnalyzer()
         self.threat_library = ThreatLibrary()
-        self.skill_detector = SkillDetector()
+        self.pattern_summarizer = PatternSummarizer()
 
         print("[4/5] Initializing Watcher (Event Processor)...")
         self.event_processor = EventProcessor()
@@ -125,11 +125,10 @@ class ChronosDemo:
         print("SKILL ASSESSMENT (monitoring only — does not influence generation)")
         print("=" * 80)
 
-        assessment = self.skill_detector.analyze_session(session_id, all_analyses)
+        assessment = self.pattern_summarizer.analyze_session(session_id, all_analyses)
 
-        print(f"\nAttacker Skill Level: {assessment['skill_level'].upper()}")
+        print(f"\nObserved Patterns: {', '.join(assessment['pattern_labels']) or 'none'}")
         print(f"Confidence: {assessment['confidence']}")
-        print(f"Skill Score: {assessment['skill_score']}")
 
         stats = assessment['statistics']
         print(f"\nStatistics:")

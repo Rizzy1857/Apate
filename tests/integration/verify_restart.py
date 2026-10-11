@@ -11,7 +11,9 @@ import redis
 
 from verify_load import prompt, barrier
 
-COUNT = 32
+COUNT = int(os.environ.get('APATE_LOAD_CLIENTS', '32'))
+if COUNT < 1 or COUNT > 32:
+    raise ValueError('APATE_LOAD_CLIENTS must be between 1 and 32')
 run_id = uuid.uuid4().hex
 
 
@@ -100,16 +102,34 @@ def main():
         deadline = time.monotonic() + 60
         while True:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT metadata->>'command', event_id FROM audit_log WHERE operation='ssh_command' AND metadata->>'command' LIKE %s", ('%' + run_id + '%',))
+                cursor.execute("SELECT metadata->>'command', event_id, session_id FROM audit_log WHERE operation='ssh_command' AND metadata->>'command' LIKE %s", ('%' + run_id + '%',))
                 rows = cursor.fetchall()
             if set(confirmed) <= {row[0] for row in rows}:
                 break
             assert time.monotonic() < deadline, 'Confirmed command missing from audit'
             time.sleep(1)
         assert len(rows) == len({row[1] for row in rows}), 'Duplicate audit event IDs'
+        interrupted_sessions = {str(row[2]) for row in rows}
+        deadline = time.monotonic() + 60
+        while True:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT DISTINCT ON (session_id) session_id, "
+                    "metadata->>'outcome', metadata->>'reason' "
+                    "FROM audit_log WHERE operation='ssh_disconnect' "
+                    "AND session_id = ANY(%s::uuid[]) ORDER BY session_id, id DESC",
+                    (list(interrupted_sessions),),
+                )
+                closes = cursor.fetchall()
+            if {str(row[0]) for row in closes} == interrupted_sessions:
+                break
+            assert time.monotonic() < deadline, 'Recovered session missing disconnect'
+            time.sleep(1)
+        assert all(row[1:] == ('interrupted', 'orphaned_session') for row in closes), closes
         print(json.dumps({'result': 'PASS', 'fault': os.environ['APATE_LOAD_FAULT'],
                           'sessions': COUNT, 'confirmed_commands': len(confirmed),
-                          'audited_commands': len(rows), 'run_id': run_id}), flush=True)
+                          'audited_commands': len(rows),
+                          'reconciled_disconnects': len(closes), 'run_id': run_id}), flush=True)
     finally:
         conn.close()
         rd.close()

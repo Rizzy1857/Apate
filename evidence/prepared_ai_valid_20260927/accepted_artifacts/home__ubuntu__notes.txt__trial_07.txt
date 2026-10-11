@@ -1,0 +1,15 @@
+This is my first Ubuntu server
+It's running 24.04
+I'm using the generic kernel
+I'm excited to try new things
+I'll start with some notes
+About the system
+And how it's performing
+I'll check the logs
+And see what's new
+I'll update my knowledge
+And learn something new
+I'll keep going
+Until I'm done
+I'll save my notes
+And come back to them

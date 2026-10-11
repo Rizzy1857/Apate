@@ -1,0 +1,12 @@
+Hello Ubuntu Team,
+
+I'm having some issues with the network connection. The DNS server is not resolving properly.
+
+The Wi-Fi adapter is not showing up in the network settings.
+
+I'm using the 2.6.32-38-generic kernel.
+
+Can you please help me?
+
+Best,
+ubuntu

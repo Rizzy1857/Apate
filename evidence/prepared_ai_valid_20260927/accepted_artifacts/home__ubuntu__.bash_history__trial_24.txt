@@ -1,0 +1,6 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu# git status
+root@web01:/home/ubuntu# vim /home/ubuntu/.bashrc
+root@web01:/home/ubuntu# ssh user@localhost
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu#

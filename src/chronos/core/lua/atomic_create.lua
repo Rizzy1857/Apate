@@ -1,11 +1,13 @@
 -- atomic_create.lua
 -- KEYS: []
--- ARGV: [parent_inode, filename, mode, timestamp]
+-- ARGV: [parent_inode, filename, mode, timestamp, uid, gid, journal...]
 
 local parent_inode = ARGV[1]
 local filename = ARGV[2]
 local mode = ARGV[3]
 local timestamp = ARGV[4]
+local uid = ARGV[5]
+local gid = ARGV[6]
 
 -- Validate relationships atomically with the mutation.
 if filename == '.' or filename == '..' or filename == '' or string.find(filename, '/', 1, true) then
@@ -32,8 +34,8 @@ local inode_counter = redis.call('INCR', 'fs:next_inode')
 -- uid/gid 0 (root) by default
 redis.call('HSET', 'fs:inode:' .. inode_counter,
     'mode', mode,
-    'uid', 0,
-    'gid', 0,
+    'uid', uid,
+    'gid', gid,
     'size', 0,
     'ctime', timestamp,
     'mtime', timestamp,
@@ -57,4 +59,11 @@ redis.call('ZADD', 'fs:dir:' .. parent_inode, inode_counter, filename)
 -- For now, generic create.
 
 redis.call('HSET', 'fs:inode:' .. parent_inode, 'mtime', timestamp, 'ctime', timestamp)
+if ARGV[7] and ARGV[7] ~= '' then
+    redis.call('HSET', 'fs:mutation:' .. ARGV[7],
+        'operation_id', ARGV[7], 'operation', ARGV[8], 'path', ARGV[9],
+        'inode', inode_counter, 'command_id', ARGV[10], 'origin', ARGV[11],
+        'completed_at', timestamp, 'schema_version', 1)
+    redis.call('ZADD', 'fs:mutation_journal', timestamp, ARGV[7])
+end
 return inode_counter

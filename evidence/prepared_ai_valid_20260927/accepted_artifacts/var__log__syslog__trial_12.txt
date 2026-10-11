@@ -1,0 +1,6 @@
+Sep 26 00:00:01 web01 systemd[1]: Started Network Manager.
+Sep 26 00:00:01 web01 systemd[1]: Started ufw.
+Sep 26 00:00:01 web01 ufw[1234]: Started ufw firewall (IPv4), version 6.8.0-51-generic running on web01.
+Sep 26 00:00:01 web01 cron[1235]: Started cron (system and user jobs).
+Sep 26 00:00:01 web01 sshd[1236]: Server listening on 0.0.0.0 port 22 for ssh.
+Sep 26 00:00:01 web01 nginx[1237]: nginx: [emergence] bind() to address 0.0.0.0:80 failed (EADDRINUSE).

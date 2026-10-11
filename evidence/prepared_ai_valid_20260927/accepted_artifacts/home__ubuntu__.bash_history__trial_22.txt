@@ -1,0 +1,15 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+curl -s https://example.com
+root@web01:/home/ubuntu# git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to restore working directory)
+  (use "git reset <file>..." to reset working directory)
+
+        modified:   .bash_history (new contents)
+        modified:   .bashrc
+  no changes added to commit (use "git add" and/or "git commit -a")
+
+root@web01:/home/ubuntu# vim .bash_history
+root@web01:/home/ubuntu#

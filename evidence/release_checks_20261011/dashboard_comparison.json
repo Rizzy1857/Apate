@@ -1,0 +1,22 @@
+[
+  {
+    "path": "src/chronos/dashboard/Cargo.lock",
+    "matches_predecessor": true
+  },
+  {
+    "path": "src/chronos/dashboard/Cargo.toml",
+    "matches_predecessor": true
+  },
+  {
+    "path": "src/chronos/dashboard/src/app.rs",
+    "matches_predecessor": true
+  },
+  {
+    "path": "src/chronos/dashboard/src/backend.rs",
+    "matches_predecessor": true
+  },
+  {
+    "path": "src/chronos/dashboard/src/main.rs",
+    "matches_predecessor": true
+  }
+]

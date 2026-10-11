@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "artifact_type": "raw_evidence_bundle",
+  "redaction_policy": null,
+  "parent_raw_input_sha256": null,
+  "reproducibility_metadata_complete": true,
+  "sha256": {
+    "events.json": "f1c1932986d03ed40cecd34f070de767b5ec1f6f019c92b1852c6c2115c36ade",
+    "run_record.json": "dc0929d74b11e2d7321fbdbde4a2bc737a835e2d127b1e842b5f4f2cb7da74ef",
+    "report.json": "d37c6a38ddc1ed2e21391a2507601c0403a472263291a8d68837299004d40367",
+    "commands.csv": "093169ae8ed631c2b8aa557261f1fb53704ae37b0ed6eba13615ae1864f74e9f",
+    "ssh_requests.csv": "09c5c99a8a051c4de011256f81cdf1e3dac0447cdee6fa410593ddc2e664c395",
+    "report.md": "8359fb3d65a9028ce6cba29555441196fc22599babc23b7c727bc6bb769c46b4"
+  }
+}

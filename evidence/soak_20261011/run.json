@@ -1,0 +1,19 @@
+{
+  "started_at": "2026-10-11T03:17:28.508933+00:00",
+  "names": {
+    "net": "apate-load-141ee5934b-net",
+    "redis": "apate-load-141ee5934b-redis",
+    "pg": "apate-load-141ee5934b-pg",
+    "core": "apate-load-141ee5934b-core",
+    "clients": "apate-load-141ee5934b-clients"
+  },
+  "image_id": "sha256:37aedd15dbea3605ee60ca5a4e40e7ecf1e201472c114483a8bf02cb7ac314ee",
+  "parameters": {
+    "APATE_LOAD_IMAGE": "apate-release:20261011",
+    "APATE_LOAD_SECONDS": "3600",
+    "APATE_LOAD_CLIENTS": "8",
+    "APATE_LOAD_MAX_COMMANDS": "0",
+    "APATE_LOAD_INTERVAL": "4",
+    "APATE_LOAD_OUTPUT": "evidence/soak_20261011"
+  }
+}

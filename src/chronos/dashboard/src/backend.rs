@@ -1,15 +1,16 @@
-use redis::AsyncCommands;
-use tokio_postgres::NoTls;
-use std::time::Duration;
 use chrono::NaiveDateTime;
+use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
+use std::time::Duration;
+use tokio_postgres::NoTls;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProvenanceEntry {
     pub blob_hash: String,
     pub model: String,
+    pub model_digest: String,
     pub file_class: String,
     pub generation_source: String,
     pub prompt_version: String,
@@ -44,6 +45,10 @@ pub struct AuditEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandEntry {
     pub command_id: Option<String>,
+    pub claimed_username: Option<String>,
+    pub effective_username: Option<String>,
+    pub identity_mismatch: Option<bool>,
+    pub identity_policy: Option<String>,
     pub outcome: Option<String>,
     pub exit_status: Option<i32>,
     pub server_elapsed_seconds: Option<f64>,
@@ -57,7 +62,13 @@ pub struct CommandEntry {
 
 #[cfg(test)]
 mod research_tests {
-    use super::CommandEntry;
+    use super::{blob_hash_from_key, CommandEntry, ExportMode};
+
+    #[test]
+    fn export_modes_are_explicit_cli_values() {
+        assert_eq!(ExportMode::Raw.as_arg(), "raw");
+        assert_eq!(ExportMode::Redacted.as_arg(), "redacted");
+    }
 
     #[test]
     fn legacy_command_is_not_assumed_successful() {
@@ -74,6 +85,15 @@ mod research_tests {
         assert_eq!(command.outcome.as_deref(), Some("emulated_success"));
         assert_eq!(command.server_elapsed_seconds, Some(0.125));
         assert_eq!(command.response_bytes, Some(42));
+    }
+
+    #[test]
+    fn scoped_provenance_key_exposes_blob_hash_only() {
+        assert_eq!(
+            blob_hash_from_key("session:abc:fs:blob_meta:deadbeef"),
+            "deadbeef"
+        );
+        assert_eq!(blob_hash_from_key("fs:blob_meta:cafebabe"), "cafebabe");
     }
 }
 
@@ -104,7 +124,29 @@ pub struct SessionDetail {
     pub commands: Vec<CommandEntry>,
     pub visited_files: Vec<String>,
     pub traversal_graph: serde_json::Value,
-    pub skill_assessment: Option<serde_json::Value>,
+    pub pattern_assessment: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct SessionStats {
+    pub finalized_count: i64,
+    pub detected_count: i64,
+    pub average_duration_seconds: Option<f64>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ExportMode {
+    Raw,
+    Redacted,
+}
+
+impl ExportMode {
+    fn as_arg(self) -> &'static str {
+        match self {
+            Self::Raw => "raw",
+            Self::Redacted => "redacted",
+        }
+    }
 }
 
 // ── Messages ────────────────────────────────────────────────────────────────
@@ -116,16 +158,33 @@ pub enum BackendMessage {
     PostgresConnected(bool),
     AuditLogs(Vec<AuditEvent>),
     TotalFiles(i32),
-    ActiveSessionCount(i32),
-    SessionList(Vec<SessionSummary>),
+    OpenSessionCount(i32),
+    SessionPage {
+        sessions: Vec<SessionSummary>,
+        total: i64,
+        offset: i64,
+        limit: i64,
+        snapshot_at: NaiveDateTime,
+    },
+    SessionPageError(String),
+    SessionStats(SessionStats),
     SessionDetailResult(Box<Option<SessionDetail>>),
     ProvenanceSnapshot(ProvenanceSummary),
 }
 
 #[derive(Debug, Clone)]
 pub enum BackendRequest {
-    ExportSession { session_id: String, destination: String },
-    FetchSessionDetail(String),  // session_id
+    ExportSession {
+        session_id: String,
+        destination: String,
+        mode: ExportMode,
+    },
+    FetchSessionDetail(String), // session_id
+    FetchSessionPage {
+        offset: i64,
+        limit: i64,
+        snapshot_at: Option<NaiveDateTime>,
+    },
 }
 
 // ── Backend Loop ────────────────────────────────────────────────────────────
@@ -133,8 +192,10 @@ pub enum BackendRequest {
 fn database_config() -> Result<tokio_postgres::Config, String> {
     let password = std::env::var("POSTGRES_PASSWORD")
         .map_err(|_| "Set POSTGRES_PASSWORD for the research database".to_string())?;
-    let port = std::env::var("POSTGRES_PORT").unwrap_or_else(|_| "5433".into())
-        .parse::<u16>().map_err(|_| "POSTGRES_PORT must be a valid port".to_string())?;
+    let port = std::env::var("POSTGRES_PORT")
+        .unwrap_or_else(|_| "5433".into())
+        .parse::<u16>()
+        .map_err(|_| "POSTGRES_PORT must be a valid port".to_string())?;
     let mut config = tokio_postgres::Config::new();
     config.host(&std::env::var("POSTGRES_HOST").unwrap_or_else(|_| "127.0.0.1".into()));
     config.port(port);
@@ -164,8 +225,6 @@ pub async fn start_backend(
         loop {
             match audit_config.connect(NoTls).await {
                 Ok((client, connection)) => {
-                    let _ = tx_pg.send(BackendMessage::PostgresConnected(true));
-
                     tokio::spawn(async move {
                         if let Err(e) = connection.await {
                             log::error!("connection error: {}", e);
@@ -175,16 +234,22 @@ pub async fn start_backend(
                     let mut last_id = 0i64;
                     loop {
                         // Fetch new audit events
-                        match client.query(
-                            "SELECT id, session_id::text, timestamp, operation, path, inode \
+                        match client
+                            .query(
+                                "SELECT id, session_id::text, timestamp, operation, path, inode \
                              FROM audit_log WHERE id > $1 ORDER BY id ASC LIMIT 1000",
-                            &[&last_id],
-                        ).await {
+                                &[&last_id],
+                            )
+                            .await
+                        {
                             Ok(rows) => {
+                                let _ = tx_pg.send(BackendMessage::PostgresConnected(true));
                                 let mut events = Vec::new();
                                 for row in rows {
                                     let id: i64 = row.get(0);
-                                    if id > last_id { last_id = id; }
+                                    if id > last_id {
+                                        last_id = id;
+                                    }
                                     events.push(AuditEvent {
                                         id,
                                         session_id: row.get(1),
@@ -200,12 +265,14 @@ pub async fn start_backend(
                             }
                             Err(e) => {
                                 log::error!("Postgres query error: {}", e);
-                                if e.is_closed() { break; }
+                                let _ = tx_pg.send(BackendMessage::PostgresConnected(false));
+                                break;
                             }
                         }
                         tokio::time::sleep(Duration::from_secs(2)).await;
                     }
                     let _ = tx_pg.send(BackendMessage::PostgresConnected(false));
+                    tokio::time::sleep(Duration::from_secs(5)).await;
                 }
                 Err(e) => {
                     log::error!("Postgres connection failed: {:?}", e);
@@ -216,7 +283,7 @@ pub async fn start_backend(
         }
     });
 
-    // ── Postgres: session list + active count (5s poll) ─────────────────
+    // ── Postgres: lifecycle and all-finalized-session statistics ────────
     let tx_sessions = tx.clone();
     let sessions_config = pg_config.clone();
     tokio::spawn(async move {
@@ -230,48 +297,58 @@ pub async fn start_backend(
                     });
 
                     loop {
-                        // Session list
-                        match client.query(
-                            "SELECT session_id::text, start_time, end_time, duration_seconds, \
-                             detection_status, detection_confidence, exit_reason, \
-                             first_suspicious_command \
-                             FROM session_evidence ORDER BY start_time DESC LIMIT 100",
-                            &[],
-                        ).await {
-                            Ok(rows) => {
-                                let sessions: Vec<SessionSummary> = rows.iter().map(|row| {
-                                    SessionSummary {
-                                        session_id: row.get::<_, Option<String>>(0).unwrap_or_default(),
-                                        start_time: row.get(1),
-                                        end_time: row.get(2),
-                                        duration_seconds: row.get(3),
-                                        detection_status: row.get(4),
-                                        detection_confidence: row.get(5),
-                                        exit_reason: row.get(6),
-                                        first_suspicious_command: row.get(7),
-                                    }
-                                }).collect();
-                                let _ = tx_sessions.send(BackendMessage::SessionList(sessions));
+                        // These aggregates cover all finalized rows, not a UI page.
+                        match client
+                            .query_one(
+                                "SELECT COUNT(*), \
+                                 COUNT(*) FILTER (WHERE detection_status = 'detected'), \
+                                 AVG(duration_seconds)::float8 \
+                                 FROM session_evidence WHERE end_time IS NOT NULL",
+                                &[],
+                            )
+                            .await
+                        {
+                            Ok(row) => {
+                                let _ =
+                                    tx_sessions.send(BackendMessage::SessionStats(SessionStats {
+                                        finalized_count: row.get(0),
+                                        detected_count: row.get(1),
+                                        average_duration_seconds: row.get(2),
+                                    }));
                             }
                             Err(e) => {
-                                log::error!("Session list query error: {}", e);
-                                if e.is_closed() { break; }
+                                log::error!("Session statistics query error: {}", e);
+                                if e.is_closed() {
+                                    break;
+                                }
                             }
                         }
 
-                        // Active session count
-                        match client.query_one(
-                            "SELECT COUNT(DISTINCT session_id) FROM audit_log \
-                             WHERE timestamp > NOW() - INTERVAL '10 minutes'",
-                            &[],
-                        ).await {
+                        // Recorded lifecycle state: latest open/close event wins.
+                        match client
+                            .query_one(
+                                "WITH latest AS ( \
+                                   SELECT DISTINCT ON (session_id) session_id, operation \
+                                   FROM audit_log \
+                                   WHERE session_id IS NOT NULL \
+                                     AND operation IN ('ssh_session_opened', 'ssh_disconnect') \
+                                   ORDER BY session_id, id DESC \
+                                 ) SELECT COUNT(*) FROM latest \
+                                   WHERE operation = 'ssh_session_opened'",
+                                &[],
+                            )
+                            .await
+                        {
                             Ok(row) => {
                                 let count: i64 = row.get(0);
-                                let _ = tx_sessions.send(BackendMessage::ActiveSessionCount(count as i32));
+                                let _ = tx_sessions
+                                    .send(BackendMessage::OpenSessionCount(count as i32));
                             }
                             Err(e) => {
                                 log::error!("Active session count error: {}", e);
-                                if e.is_closed() { break; }
+                                if e.is_closed() {
+                                    break;
+                                }
                             }
                         }
 
@@ -297,13 +374,25 @@ pub async fn start_backend(
             };
 
             match req {
-                BackendRequest::ExportSession { session_id, destination } => {
+                BackendRequest::ExportSession {
+                    session_id,
+                    destination,
+                    mode,
+                } => {
                     // Operator-side helper only; never executed by a honeypot worker.
                     // Argument arrays avoid shell interpretation of paths or identifiers.
                     let python = std::env::var("APATE_PYTHON").unwrap_or_else(|_| "python3".into());
                     let mut child = tokio::process::Command::new(python);
-                    child.args(["-m", "chronos.watcher.export_report", "--session-id",
-                                &session_id, "--output", &destination]);
+                    child.args([
+                        "-m",
+                        "chronos.watcher.export_report",
+                        "--session-id",
+                        &session_id,
+                        "--output",
+                        &destination,
+                        "--mode",
+                        mode.as_arg(),
+                    ]);
                     child.kill_on_drop(true);
                     child.stdout(std::process::Stdio::null());
                     child.stderr(std::process::Stdio::null());
@@ -314,6 +403,84 @@ pub async fn start_backend(
                         Err(_) => Err("Export exceeded 90 seconds; incomplete output must not be used as evidence.".into()),
                     };
                     let _ = tx_detail.send(BackendMessage::ExportResult(result));
+                }
+                BackendRequest::FetchSessionPage {
+                    offset,
+                    limit,
+                    snapshot_at,
+                } => {
+                    let offset = offset.max(0);
+                    let limit = limit.clamp(1, 200);
+                    match pg_config.connect(NoTls).await {
+                        Ok((client, connection)) => {
+                            tokio::spawn(async move {
+                                if let Err(e) = connection.await {
+                                    log::error!("session page connection error: {}", e);
+                                }
+                            });
+                            let snapshot = match snapshot_at {
+                                Some(value) => Ok(value),
+                                None => client
+                                    .query_one("SELECT CURRENT_TIMESTAMP::timestamp", &[])
+                                    .await
+                                    .map(|row| row.get::<_, NaiveDateTime>(0)),
+                            };
+                            let total = match snapshot {
+                                Ok(snapshot_at) => client.query_one(
+                                    "SELECT COUNT(*) FROM session_evidence WHERE end_time IS NOT NULL AND finalized_at <= $1",
+                                    &[&snapshot_at],
+                                ).await.map(|row| (row.get::<_, i64>(0), snapshot_at)),
+                                Err(error) => Err(error),
+                            };
+                            let rows = client.query(
+                                "SELECT session_id::text, start_time, end_time, duration_seconds, \
+                                 detection_status, detection_confidence, exit_reason, \
+                                 first_suspicious_command \
+                                 FROM session_evidence WHERE end_time IS NOT NULL AND finalized_at <= $3 \
+                                 ORDER BY start_time DESC NULLS LAST, session_id DESC \
+                                 LIMIT $1 OFFSET $2",
+                                &[&limit, &offset, &total.as_ref().map(|(_, value)| *value).unwrap_or_else(|_| chrono::Utc::now().naive_utc())],
+                            ).await;
+                            match (total, rows) {
+                                (Ok((total, snapshot_at)), Ok(rows)) => {
+                                    let sessions = rows
+                                        .iter()
+                                        .map(|row| SessionSummary {
+                                            session_id: row
+                                                .get::<_, Option<String>>(0)
+                                                .unwrap_or_default(),
+                                            start_time: row.get(1),
+                                            end_time: row.get(2),
+                                            duration_seconds: row.get(3),
+                                            detection_status: row.get(4),
+                                            detection_confidence: row.get(5),
+                                            exit_reason: row.get(6),
+                                            first_suspicious_command: row.get(7),
+                                        })
+                                        .collect();
+                                    let _ = tx_detail.send(BackendMessage::SessionPage {
+                                        sessions,
+                                        total,
+                                        offset,
+                                        limit,
+                                        snapshot_at,
+                                    });
+                                }
+                                (Err(e), _) | (_, Err(e)) => {
+                                    log::error!("Session page query error: {}", e);
+                                    let _ = tx_detail.send(BackendMessage::SessionPageError(
+                                        "Unable to load finalized session history.".into(),
+                                    ));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            log::error!("Session page connection failed: {:?}", e);
+                            let _ = tx_detail.send(BackendMessage::SessionPageError(
+                                "Research database is unavailable.".into(),
+                            ));
+                        }
+                    }
                 }
                 BackendRequest::FetchSessionDetail(session_id) => {
                     match pg_config.connect(NoTls).await {
@@ -358,7 +525,7 @@ pub async fn start_backend(
                                         commands,
                                         visited_files,
                                         traversal_graph,
-                                        skill_assessment: row.get(11),
+                                        pattern_assessment: row.get(11),
                                     };
                                     let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(Some(detail))));
                                 }
@@ -373,7 +540,8 @@ pub async fn start_backend(
                         }
                         Err(e) => {
                             log::error!("Detail postgres connection failed: {:?}", e);
-                            let _ = tx_detail.send(BackendMessage::SessionDetailResult(Box::new(None)));
+                            let _ =
+                                tx_detail.send(BackendMessage::SessionDetailResult(Box::new(None)));
                         }
                     }
                 }
@@ -398,7 +566,8 @@ pub async fn start_backend(
                         let _ = tx_rd.send(BackendMessage::RedisConnected(true));
                         let mut provenance_tick = 0u32;
                         loop {
-                            let count: redis::RedisResult<Option<i32>> = con.get("fs:next_inode").await;
+                            let count: redis::RedisResult<Option<i32>> =
+                                con.get("fs:next_inode").await;
                             match count {
                                 Ok(c) => {
                                     let _ = tx_rd.send(BackendMessage::TotalFiles(c.unwrap_or(0)));
@@ -413,7 +582,8 @@ pub async fn start_backend(
                             if provenance_tick % 5 == 0 {
                                 match collect_provenance_snapshot(&mut con).await {
                                     Ok(snapshot) => {
-                                        let _ = tx_rd.send(BackendMessage::ProvenanceSnapshot(snapshot));
+                                        let _ = tx_rd
+                                            .send(BackendMessage::ProvenanceSnapshot(snapshot));
                                     }
                                     Err(e) => {
                                         log::error!("Provenance snapshot error: {}", e);
@@ -453,30 +623,41 @@ async fn collect_provenance_snapshot(
         }
 
         total_blobs += 1;
-        let validated = meta.get("validated").map(|value| value == "true").unwrap_or(false);
+        let validated = meta
+            .get("validated")
+            .map(|value| value == "true")
+            .unwrap_or(false);
         if validated {
             validated_blobs += 1;
         }
 
-        match meta.get("generation_source").map(|s| s.as_str()).unwrap_or("llm") {
+        match meta
+            .get("generation_source")
+            .map(|s| s.as_str())
+            .unwrap_or("llm")
+        {
             "llm" => llm_blobs += 1,
             "fallback" => fallback_blobs += 1,
             "template" => template_blobs += 1,
             _ => {}
         }
 
-        let file_class = meta.get("file_class").cloned().unwrap_or_else(|| "unknown".to_string());
+        let file_class = meta
+            .get("file_class")
+            .cloned()
+            .unwrap_or_else(|| "unknown".to_string());
         *by_file_class.entry(file_class.clone()).or_insert(0) += 1;
 
         let generated_at = meta.get("generated_at").cloned().unwrap_or_default();
         let generated_at_ts = generated_at.parse::<f64>().unwrap_or(0.0);
-        let blob_hash = key.strip_prefix("fs:blob_meta:").unwrap_or(&key).to_string();
+        let blob_hash = blob_hash_from_key(&key);
 
         entries.push((
             generated_at_ts,
             ProvenanceEntry {
                 blob_hash,
                 model: meta.get("model").cloned().unwrap_or_default(),
+                model_digest: meta.get("model_digest").cloned().unwrap_or_default(),
                 file_class,
                 generation_source: meta.get("generation_source").cloned().unwrap_or_default(),
                 prompt_version: meta.get("prompt_version").cloned().unwrap_or_default(),
@@ -495,6 +676,18 @@ async fn collect_provenance_snapshot(
         fallback_blobs,
         template_blobs,
         by_file_class: by_file_class.into_iter().collect(),
-        recent_entries: entries.into_iter().take(12).map(|(_, entry)| entry).collect(),
+        recent_entries: entries
+            .into_iter()
+            .take(12)
+            .map(|(_, entry)| entry)
+            .collect(),
     })
+}
+
+fn blob_hash_from_key(key: &str) -> String {
+    key.split_once(":fs:blob_meta:")
+        .map(|(_, hash)| hash)
+        .or_else(|| key.strip_prefix("fs:blob_meta:"))
+        .unwrap_or(key)
+        .to_string()
 }

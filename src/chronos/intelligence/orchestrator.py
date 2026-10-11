@@ -25,10 +25,19 @@ LOCK_TTL = 120
 
 
 class GenerationOrchestrator:
-    def __init__(self, redis_client, profile, runtime=None, max_workers=8):
+    def __init__(self, redis_client, profile, runtime=None, max_workers=8,
+                 inference_mode=None):
         self.redis = redis_client
         self.profile = profile
-        self.runtime = runtime or get_runtime()
+        configured_mode = inference_mode or os.environ.get(
+            "CHRONOS_INFERENCE_MODE", "ollama" if runtime is not None else "deterministic"
+        )
+        if configured_mode not in ("deterministic", "ollama"):
+            raise ValueError(
+                "CHRONOS_INFERENCE_MODE must be 'deterministic' or 'ollama'"
+            )
+        self.inference_mode = configured_mode
+        self.runtime = (runtime or get_runtime()) if configured_mode == "ollama" else None
         self.policy_engine = ArtifactPolicyEngine()
         self.prompt_builder = PromptBuilder()
         self.validator = SemanticValidator()
@@ -58,7 +67,7 @@ class GenerationOrchestrator:
         # Recreating a manifest path does not make an attacker file AI-backed.
         if meta.get("manifest_class", "runtime") not in ("ai_backed", "deterministic"):
             return b""
-        future = self._submit(inode, path, session_id)
+        future = self._submit(inode, path, session_id, machine_state)
         if future is None:
             return None
         try:
@@ -76,16 +85,18 @@ class GenerationOrchestrator:
             and stat.S_ISREG(int(meta["mode"]))
             and meta.get("manifest_class") in ("ai_backed", "deterministic")
         ):
-            self._submit(inode, path, session_id)
+            self._submit(inode, path, session_id, machine_state)
 
-    def _submit(self, inode, path, session_id):
+    def _submit(self, inode, path, session_id, machine_state=None):
         with self._futures_lock:
             if inode in self._futures:
                 return self._futures[inode]
             if not self._slots.acquire(blocking=False):
                 return None
             try:
-                future = self._pool.submit(self._resolve, inode, path, session_id)
+                future = self._pool.submit(
+                    self._resolve, inode, path, session_id, machine_state
+                )
                 self._futures[inode] = future
             except BaseException:
                 self._slots.release()
@@ -101,7 +112,7 @@ class GenerationOrchestrator:
         future.add_done_callback(finished)
         return future
 
-    def _resolve(self, inode, path, session_id):
+    def _resolve(self, inode, path, session_id, machine_state=None):
         key, lease = f"fs:inode:{inode}", f"fs:generating:{inode}"
         token = str(uuid.uuid4())
         deadline = time.monotonic() + 10
@@ -126,11 +137,33 @@ class GenerationOrchestrator:
             if meta.get("manifest_class") not in ("ai_backed", "deterministic"):
                 return b""
             # Only trusted profile facts enter prompts, never attacker history/env.
-            machine = self.profile.build_machine_state()
+            machine = dict(machine_state or {})
+            if not machine.get("created_at"):
+                machine = self.profile.get_or_create_machine_state(
+                    self.redis, session_id
+                )
             policy = self.policy_engine.resolve(os.path.basename(path), path, machine)
             source, validated = GenerationSource.TEMPLATE, True
+            model_identifier = (
+                policy.model if self.inference_mode == "ollama" else "deterministic-none"
+            )
             if meta["manifest_class"] == "deterministic":
                 content = self.deterministic_renderer.render(path, machine)
+            elif self.inference_mode == "deterministic":
+                content = self.fallback_provider.get_degraded_content(
+                    os.path.basename(path), policy, path=path, machine_state=machine
+                )
+                source = GenerationSource.TEMPLATE
+                validation = self.validator.validate(
+                    content.decode("utf-8", errors="replace"),
+                    policy,
+                    {**machine, "artifact_path": path},
+                )
+                validated = validation.accepted
+                if not validated:
+                    raise RuntimeError(
+                        f"Deterministic template rejected for {path}: {validation.reason}"
+                    )
             elif policy.skip_generation:
                 content = b""
             elif not self._quota(session_id):
@@ -177,7 +210,7 @@ class GenerationOrchestrator:
                     )
                     source, validated = GenerationSource.FALLBACK, False
             provenance = ProvenanceRecord(
-                model=policy.model,
+                model=model_identifier,
                 generation_source=source,
                 file_class=policy.file_class,
                 prompt_version="1.0",

@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.getcwd(), "src"))
 
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
-from chronos.skills.skill_detector import SkillDetector
+from chronos.skills.skill_detector import PatternSummarizer
 
 def test_command_analysis():
     """Test command analysis capabilities"""
@@ -73,12 +73,12 @@ def test_threat_library():
     return True
 
 
-def test_skill_detection():
-    """Test attacker skill level detection"""
-    print("\n[TEST 3] Skill Detection")
+def test_pattern_summary():
+    """Test evidence-linked pattern summaries."""
+    print("\n[TEST 3] Observable Pattern Summary")
     print("-" * 60)
     
-    detector = SkillDetector()
+    detector = PatternSummarizer()
     analyzer = CommandAnalyzer()
     
     # Script kiddie session
@@ -91,12 +91,9 @@ def test_skill_detection():
     analyses = analyzer.batch_analyze(basic_commands)
     assessment = detector.analyze_session("test_session_1", analyses)
     
-    print(f"  Basic session:")
-    print(f"    Skill level: {assessment['skill_level']}")
-    print(f"    Score: {assessment['skill_score']}")
-    
-    if assessment['skill_level'] not in ['script_kiddie', 'opportunistic']:
-        print(f"  [FAIL] Expected low skill level for basic commands")
+    print(f"  Basic session labels: {assessment['pattern_labels']}")
+    if 'skill_level' in assessment or 'skill_score' in assessment:
+        print("  [FAIL] Pattern summary must not infer expertise")
         return False
     print(f"  [PASS]")
     
@@ -113,12 +110,9 @@ def test_skill_detection():
     analyses = analyzer.batch_analyze(advanced_commands)
     assessment = detector.analyze_session("test_session_2", analyses)
     
-    print(f"  Advanced session:")
-    print(f"    Skill level: {assessment['skill_level']}")
-    print(f"    Score: {assessment['skill_score']}")
-    
-    if assessment['skill_level'] in ['script_kiddie']:
-        print(f"  [FAIL] Expected higher skill level for advanced commands")
+    print(f"  Multi-pattern session labels: {assessment['pattern_labels']}")
+    if not assessment['observations']['technique_rule_matches']:
+        print("  [FAIL] Expected evidence-linked rule matches")
         return False
     print(f"  [PASS]")
     
@@ -133,7 +127,7 @@ def test_integration():
     # Simulate a complete attack session
     analyzer = CommandAnalyzer()
     library = ThreatLibrary()
-    detector = SkillDetector()
+    detector = PatternSummarizer()
     
     session_commands = [
         "whoami",
@@ -159,12 +153,12 @@ def test_integration():
         if matches:
             threat_matches.append((cmd, matches))
     
-    # Skill detection
+    # Observable pattern summary
     assessment = detector.analyze_session("integration_test", all_analyses)
     
     print(f"    Commands analyzed: {len(all_analyses)}")
     print(f"    Threat signatures matched: {len(threat_matches)}")
-    print(f"    Detected skill level: {assessment['skill_level']}")
+    print(f"    Pattern labels: {assessment['pattern_labels']}")
     print(f"    Attack phases: {assessment['statistics']['phases_completed']}")
     
     if len(all_analyses) != len(session_commands):
@@ -192,7 +186,7 @@ def run_all_tests():
     tests = [
         ("Command Analysis", test_command_analysis),
         ("Threat Library", test_threat_library),
-        ("Skill Detection", test_skill_detection),
+        ("Observable Pattern Summary", test_pattern_summary),
         ("Integration", test_integration),
     ]
     

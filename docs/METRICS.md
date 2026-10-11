@@ -1,25 +1,23 @@
-# Metrics and Prometheus integration
+# Metrics and measurement
 
-This project exposes Prometheus metrics from multiple components:
+Reviewed 2026-09-25. Metrics support diagnosis and experiments; they do not replace raw evidence reconciliation. Definitions and acceptance targets are in [VERIFICATION_PLAN.md](VERIFICATION_PLAN.md).
 
-- Chronos core engine: `:8000` (started by `src/chronos/core/main.py` and `main_with_ssh.py`)
-- Dashboard metrics exporter (Postgres + Redis derived metrics): `:9100` (script: `src/chronos/core/dashboard_metrics_exporter.py`)
+The core calls `start_metrics_server()` and defaults to port 8000, configurable by `CHRONOS_METRICS_PORT`. Failure to bind is logged but does not stop core startup, so verify reachability and scrape health explicitly.
 
-Prometheus configuration (development) is in `config/prometheus/prometheus.yml`. It includes a job `chronos_dashboard_exporter` that scrapes `dashboard-exporter:9100`.
+The optional `monitoring` Compose profile runs `dashboard-exporter` on port 9100 plus Prometheus and Grafana. Exporter variables are `CHRONOS_DASHBOARD_METRICS_PORT`, `CHRONOS_PG_*`, and `CHRONOS_REDIS_*`. The current exporter has development credential defaults; supply credentials and use least-privilege roles for controlled deployments.
 
-How to run dashboard exporter locally:
+Current caveats:
+
+- `chronos_dashboard_active_sessions` means distinct sessions with audit activity in the last ten minutes, not lifecycle-active sessions.
+- Average session duration hides distribution and censoring; do not use it as deception quality or MTTD.
+- Provenance gauges scan active session blob metadata and do not establish lifetime generation totals.
+- Collector counters/histograms are process-local and reset on restart unless the monitoring design accounts for it.
+- Scrape success, exporter health, queue lag, pending spool records and summary watermark are different health signals.
+
+Run the optional profile only after inspecting merged Compose configuration:
 
 ```bash
-# activate virtualenv
-source .venv/bin/activate
-# run exporter (defaults to host-local Postgres/Redis)
-python3 src/chronos/core/dashboard_metrics_exporter.py
+docker compose --profile monitoring up -d dashboard-exporter prometheus grafana
 ```
 
-Environment variables:
-
-- `CHRONOS_DASHBOARD_METRICS_PORT` — port for exporter (default 9100)
-- `CHRONOS_PG_HOST`, `CHRONOS_PG_PORT`, `CHRONOS_PG_USER`, `CHRONOS_PG_PASSWORD`, `CHRONOS_PG_DB` — Postgres connection
-- `CHRONOS_REDIS_HOST`, `CHRONOS_REDIS_PORT` — Redis connection
-
-Prometheus scrape config lives at `config/prometheus/prometheus.yml` and should be mounted into your Prometheus container or service in production.
+Do not expose development metrics or Grafana publicly. Record scrape configuration and instrumentation version with research runs.

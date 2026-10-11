@@ -1,0 +1,10 @@
+Hello Ubuntu Team,
+
+I'm having some issues with the network connection. The DNS server is not resolving correctly.
+
+The server is running Ubuntu 24.04 and I've checked the network settings, but I'm not sure what's causing the problem.
+
+Can you please help me resolve this issue?
+
+Thanks,
+ubuntu

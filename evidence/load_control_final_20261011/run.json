@@ -1,0 +1,19 @@
+{
+  "started_at": "2026-10-11T03:15:49.051385+00:00",
+  "names": {
+    "net": "apate-load-d535843a93-net",
+    "redis": "apate-load-d535843a93-redis",
+    "pg": "apate-load-d535843a93-pg",
+    "core": "apate-load-d535843a93-core",
+    "clients": "apate-load-d535843a93-clients"
+  },
+  "image_id": "sha256:1a6f70736d515878efd2865f059adbfc7e8423e3ce3d494f4fdc65b43d5798fe",
+  "parameters": {
+    "APATE_LOAD_SECONDS": "25",
+    "APATE_LOAD_CLIENTS": "2",
+    "APATE_LOAD_MAX_COMMANDS": "0",
+    "APATE_LOAD_INTERVAL": "1",
+    "APATE_LOAD_ROTATE_SECONDS": "10",
+    "APATE_LOAD_OUTPUT": "evidence/load_control_final_20261011"
+  }
+}

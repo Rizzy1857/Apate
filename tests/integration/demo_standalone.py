@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.getcwd(), "src"))
 # Skills (no external dependencies)
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
-from chronos.skills.skill_detector import SkillDetector
+from chronos.skills.skill_detector import PatternSummarizer
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     print("Initializing components...")
     analyzer = CommandAnalyzer()
     library = ThreatLibrary()
-    detector = SkillDetector()
+    detector = PatternSummarizer()
     print("✓ All components ready\n")
     
     # Simulate a realistic attack session
@@ -126,9 +126,8 @@ def main():
     
     print(f"\n┌─ ATTACKER PROFILE")
     print(f"│")
-    print(f"│  Skill Level: {assessment['skill_level'].upper()}")
+    print(f"│  Pattern Labels: {', '.join(assessment['pattern_labels']) or 'none'}")
     print(f"│  Confidence:  {assessment['confidence']}")
-    print(f"│  Risk Score:  {assessment['skill_score']}/100")
     print(f"│")
     print(f"│  Attack Phases Detected:")
     for phase in assessment['statistics']['attack_phases']:
@@ -178,7 +177,7 @@ def main():
     print("\nChronos successfully analyzed the attack session:")
     print(f"  ✓ Detected {assessment['statistics']['unique_techniques']} unique techniques")
     print(f"  ✓ Identified {len(assessment['statistics']['attack_phases'])} attack phases")
-    print(f"  ✓ Classified attacker as '{assessment['skill_level']}'")
+    print(f"  ✓ Recorded {len(assessment['pattern_labels'])} observable pattern labels")
     print(f"  ✓ Matched {len(critical_events)} threat signatures")
     print(f"  ✓ Overall session risk: {profile['overall_risk_level'].upper()}")
     print("\nThe honeypot successfully documented the entire attack chain.")

@@ -13,3 +13,7 @@ report_workspace
 .codex
 .agents
 **/*.log
+# Separate native console and deferred Layer 0 are not Python-core runtime inputs.
+src/chronos/dashboard
+src/chronos/layer0
+evidence

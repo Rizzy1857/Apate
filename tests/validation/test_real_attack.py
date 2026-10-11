@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
-from chronos.skills.skill_detector import SkillDetector
+from chronos.skills.skill_detector import PatternSummarizer
 
 # Real attack sequences collected from honeypot data
 ATTACK_SCENARIOS = {
@@ -69,7 +69,7 @@ def library():
 
 @pytest.fixture(scope="module")
 def detector():
-    return SkillDetector()
+    return PatternSummarizer()
 
 @pytest.mark.parametrize("name, commands", list(ATTACK_SCENARIOS.items()))
 def test_scenario(name, commands, analyzer, library, detector):
@@ -125,7 +125,7 @@ def test_scenario(name, commands, analyzer, library, detector):
             for threat in threats:
                 print(f"       └─ Matched: {threat.name}")
     
-    # Get skill profile
+    # Get evidence-linked pattern summary
     profile = detector.analyze_session(session_id, analyses)
     
     # Calculate averages
@@ -140,7 +140,7 @@ def test_scenario(name, commands, analyzer, library, detector):
     print(f"  Threat Signatures: {results['signatures']}")
     print(f"  Total Risk:        {results['total_risk']}")
     print(f"  Avg Risk/Cmd:      {results['total_risk']/results['commands']:.1f}")
-    print(f"  Skill Level:       {profile.get('skill_level', 'UNKNOWN').upper()}")
+    print(f"  Pattern Labels:    {', '.join(profile['pattern_labels']) or 'none'}")
     print(f"  Avg Latency:       {avg_latency:.2f}ms")
     print(f"  P95 Latency:       {p95_latency:.2f}ms")
     
@@ -158,7 +158,7 @@ def main():
     # Initialize components
     analyzer = CommandAnalyzer()
     library = ThreatLibrary()
-    detector = SkillDetector()
+    detector = PatternSummarizer()
     
     all_results = []
     

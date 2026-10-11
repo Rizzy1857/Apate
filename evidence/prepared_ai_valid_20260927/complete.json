@@ -1,0 +1,7 @@
+{
+  "accepted": 172,
+  "artifact_type": "prepared_ai_evaluation",
+  "evaluation_sha256": "c423ef4b1a4bcf0b1bf30b36ab99982921120969138a2b41b91a05fc093a3ad0",
+  "schema_version": 1,
+  "trials": 180
+}

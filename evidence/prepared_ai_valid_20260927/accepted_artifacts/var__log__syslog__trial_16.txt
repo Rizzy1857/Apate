@@ -1,0 +1,6 @@
+Sep 26 00:00:01 web01 systemd[1]: Started Network Manager.
+Sep 26 00:00:01 web01 systemd[1]: Started ufw.
+Sep 26 00:00:01 web01 ufw[1]: Started ufw.
+Sep 26 00:00:01 web01 cron[1]: Started cron (system and job tasks).
+Sep 26 00:00:01 web01 fail2ban[1]: Started fail2ban.
+Sep 26 00:00:01 web01 sshd[1]: Server listening on 0.0.0.0 port 22 for ssh.

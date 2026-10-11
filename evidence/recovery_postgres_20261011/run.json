@@ -1,0 +1,18 @@
+{
+  "started_at": "2026-10-11T03:49:48.454190+00:00",
+  "names": {
+    "net": "apate-load-fe63bae998-net",
+    "redis": "apate-load-fe63bae998-redis",
+    "pg": "apate-load-fe63bae998-pg",
+    "core": "apate-load-fe63bae998-core",
+    "clients": "apate-load-fe63bae998-clients"
+  },
+  "image_id": "sha256:37aedd15dbea3605ee60ca5a4e40e7ecf1e201472c114483a8bf02cb7ac314ee",
+  "parameters": {
+    "APATE_LOAD_IMAGE": "apate-release:20261011",
+    "APATE_LOAD_SECONDS": "45",
+    "APATE_LOAD_CLIENTS": "8",
+    "APATE_LOAD_FAULT": "postgres",
+    "APATE_LOAD_OUTPUT": "evidence/recovery_postgres_20261011"
+  }
+}

@@ -6,33 +6,36 @@
 >
 > Framework name: **Chronos**
 
-Mirage is a state-consistent honeypot platform built on the Chronos framework. The goal is simple enough to state and demanding enough to deserve the work: preserve believable attacker interaction without letting the environment contradict itself.
+Mirage is a research SSH deception project built on the Chronos framework. It emulates a limited command environment with isolated filesystem state and records interactions for analysis. The bounded Research MVP is implemented; Mirage Home is a separate future product. Use the [release evidence index](docs/RELEASE_EVIDENCE_INDEX_2026-10-11.md) for the verified source bundle, gate decisions and limitations. The tested working tree includes changes beyond the base Git commit; cloning that commit alone does not reproduce this release.
 
-Chronos combines a FUSE-backed filesystem, Redis-based atomic state, PostgreSQL audit storage, and optional LLM-assisted content generation. The LLM is used for texture, not truth. State remains deterministic; the interesting part is that it stays interesting.
+Chronos combines a FUSE-backed filesystem, session-scoped Redis state, a durable SQLite audit outbox, PostgreSQL evidence storage, and optional LLM-assisted artifact generation. Selected filesystem mutations use Redis/Lua transactions. The model supplies bounded content for approved artifacts; deterministic code owns state.
 
-## Program Phases
+## Product plan and status
 
-- Phase 1: Core deception platform engineering and validation, completed.
-- Phase 2: AI integration that improves realism and analysis without adding unnecessary complexity, in progress.
+- Start with the [authoritative documentation set](docs/PLAN_INDEX.md).
+- [Research MVP](docs/RESEARCH_MVP.md), [implementation backlog](docs/IMPLEMENTATION_BACKLOG.md), and [verification gates](docs/VERIFICATION_PLAN.md) define completion.
+- [Mirage Home](docs/MIRAGE_HOME.md) describes the future household sensor and optional research sharing.
+- [Current status](docs/STATUS.md) distinguishes observed results from pending validation.
 
 ## What It Does
 
-- Presents a realistic filesystem through a FUSE interface.
-- Persists filesystem state atomically in Redis.
+- Presents an Ubuntu-like, deliberately limited filesystem through FUSE.
+- Stores session filesystem state in Redis and uses Lua for selected atomic mutations.
 - Records audit and session data in PostgreSQL.
-- Classifies commands, threats, and attacker behavior.
-- Generates missing file content on demand, then persists it for consistent reuse.
-- Exposes SSH and HTTP entry points for attacker interaction.
-- Uses a Rust layer for high-speed protocol analysis and early threat tagging.
+- Applies evidence-linked command-pattern rules. These labels do not estimate attacker expertise or identity.
+- Generates content only for approved manifest artifacts and caches accepted or fallback content.
+- Exposes an SSH emulator; HTTP and Rust Layer 0 are not established in the current core startup path.
+- Provides a native Rust research console and snapshot export, with known gaps tracked in the backlog.
 
-For the technical case behind the design, see [Problem Validation Analysis](PROBLEM_VALIDATION_ANALYSIS.md).
+See the [current architecture and evidence contract](docs/RESEARCH_ARCHITECTURE.md).
 
 ## Quick Start
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Optional: an OpenAI or Anthropic API key for content generation features
+- Docker and Docker Compose with a supported Linux FUSE runtime
+- Required database credentials; current Compose also requires `GRAFANA_PASSWORD` during configuration interpolation
+- Deterministic startup requires no model service. Local Ollama is optional for prepared-artifact experiments or bounded lazy-generation tests.
 
 ### Run the stack
 
@@ -42,52 +45,40 @@ cd chronos
 docker compose up --build -d
 ```
 
+Set `POSTGRES_PASSWORD` and `GRAFANA_PASSWORD` securely in the environment before running. Inspect `docker compose config --quiet` and any local override first; do not paste rendered credentials into reports. Model provisioning and native UI setup must be validated for the chosen environment. This is not yet a verified one-command installation.
+
+The default artifact treatment is deterministic. A stored AI-prepared bundle is loaded only when `CHRONOS_ARTIFACT_TREATMENT=prepared` is explicitly selected; a missing or incomplete current bundle stops initialization.
+
 Check the core service logs:
 
 ```bash
 docker compose logs -f core-engine
 ```
 
-Open the container and explore the mounted filesystem:
+Interact through the SSH gateway:
 
 ```bash
-docker exec -it chronos_core /bin/bash
-cd /mnt/honeypot
-ls -la
+ssh -p 2222 ubuntu@127.0.0.1
 ```
+
+Filesystem access is attributed through registered worker PIDs; arbitrary container-shell access is not the supported session path. Inspect the expected host key rather than disabling host-key checking by default. Current authentication is permissive and the shell uses the configured profile user; this is a documented implementation limitation.
 
 ## Verification
 
-Run the core validation and verification targets from the repository root:
+Start with non-disruptive regression/build checks:
 
 ```bash
-make up
-make validate-core
-make validate-attacks
-make verify
+PYTHONPATH=src pytest -q --tb=short
+cargo check --manifest-path src/chronos/dashboard/Cargo.toml
 ```
 
-You can also run the phase scripts directly:
-
-```bash
-python3 tests/verification/verify_phase1.py
-python3 tests/verification/verify_phase2.py
-python3 tests/verification/verify_phase3.py
-python3 tests/verification/verify_phase4.py
-```
-
-For a lighter demonstration, use the standalone demo:
-
-```bash
-python3 tests/integration/demo_standalone.py
-```
+The Python suite requires dependencies and a runnable `redis-server`. See the [verification plan](docs/VERIFICATION_PLAN.md) before integration/recovery testing. Older Make targets and phase scripts are not a complete release gate and may access external infrastructure.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Developer Onboarding](docs/ONBOARDING.md)
-- [How To Use Chronos](docs/HOW_TO.md)
-- [Roadmap](docs/ROADMAP.md)
+- [Plan index and decisions](docs/PLAN_INDEX.md)
+- [Architecture and evidence contract](docs/RESEARCH_ARCHITECTURE.md)
+- [Future research roadmap](docs/RESEARCH_FUTURE.md)
 - [Current Status](docs/STATUS.md)
 - [Test Suite Guide](tests/README.md)
 
@@ -99,8 +90,9 @@ Environment variables in `docker-compose.yml`:
 |---|---|---|
 | `REDIS_HOST` | Redis service host | `redis-store` |
 | `POSTGRES_HOST` | PostgreSQL service host | `db-store` |
-| `LLM_PROVIDER` | `openai`, `anthropic`, or `mock` | `mock` |
-| `OPENAI_API_KEY` | OpenAI API key, if used | unset |
+| `POSTGRES_PASSWORD` | Required Compose database password | unset |
+| `OLLAMA_HOST` | Local inference endpoint host in Compose | `ollama` |
+| `GRAFANA_PASSWORD` | Required by current Compose interpolation; monitoring service is optional | unset |
 
 ## License
 

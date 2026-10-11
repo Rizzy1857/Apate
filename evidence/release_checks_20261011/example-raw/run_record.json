@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "export_schema_version": 2,
+  "export_mode": "raw",
+  "metadata_values_pseudonymized": false,
+  "run_id": "synthetic-export-example-20261011",
+  "source_revision": "262284b8e360df9b206b51c74654dea74d0166eb9f12a12c12e82233582bdfbe",
+  "configuration_digest": "9b967552d8349df4c4bb811831089d68418a13cdf99493b2d6e165ca57b24539",
+  "profile_digest": "302ffe87796fbacaf0d2decafde18b31e278862ee86764bac1351a6d0d5adda3",
+  "missing_reproducibility_fields": [],
+  "reproducibility_metadata_complete": true
+}

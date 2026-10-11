@@ -1,144 +1,43 @@
-# Mirage Developer Onboarding
+# Mirage developer onboarding
 
-> Repository codename: **Apate**
->
-> Product name: **Mirage**
->
-> Framework name: **Chronos**
+Reviewed 2026-09-25. Begin with the [plan index](PLAN_INDEX.md), then read the [MVP](RESEARCH_MVP.md), [architecture](RESEARCH_ARCHITECTURE.md), and [backlog](IMPLEMENTATION_BACKLOG.md).
 
-This guide is the short path into the project. It is written for two jobs: understanding the project quickly and running a clean demo without memorizing the whole codebase.
+## Repository model
 
-## What Mirage Is
+- `src/chronos/gateway`: Paramiko SSH endpoint, restricted worker and command emulator.
+- `src/chronos/interface` and `core`: FUSE callbacks, session state, content mutation, durable audit outbox and PostgreSQL delivery.
+- `src/chronos/intelligence`: optional local artifact generation, validation, fallback and provenance.
+- `src/chronos/watcher`: audit consumption, derived evidence and exports.
+- `src/chronos/dashboard`: native Rust research console.
+- `src/chronos/simulation` and `layer0`: mostly deferred/experimental paths unless a current requirement names them.
+- `tests`: default regressions plus opt-in Linux, live-model and disruptive infrastructure checks.
 
-Mirage is a state-consistent honeypot platform.
+The working tree already contains user changes in dashboard, SSH and FUSE files. Preserve them. Use `apply_patch` for edits and never clean/reset unrelated work.
 
-In plain terms:
-- It looks like a real system to an attacker.
-- It keeps filesystem state consistent.
-- It logs activity for later analysis.
-- It can generate file content when a file is missing or empty.
-- It uses LLMs for content, not for state truth.
+## Safe first checks
 
-## What To Show In A Demo
-
-If you need to explain the project to someone quickly, show these five things:
-
-1. The fake system feels real.
-   - Start the stack.
-   - Open the container.
-   - Show that the filesystem responds like a normal Linux environment.
-
-2. State stays consistent.
-   - Create or modify something.
-   - Show that later reads still match the earlier change.
-   - Point out that the system remembers because state is stored, not guessed.
-
-3. Missing files can still look believable.
-   - Read a file that does not yet have content.
-   - Show that the persona engine generates content.
-   - Read it again and show the same content comes back.
-
-4. Attacks are observed, not ignored.
-   - Run a few suspicious commands.
-   - Show command analysis, threat tagging, or logs.
-   - Explain that the system tracks behavior rather than just printing responses.
-
-5. The project has a layered design.
-   - FUSE handles the filesystem view.
-   - Redis handles live state.
-   - PostgreSQL stores audit history.
-   - Rust handles early protocol analysis.
-
-## Easiest Demo Flow
-
-Use this order if you want the least friction:
-
-### 1. Start the stack
+Install pinned Python dependencies in an isolated environment and ensure `redis-server` is available. From the repository root:
 
 ```bash
-make up
+PYTHONPATH=src pytest -q --tb=short
+cargo check --manifest-path src/chronos/dashboard/Cargo.toml
 ```
 
-### 2. Confirm the services are running
+As of the documented 2026-09-28 review, Python returned 101 passed and 7 skipped with no warnings; see [status](STATUS.md). The default suite uses disposable Unix-socket Redis. Do not enable `--legacy-infrastructure` until you inspect the selected tests: they can mutate external services.
 
-```bash
-docker ps --filter "name=chronos"
-```
+Before Docker work, inspect `docker-compose.yml`, any automatically loaded `docker-compose.override.yml`, and the [verification plan](VERIFICATION_PLAN.md). Set required secrets in the environment and avoid printing rendered configuration into shared logs. Linux FUSE integration is the supported container target; macOS uses a local relay/override and does not itself establish Linux release behavior.
 
-### 3. Open the honeypot container
+## Change workflow
 
-```bash
-docker exec -it chronos_core /bin/bash
-cd /mnt/honeypot
-```
+1. Select one W/B/R item and record the current source/patch identity.
+2. Reproduce the behavior with the smallest meaningful test.
+3. Change the authoritative state/evidence path first, then its projections and UI.
+4. Run focused tests and appropriate broader regressions.
+5. Update the completion record with actual results and limitations.
+6. Do not mark a requirement verified from code presence or compilation alone.
 
-### 4. Show the filesystem
+Use precise language: attempted, admitted, emulated, completed, failed, denied, unsupported, interrupted, or unknown. Keep raw evidence separate from interpretations. Treat shell input, paths, generated content and imported evidence as untrusted.
 
-```bash
-ls -la
-cat etc/passwd
-```
+## Current first package
 
-### 5. Show a state change
-
-```bash
-touch /tmp/demo-file
-ls /tmp
-```
-
-### 6. Show a generated file
-
-```bash
-cat /etc/anything-that-does-not-exist-yet
-```
-
-### 7. Show analysis or logs
-
-Back on the host:
-
-```bash
-docker compose logs -f core-engine
-```
-
-## Simple Explanation Script
-
-If someone asks what the project does, say this:
-
-> Mirage is a honeypot that keeps state consistent. It behaves like a real filesystem, stores truth in Redis, keeps audit history in PostgreSQL, and uses AI only to fill in missing content. The point is to make attacker interaction believable without letting the system contradict itself.
-
-## What To Say About The Architecture
-
-Keep it short:
-
-- FUSE gives the attacker a real filesystem interface.
-- Redis and Lua keep state atomic.
-- PostgreSQL keeps the audit trail.
-- The persona engine generates content when needed.
-- Rust handles fast protocol analysis.
-
-That is enough for most demos. The project has more moving parts, but those are the parts that matter first.
-
-## Useful Commands
-
-```bash
-make up
-make validate-core
-make validate-attacks
-make verify
-python3 tests/integration/demo_standalone.py
-```
-
-## Working Notes
-
-- Keep the demo focused on state consistency and observability.
-- Avoid diving into too many internal files unless asked.
-- If the audience wants more detail, move from the demo flow to the architecture guide.
-- If something fails during the demo, show the logs and keep going. A controlled failure is still a useful result.
-
-## Where To Read Next
-
-- [How To Use Chronos](HOW_TO.md)
-- [Architecture](ARCHITECTURE.md)
-- [Current Status](STATUS.md)
-- [Roadmap](ROADMAP.md)
-- [Test Suite Guide](../tests/README.md)
+The shell contract and B1–B12 fixes have verification evidence. Use [STATUS.md](STATUS.md) and the latest release evidence index for remaining gates; the backlog records the work and its limits. Future protocols, frontends and model providers require a separate scope decision.

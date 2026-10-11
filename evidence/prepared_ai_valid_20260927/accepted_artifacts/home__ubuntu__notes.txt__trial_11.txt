@@ -1,0 +1,10 @@
+Hello Ubuntu Team,
+
+I'm having some issues with the network connection. It keeps dropping every 10 minutes.
+
+Also, I need help with the firewall. I'm not sure how to allow incoming traffic on port 80.
+
+Can someone please help me with this?
+
+Thanks,
+ubuntu

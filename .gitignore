@@ -574,3 +574,14 @@ config.local.json
 
 #misc.
 docs/files
+
+# Reviewed release inputs and synthetic verification evidence only.
+!src/chronos/dashboard/Cargo.lock
+!evidence/release_candidate_20261011/source.tar.gz
+!evidence/release_checks_20261011/*.log
+!evidence/soak_20261011/*.log
+!evidence/recovery_core_20261011/*.log
+!evidence/recovery_redis_20261011/*.log
+!evidence/recovery_postgres_20261011/*.log
+!evidence/load_single_20261011/*.log
+!evidence/load_control_final_20261011/*.log

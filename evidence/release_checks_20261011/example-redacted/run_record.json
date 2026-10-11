@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "export_schema_version": 2,
+  "export_mode": "redacted",
+  "metadata_values_pseudonymized": true,
+  "run_id": "run_metadata.run_id:sha256:3a8a1fd9cfd1435c",
+  "source_revision": "run_metadata.source_revision:sha256:2b1027a9756057ca",
+  "configuration_digest": "run_metadata.configuration_digest:sha256:db333e33a1107dab",
+  "profile_digest": "run_metadata.profile_digest:sha256:850c84b0210b3cd5",
+  "parent_raw_input_sha256": "3ba44cce9fe3bdc2059fc108eb8702a05f4dba0f404bdf3951e390a7eb1b174d",
+  "missing_reproducibility_fields": [],
+  "reproducibility_metadata_complete": true
+}

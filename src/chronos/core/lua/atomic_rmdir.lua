@@ -39,4 +39,11 @@ redis.call('DEL', 'fs:dir:' .. inode)
 redis.call('HINCRBY', 'fs:inode:' .. parent_inode, 'nlink', -1)
 local now = redis.call('TIME')[1]
 redis.call('HSET', 'fs:inode:' .. parent_inode, 'mtime', now, 'ctime', now)
+if ARGV[3] and ARGV[3] ~= '' then
+    redis.call('HSET', 'fs:mutation:' .. ARGV[3],
+        'operation_id', ARGV[3], 'operation', ARGV[4], 'path', ARGV[5],
+        'inode', inode, 'command_id', ARGV[6], 'origin', ARGV[7],
+        'completed_at', now, 'schema_version', 1)
+    redis.call('ZADD', 'fs:mutation_journal', now, ARGV[3])
+end
 return inode

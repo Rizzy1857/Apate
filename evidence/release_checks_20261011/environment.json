@@ -1,0 +1,67 @@
+{
+  "docker": {
+    "Platform": {
+      "Name": "Docker Desktop 4.93.0 (240920)"
+    },
+    "Version": "29.8.1",
+    "ApiVersion": "1.56",
+    "MinAPIVersion": "1.40",
+    "Os": "linux",
+    "Arch": "arm64",
+    "Components": [
+      {
+        "Name": "Engine",
+        "Version": "29.8.1",
+        "Details": {
+          "ApiVersion": "1.56",
+          "Arch": "arm64",
+          "BuildTime": "Tue Sep 15 16:25:04 2026",
+          "Experimental": "false",
+          "GitCommit": "464cd50",
+          "GoVersion": "go1.26.8",
+          "KernelVersion": "7.0.14-linuxkit",
+          "MinAPIVersion": "1.40",
+          "Module": "github.com/moby/moby/v2",
+          "ModuleVersion": "v2.0.0+unknown",
+          "Os": "linux"
+        }
+      },
+      {
+        "Name": "containerd",
+        "Version": "v2.3.5",
+        "Details": {
+          "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+        }
+      },
+      {
+        "Name": "runc",
+        "Version": "1.5.1",
+        "Details": {
+          "GitCommit": "v1.5.1-0-g8f2685a4"
+        }
+      },
+      {
+        "Name": "docker-init",
+        "Version": "0.19.0",
+        "Details": {
+          "GitCommit": "de40ad0"
+        }
+      }
+    ],
+    "GitCommit": "464cd50",
+    "GoVersion": "go1.26.8",
+    "KernelVersion": "7.0.14-linuxkit",
+    "BuildTime": "2026-09-15T16:25:04.000000000+00:00"
+  },
+  "docker_vm_memory_bytes": 8319504384,
+  "docker_vm_cpus": 10,
+  "core_memory_bytes": 2147483648,
+  "core_cpus": 2,
+  "core_pids_limit": 192,
+  "redis_maxmemory_bytes": 268435456,
+  "redis_eviction_policy": "noeviction",
+  "postgres_limits": "No separate container CPU/memory limits; shares Docker VM",
+  "host": "17179869184\n10\nApple M4",
+  "trivy_database_sha256": "76bbe157a4381120da13cb57993a0e8a34cfa6407c02a55fbf12975d4ec008be",
+  "trivy_database_updated_at": "2026-10-11T01:13:45.784565337Z"
+}

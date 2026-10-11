@@ -1,4 +1,5 @@
 import os
+import uuid
 import time
 import threading
 import logging
@@ -92,6 +93,7 @@ class PersistenceLayer:
             cur.execute('ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS event_id UUID')
             cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS audit_event_id ON audit_log(event_id)')
             cur.execute('ALTER TABLE session_evidence ADD COLUMN IF NOT EXISTS last_event_id BIGINT NOT NULL DEFAULT 0')
+            cur.execute('ALTER TABLE session_evidence ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP')
             cur.execute('CREATE TABLE IF NOT EXISTS evidence_progress (session_id UUID PRIMARY KEY, last_event_id BIGINT NOT NULL, payload JSONB NOT NULL)')
         self.conn.commit()
 
@@ -129,10 +131,27 @@ class PersistenceLayer:
         """Durably admit before returning; storage failures reach the caller."""
         if not session_id:
             return
-        self.spool.append((session_id, datetime.utcnow().isoformat(), operation,
-                           path, inode,
-                           {k: v for k, v in (metadata or {}).items()
-                            if k.lower() != 'password'}))
+        cleaned = {k: v for k, v in (metadata or {}).items()
+                   if k.lower() != 'password'}
+        event_id = None
+        deterministic_result = (
+            cleaned.get('outcome') == 'completed'
+            or cleaned.get('idempotency_scope') == 'lifecycle-recovery-v1'
+        )
+        if cleaned.get('operation_id') and deterministic_result:
+            operation_id = str(uuid.UUID(cleaned['operation_id']))
+            event_id = str(uuid.uuid5(
+                uuid.UUID(operation_id), f'apate-mutation-result-v1:{operation}'
+            ))
+        timestamp = (
+            datetime.utcfromtimestamp(float(cleaned['completed_at'])).isoformat()
+            if event_id and cleaned.get('completed_at') is not None
+            else datetime.utcnow().isoformat()
+        )
+        self.spool.append(
+            (session_id, timestamp, operation, path, inode, cleaned),
+            event_id=event_id,
+        )
 
     def close(self):
         self.running = False
@@ -158,9 +177,11 @@ class PersistenceLayer:
                         session_id, start_time, end_time, duration_seconds, 
                         detection_status, detection_confidence, exit_reason, 
                         first_suspicious_command, last_successful_interaction, 
-                        commands, visited_files, traversal_graph, skill_assessment, last_event_id
+                        commands, visited_files, traversal_graph, skill_assessment, last_event_id,
+                        finalized_at
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        CURRENT_TIMESTAMP
                     )
                     ON CONFLICT (session_id) DO UPDATE SET
                         end_time = EXCLUDED.end_time,
@@ -189,7 +210,7 @@ class PersistenceLayer:
                     Json(evidence_data.get('commands', [])),
                     Json(evidence_data.get('visited_files', [])),
                     Json(evidence_data.get('traversal_graph', {})),
-                    Json(evidence_data.get('skill_assessment')),
+                    Json(evidence_data.get('pattern_assessment')),
                     evidence_data.get('last_event_id', 0)
                 ))
                 conn.commit()

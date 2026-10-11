@@ -1,0 +1,32 @@
+{
+  "archive_members_verified": 167,
+  "change_explanation": "Packaging helper gained image/source hashing; runtime and workload harness unchanged.",
+  "extracted_linux_exit_code": 0,
+  "extracted_python": {
+    "passed": 244,
+    "skipped": 7
+  },
+  "fresh_build_exit_code": 0,
+  "fresh_image": "sha256:d845b13704bd3112ca6698285185e2f50288e58e8ce9631e935449738dbe8892",
+  "inventory_matches": {
+    "application_files": true,
+    "architecture": true,
+    "os": true,
+    "os_packages": true,
+    "python_distributions": true
+  },
+  "result": "PASS",
+  "sha256": {
+    "evidence/release_candidate_20261011/candidate.json": "d36684b476eeed8e1fdd4c1bd03d6de5ebccc878f707906aa3a909f62ede66c1",
+    "evidence/release_candidate_20261011/complete.json": "6e851b57d84eeff596c76fd49d38bb51d7a2a4caca4da4df6addf9d42a34ee2d",
+    "evidence/release_candidate_20261011/image_inventory.json": "1c0c9acd81cd1814e1b6330ed150a17c6af3d6f20eb68cf142ffba4d23a9878f",
+    "evidence/release_candidate_20261011/source.tar.gz": "262284b8e360df9b206b51c74654dea74d0166eb9f12a12c12e82233582bdfbe",
+    "evidence/release_candidate_20261011/source_manifest.json": "756f3d3cf668f605e6364751d407bdb8b0594700c3253dab5f3c35d405467afa",
+    "evidence/release_candidate_20261011/tracked.patch": "907123e22805e909c87874905727b33dc80eac964ab7366594d3665b5f173fd7"
+  },
+  "soak_to_release_instrumented_source_changes": [
+    "tests/integration/freeze_release_candidate.py"
+  ],
+  "tested_image": "sha256:37aedd15dbea3605ee60ca5a4e40e7ecf1e201472c114483a8bf02cb7ac314ee",
+  "working_tree_matches_archive": true
+}

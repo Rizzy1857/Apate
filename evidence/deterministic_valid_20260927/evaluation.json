@@ -1,0 +1,1908 @@
+{
+  "limitations": [
+    "Repeated renders are timing repetitions, not independent stochastic samples.",
+    "Automated validator acceptance is not an independent plausibility rating.",
+    "Sub-millisecond timings are sensitive to instrumentation and host scheduling."
+  ],
+  "reference_epoch": 1790467200.0,
+  "runtime": {
+    "cache": "disabled",
+    "model": "deterministic-none"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a098fe02771802de03b9c64c8fbce52d82defc38",
+    "working_tree_dirty": true
+  },
+  "summary": {
+    "by_path": {
+      "/etc/nginx/nginx.conf": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 5.0417e-05,
+          "median": 3.90415e-05,
+          "p95_nearest_rank": 4.5917e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      },
+      "/home/ubuntu/.bash_history": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 4.5125e-05,
+          "median": 3.83745e-05,
+          "p95_nearest_rank": 4.3208e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      },
+      "/home/ubuntu/notes.txt": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 4.15e-05,
+          "median": 3.79585e-05,
+          "p95_nearest_rank": 3.9458e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      },
+      "/var/log/auth.log": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 0.000116542,
+          "median": 4.0229e-05,
+          "p95_nearest_rank": 5.7208e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      },
+      "/var/log/syslog": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 0.000113666,
+          "median": 4.05005e-05,
+          "p95_nearest_rank": 8.1959e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      },
+      "/var/www/html/index.html": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 4.4584e-05,
+          "median": 3.8709e-05,
+          "p95_nearest_rank": 4.1459e-05
+        },
+        "rejected_or_failed": 0,
+        "trials": 30,
+        "unique_accepted_outputs": 1
+      }
+    },
+    "overall": {
+      "acceptance_rate": 1.0,
+      "accepted": 180,
+      "latency_seconds": {
+        "maximum": 0.000116542,
+        "median": 3.8958e-05,
+        "p95_nearest_rank": 5.0417e-05
+      },
+      "rejected_or_failed": 0,
+      "trials": 180,
+      "unique_accepted_outputs": 6
+    }
+  },
+  "treatment": "deterministic_valid_only",
+  "trials": [
+    {
+      "accepted": true,
+      "elapsed_seconds": 0.000116542,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.7208e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.65e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1209e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0459e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.075e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.075e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0167e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9333e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9833e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0291e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9166e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9209e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9416e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9333e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9666e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.7375e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1958e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.5625e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.5708e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9125e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8916e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8916e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8875e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9125e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.5375e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.2e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1042e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9875e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9584e-05,
+      "file_class": "log_file",
+      "path": "/var/log/auth.log",
+      "reason": "",
+      "response_bytes": 194,
+      "response_sha256": "c1ca6313b3f91666bb3ff00737ae7658dbcf951d9928e6dbc562cb032e2ad569",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.1625e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.8125e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.125e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0417e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.025e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.65e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0375e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0584e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9375e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8791e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9916e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.3208e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.3042e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 8.1959e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 0.000113666,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 6.1958e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.475e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.6916e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.1e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.5458e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1833e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9042e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8917e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8958e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8416e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9125e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9541e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9167e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8458e-05,
+      "file_class": "log_file",
+      "path": "/var/log/syslog",
+      "reason": "",
+      "response_bytes": 242,
+      "response_sha256": "8d78ffe8f78eee77a079aa08ee3a28ef92af372b21ee89c3c5f5e61bc5320775",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0666e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.3208e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9292e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9166e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9667e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8958e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0375e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.5125e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9083e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8292e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8333e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8167e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7917e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8584e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8292e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8708e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9041e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8875e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.825e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7959e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7708e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8042e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8167e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8416e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8209e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8584e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8125e-05,
+      "file_class": "history_file",
+      "path": "/home/ubuntu/.bash_history",
+      "reason": "",
+      "response_bytes": 90,
+      "response_sha256": "c1b221ddc2b0054ca7e3edbde566c40b8bc09df492324317b2a3346d2eafcdaf",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9292e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.15e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9458e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8708e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8542e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8458e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8542e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7833e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7833e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8125e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8167e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7959e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7917e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7792e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.775e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7792e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7583e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7959e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7834e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8167e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8042e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.775e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8041e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7958e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7709e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7875e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.7625e-05,
+      "file_class": "notes_file",
+      "path": "/home/ubuntu/notes.txt",
+      "reason": "",
+      "response_bytes": 179,
+      "response_sha256": "cf9fba80289178f96675e2cb3940760cbc115295fd9de4fa5337d96cad24a812",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0084e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.5917e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0667e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0291e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.3625e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9458e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9416e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 5.0417e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1083e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9375e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.95e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8375e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8458e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8958e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8833e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8958e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0667e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9125e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9583e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8917e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8625e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8541e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8541e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8542e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8458e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.975e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8958e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8333e-05,
+      "file_class": "config_file",
+      "path": "/etc/nginx/nginx.conf",
+      "reason": "",
+      "response_bytes": 532,
+      "response_sha256": "3f9b130b75ad9cefcc390f33a14d70a213dbe56baa31acd1c3d7a05cbdc5eb00",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.1459e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.4584e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 4.0333e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9958e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9459e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9125e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9334e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8291e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8709e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8375e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8708e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9083e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8875e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8792e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9792e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8709e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8709e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.9042e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8584e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8916e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8333e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8167e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8334e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.825e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.85e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8916e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8375e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "elapsed_seconds": 3.8208e-05,
+      "file_class": "config_file",
+      "path": "/var/www/html/index.html",
+      "reason": "",
+      "response_bytes": 148,
+      "response_sha256": "aff0acd607f6893db7c84eb2df0ebcd325276a6a3b967116e1bfd846f8977d67",
+      "trial": 30
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Sep 26 00:00:01 web01 sshd[1234]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Invalid user ubuntu from 192.168.1.100 port 1234, login: 'ubuntu'
+Sep 25 23:59:58 web01 sshd[1233]: Invalid user ubuntu from 192.168.1.100 port 1234, login: 'ubuntu'
+Sep 25 23:59:58 web01 cron[1232]: crontab[1232] loaded
+Sep 25 23:59:58 web01 cron[1232]: No MTA records found for sendmail.

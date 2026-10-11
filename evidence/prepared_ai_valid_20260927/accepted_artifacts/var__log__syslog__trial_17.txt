@@ -1,0 +1,6 @@
+Sep 26 00:00:01 web01 systemd[1]: Started Network Manager.
+Sep 26 00:00:01 web01 systemd[1]: Started ufw.
+Sep 26 00:00:01 web01 ufw[1234]: Started ufw firewall (IPv4), version 6.8.0-51-generic running on web01.
+Sep 26 00:00:01 web01 cron[1235]: Started cron (system and user jobs).
+Sep 26 00:00:01 web01 sshd[1236]: Server listen 22 on /var/run/sshd.pid[1236].
+Sep 26 00:00:01 web01 nginx[1237]: nginx: [error] open socket /var/run/nginx.pid[1237] failed (2: No such file or directory).

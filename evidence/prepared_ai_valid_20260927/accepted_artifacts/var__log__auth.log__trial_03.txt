@@ -1,0 +1,8 @@
+Sep 26 00:00:01 web01 sshd[1234]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Connection closed by authenticator.
+Sep 25 23:59:57 web01 sshd[1233]: User ubuntu from 192.168.1.100 ssh2.
+Sep 25 23:59:57 web01 sshd[1233]: Authentication succeeded for user ubuntu.
+Sep 25 23:59:56 web01 cron[1232]: CRON(0) 0 0 * * root apt update
+Sep 25 23:59:56 web01 cron[1232]: CRON(0) 0 0 * * root apt upgrade
+Sep 25 23:59:55 web01 fail2ban[1231]: Connection to /run/fail2ban/fail2ban.service failed: No such file or directory
+Sep 25 23:59:55 web01 fail2ban[1231]: Connection to /run/fail2ban/fail2ban.service failed: No such file or directory

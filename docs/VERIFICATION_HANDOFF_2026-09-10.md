@@ -1,5 +1,7 @@
 # Verification handoff — 2026-09-10
 
+> Dated evidence snapshot. Later source and uncommitted changes are not covered. Use [STATUS.md](STATUS.md), the [current backlog](IMPLEMENTATION_BACKLOG.md), and [verification plan](VERIFICATION_PLAN.md) for present decisions. Results below remain evidence only for the exact historical configurations described.
+
 This is an evidence ledger for documentation updates, not a production-readiness
 certificate. The hardening goal remains open. Preserve these distinctions when
 updating README, STATUS, FINAL_PROJECT_SUMMARY, ONBOARDING and roadmap material.

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "run_metadata": {
+    "schema_version": 1,
+    "export_schema_version": 2,
+    "export_mode": "redacted",
+    "metadata_values_pseudonymized": true,
+    "run_id": "run_metadata.run_id:sha256:3a8a1fd9cfd1435c",
+    "source_revision": "run_metadata.source_revision:sha256:2b1027a9756057ca",
+    "configuration_digest": "run_metadata.configuration_digest:sha256:db333e33a1107dab",
+    "profile_digest": "run_metadata.profile_digest:sha256:850c84b0210b3cd5",
+    "parent_raw_input_sha256": "3ba44cce9fe3bdc2059fc108eb8702a05f4dba0f404bdf3951e390a7eb1b174d",
+    "missing_reproducibility_fields": [],
+    "reproducibility_metadata_complete": true
+  },
+  "input_sha256": "24eb98d95d9830a8bb3541b60f7de8bf20527852f247e5d4a487d2a1b4d0e2ec",
+  "unique_events": 2,
+  "duplicate_events_removed": 0,
+  "submissions_by_origin": {
+    "synthetic": 1
+  },
+  "commands": [
+    {
+      "session_id": "session:sha256:d00d4dc5b4ce6066",
+      "command_id": "command_id:sha256:f5cfd67937138ef8",
+      "origin": "synthetic",
+      "submission_event_id": "04285ec9-0fb2-5366-bbee-c8bc59b3da56",
+      "command": null,
+      "claimed_username": null,
+      "effective_username": null,
+      "identity_mismatch": null,
+      "identity_policy": null,
+      "outcome": "emulated_success",
+      "exit_status": 0,
+      "stage_results": [],
+      "server_elapsed_seconds": null,
+      "result_event_ids": [
+        "c56222f2-ee46-5ab9-9ece-147719a382f9"
+      ],
+      "conflicting_results": false,
+      "file_events": []
+    }
+  ],
+  "requests_by_origin": {},
+  "ssh_requests": [],
+  "legacy_submission_event_ids": [],
+  "legacy_request_event_ids": [],
+  "unmatched_result_event_ids": [],
+  "unmatched_file_event_ids": [],
+  "participant_outcomes": {},
+  "participant_request_outcomes": {},
+  "participant_interaction_outcomes": {},
+  "participant_server_latency": {
+    "sample_count": 0,
+    "method": "nearest_rank",
+    "p50_seconds": null,
+    "p95_seconds": null,
+    "p99_seconds": null
+  },
+  "limitations": [
+    "Completeness is relative to the supplied snapshot, not the collection system.",
+    "Server elapsed time is not client-observed or network latency.",
+    "Unknown outcomes and legacy records do not prove successful execution.",
+    "No participant discovery time or calibrated threat probability is inferred.",
+    "Raw command evidence may contain secrets; restrict access before sharing."
+  ]
+}

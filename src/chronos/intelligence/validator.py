@@ -72,6 +72,10 @@ class SemanticValidator:
             return ValidationResult(accepted=False, reason="invalid_content_type")
         if len(content.encode('utf-8')) > 65536 or '\x00' in content:
             return ValidationResult(accepted=False, reason="invalid_content_size_or_nul")
+        if not content.strip() and not policy.skip_generation:
+            return ValidationResult(
+                accepted=False, reason="empty_content_for_nonempty_category"
+            )
         if policy.file_class == 'log_file' and content.strip() and machine_state.get('created_at'):
             from datetime import datetime, timezone, timedelta
             reference = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)

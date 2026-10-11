@@ -1,0 +1,5 @@
+sudo systemctl status nginx
+sudo nginx -t
+journalctl -u nginx --since today
+df -h
+ss -lnt

@@ -1,0 +1,7 @@
+root@web01:/# curl -s https://example.com
+root@web01:/# git config --global user.name ubuntu
+root@web01:/# vim /home/ubuntu/.bash_history
+root@web01:/# ssh user@192.168.1.100
+root@web01:/# ufw status
+root@web01:/# curl -s https://example.com
+root@web01:/#

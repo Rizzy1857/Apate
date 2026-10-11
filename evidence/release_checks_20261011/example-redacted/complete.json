@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "artifact_type": "redacted_evidence_bundle",
+  "redaction_policy": "apate-structural-allowlist-v1",
+  "parent_raw_input_sha256": "3ba44cce9fe3bdc2059fc108eb8702a05f4dba0f404bdf3951e390a7eb1b174d",
+  "reproducibility_metadata_complete": true,
+  "sha256": {
+    "events.json": "a3786a6cab2f944e7163363648634bb1f18800e719c75c74a7f1e9a3c3157fb8",
+    "run_record.json": "d2e970b8de1b7a0f36312c027fe29b0d13a17cb089dea21dbdfe6732e5f24d02",
+    "redaction.json": "3a07f29e9ee88163e31071332d061c5c02f592b771fa945cf031f6825612ab1b",
+    "report.json": "0e91367088b8f3427349eb81c0ea84fad9ff272aff8ca9a8b4abe2b37a8ca27b",
+    "commands.csv": "13c8e0f6c34cfd855334f9c6c4497d4573bba0a95d4174ed51bcb2c67f7cce76",
+    "ssh_requests.csv": "09c5c99a8a051c4de011256f81cdf1e3dac0447cdee6fa410593ddc2e664c395",
+    "report.md": "1cda230c22ed28e42d9529991f42594e6d466a8a39b48512449c004d2504f311"
+  }
+}

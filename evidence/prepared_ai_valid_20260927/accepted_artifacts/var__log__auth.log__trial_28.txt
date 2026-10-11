@@ -1,0 +1,7 @@
+Sep 26 00:00:01 web01 sshd[1234]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Connection closed by authenticator.
+Sep 25 23:59:57 web01 cron[1232]: CRON(0) 0 0 * * root apt update
+Sep 25 23:59:56 web01 fail2ban[1231]: Connection to /var/run/fail2ban/fail2ban.sock closed.
+Sep 25 23:59:55 web01 sshd[1230]: Connection closed by authenticator.
+Sep 25 23:59:54 web01 nginx[1229]: 192.168.1.100 - - [25/Sep/2026:23:59:54] "GET / HTTP/1.1" 200 1234
+Sep 25 23:59:53 web01 ufw[1228]: Refreshing rule set.

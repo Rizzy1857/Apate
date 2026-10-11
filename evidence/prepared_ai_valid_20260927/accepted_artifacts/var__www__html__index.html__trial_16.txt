@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to web01</title>
+</head>
+<body>
+<h1>Welcome to web01</h1>
+<p>This is a sample web page.</p>
+</body>
+</html>

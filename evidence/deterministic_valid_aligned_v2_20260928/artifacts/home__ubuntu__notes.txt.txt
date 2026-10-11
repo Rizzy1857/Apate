@@ -1,0 +1,4 @@
+Maintenance notes
+- Review nginx access logs after the next restart.
+- Confirm certificate renewal timer is active.
+- Apply routine package updates during the maintenance window.

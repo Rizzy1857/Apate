@@ -27,9 +27,11 @@ def build_report(events, run_metadata=None):
         else:
             unique[identity] = event
 
-    submissions, results, effects = {}, {}, {}
+    submissions, results, effects, requests = {}, {}, {}, {}
     origins = Counter()
+    request_origins = Counter()
     legacy_submissions = []
+    legacy_requests = []
     for identity, event in unique.items():
         metadata = event.get('metadata') or {}
         key = (event.get('session_id'), metadata.get('command_id'))
@@ -44,7 +46,18 @@ def build_report(events, run_metadata=None):
             submissions[key] = (identity, event)
         elif operation == 'ssh_command_result':
             results.setdefault(key, []).append((identity, metadata))
-        elif operation in ('read', 'write', 'create', 'unlink'):
+        elif operation in ('ssh_request', 'ssh_exec'):
+            request_id = metadata.get('request_id')
+            request_key = (event.get('session_id'), request_id)
+            request_origins[metadata.get('origin', 'unknown')] += 1
+            if not all(request_key):
+                legacy_requests.append(identity)
+                continue
+            if request_key in requests:
+                raise ValueError('Multiple SSH requests share a session/request identity')
+            requests[request_key] = (identity, event)
+        elif operation in ('read', 'write', 'create', 'unlink', 'mkdir', 'rmdir',
+                           'truncate', 'chmod', 'chown', 'utimens'):
             effects.setdefault(key, []).append((identity, event))
 
     commands = []
@@ -63,7 +76,12 @@ def build_report(events, run_metadata=None):
         commands.append({
             'session_id': key[0], 'command_id': key[1], 'origin': origin,
             'submission_event_id': identity, 'command': metadata.get('command'),
+            'claimed_username': metadata.get('claimed_username'),
+            'effective_username': metadata.get('effective_username'),
+            'identity_mismatch': metadata.get('identity_mismatch'),
+            'identity_policy': metadata.get('identity_policy'),
             'outcome': outcome, 'exit_status': result.get('exit_status'),
+            'stage_results': result.get('stage_results', []),
             'server_elapsed_seconds': duration if valid_duration else None,
             'result_event_ids': [item[0] for item in completions],
             'conflicting_results': len(completions) > 1,
@@ -77,6 +95,35 @@ def build_report(events, run_metadata=None):
         # Explicit nearest-rank convention, not an interpolated estimate.
         return measured[max(0, math.ceil(len(measured) * fraction) - 1)] if measured else None
 
+    reconciled_requests = []
+    for key, (identity, event) in sorted(requests.items()):
+        metadata = event.get('metadata') or {}
+        reconciled_requests.append({
+            'session_id': key[0], 'request_id': key[1],
+            'request_type': metadata.get(
+                'request_type', 'exec' if event.get('operation') == 'ssh_exec' else 'unknown'
+            ),
+            'origin': metadata.get('origin', 'unknown'),
+            'outcome': metadata.get('outcome', 'unknown'),
+            'accepted': metadata.get('accepted'),
+            'claimed_username': metadata.get('claimed_username'),
+            'effective_username': metadata.get('effective_username'),
+            'identity_mismatch': metadata.get('identity_mismatch'),
+            'identity_policy': metadata.get('identity_policy'),
+            'event_id': identity,
+            'command': metadata.get('command'),
+            'details': {name: value for name, value in metadata.items() if name not in {
+                'request_id', 'request_type', 'origin', 'outcome', 'accepted', 'command',
+                'claimed_username', 'effective_username', 'identity_mismatch',
+                'identity_policy'
+            }},
+        })
+
+    command_outcomes = Counter(c['outcome'] for c in commands
+                               if c['origin'] == 'participant')
+    request_outcomes = Counter(r['outcome'] for r in reconciled_requests
+                               if r['origin'] == 'participant')
+    interaction_outcomes = command_outcomes + request_outcomes
     canonical = json.dumps(sorted(unique.items()), sort_keys=True, separators=(',', ':'),
                            ensure_ascii=True, allow_nan=False).encode()
     return {
@@ -84,13 +131,16 @@ def build_report(events, run_metadata=None):
         'input_sha256': hashlib.sha256(canonical).hexdigest(),
         'unique_events': len(unique), 'duplicate_events_removed': duplicates,
         'submissions_by_origin': dict(origins), 'commands': commands,
+        'requests_by_origin': dict(request_origins), 'ssh_requests': reconciled_requests,
         'legacy_submission_event_ids': legacy_submissions,
+        'legacy_request_event_ids': legacy_requests,
         'unmatched_result_event_ids': [eid for key, items in results.items()
                                        if key not in submissions for eid, _ in items],
         'unmatched_file_event_ids': [eid for key, items in effects.items()
                                      if key not in submissions for eid, _ in items],
-        'participant_outcomes': dict(Counter(c['outcome'] for c in commands
-                                             if c['origin'] == 'participant')),
+        'participant_outcomes': dict(command_outcomes),
+        'participant_request_outcomes': dict(request_outcomes),
+        'participant_interaction_outcomes': dict(interaction_outcomes),
         'participant_server_latency': {
             'sample_count': len(measured), 'method': 'nearest_rank',
             'p50_seconds': percentile(.5), 'p95_seconds': percentile(.95),

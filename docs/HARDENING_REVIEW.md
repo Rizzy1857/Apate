@@ -1,5 +1,9 @@
 # Apate hardening review — 2026-09-09
 
+> Dated evidence snapshot, not current status or a release certificate. Subsequent work added a durable SQLite audit outbox, orphan recovery, stricter evidence outcomes, updated dependencies and other changes. Use [STATUS.md](STATUS.md) and [IMPLEMENTATION_BACKLOG.md](IMPLEMENTATION_BACKLOG.md) for current findings. Preserve the measurements below with their original scope rather than carrying their remaining-risk list forward unchanged.
+
+Reconciliation note: the historical diagram's bounded process audit queue is now a SQLite outbox; the historical “not crash-durable” and orphan-recovery gaps were subsequently addressed in code. Its redirection remediation did not cover the quote/descriptor defects now recorded as B1/B2. The native console remains in MVP scope, while Layer 0 and broad world simulation are deferred. These updates do not retroactively broaden the tests recorded below.
+
 ## 1. Architecture reconstructed
 
 Apate is a research SSH deception environment: a small Linux command emulator,

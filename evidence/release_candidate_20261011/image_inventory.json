@@ -1,0 +1,639 @@
+{
+  "application_files": {
+    "config/generation_policy.yaml": "9b967552d8349df4c4bb811831089d68418a13cdf99493b2d6e165ca57b24539",
+    "config/prometheus/prometheus.yml": "c6f4dcdd91e2906c61f23a5b21309de2e933a1b2fb4547e078698f6c3a1fd2e5",
+    "config/ubuntu.yaml": "302ffe87796fbacaf0d2decafde18b31e278862ee86764bac1351a6d0d5adda3",
+    "src/chronos/core/__init__.py": "f5425f0d375e15e57a9d536350d7b47abc2870286d1d88c20faeb30470644c98",
+    "src/chronos/core/audit_spool.py": "9a425a52b69e6121fe8e59fcc352bf459e7d01267c83dfb7bed35b942fb9b114",
+    "src/chronos/core/content.py": "089678990a5da0d1380a2025e7c5f345a3af33ed454859fb8c899f65b3340953",
+    "src/chronos/core/dashboard_metrics_exporter.py": "1f8b3b94c93366c97e2fc0ff553d03cc327442fba9a4c5c12146a2f620790f80",
+    "src/chronos/core/data_logger.py": "6a98a22ee72dcde57ab293e11c2a3b194f5af30ca1c98d01054ac4665392ef1f",
+    "src/chronos/core/database.py": "0f859514ca98a766192bb631ca02b97b1babd3aa55578aaead357b827001089b",
+    "src/chronos/core/lua/atomic_create.lua": "453765ca36b4aab28c5f44ecd509d6073f644705d63a626b833b297b0536c6c8",
+    "src/chronos/core/lua/atomic_mkdir.lua": "9ddb520260c2a3fe10534109154ab35332b371cd8280695194f9de7835616a06",
+    "src/chronos/core/lua/atomic_rmdir.lua": "39ae786e8f59a148661fd96b5902ddac2badbc1fef074cca815af48abd8af067",
+    "src/chronos/core/lua/atomic_unlink.lua": "a6ecd853bf4840bc8a846691d7513db2106e457b5cd54df659903db6c8dccbdb",
+    "src/chronos/core/main.py": "888d21da93fe98c36bc013e10b8f670e28b09911d1af9c7a8102493bf83ffbb2",
+    "src/chronos/core/main_with_ssh.py": "d175a7361571d69aa21c9cba7ac72a7fecf1834ff53ac145b92978b40d90d612",
+    "src/chronos/core/metrics.py": "6c3cf763b70cd452085b2c9e0ca3e8f7b18604b665bb2300715d83c4a8590361",
+    "src/chronos/core/models.py": "b228e9642ccb1198dd771e9be6c06b7c0d102730868c61d49eca158b2304e2dd",
+    "src/chronos/core/mutation_journal.py": "fc882236ef1b1bbe6811a9077811335a01137135bd977a33709a59b6d6d6f094",
+    "src/chronos/core/persistence.py": "b3d116c3c29098805048b113aef26aa84d1867105e420b2c9ca21387f474cc10",
+    "src/chronos/core/scoped_redis.py": "fbf6a48c1157f1133dac8d1ffa07a2359a9b5b19fd7edfe4eeff86140767b1cc",
+    "src/chronos/core/session_cleanup.py": "7046cde197ae5d44cd40d138281a935caa5d986997ee8fa51d24027e12a57773",
+    "src/chronos/core/state.py": "fcfea5dda4d7156b5fdd0d8115cd15d8c706ff2babd8cde401af4900a9b7765b",
+    "src/chronos/core/world_main.py": "0ee58775bbb28665ff2d54e57cf82d194b74b9ce861c15d3b2b5353e6c45cc61",
+    "src/chronos/gateway/__init__.py": "221c0f84655e52d6921005af2bb61e27f849a10b44a76bba8f65178c14a3cae9",
+    "src/chronos/gateway/containment.py": "5530bf392275b330cdfe7acaebe7c84c2539dec015de06fc5fb3d9c5c94e398c",
+    "src/chronos/gateway/dispatcher.py": "ad38670162f430144eb867d7258d44e58c910e56bda48ae441785fafb1b1c8cc",
+    "src/chronos/gateway/shell_parser.py": "db09d553e54c002b27d4ece3e80755fe92aae23390f5042084116a1c3eb158bd",
+    "src/chronos/gateway/ssh_server.py": "9a69412bde9997665365fee0dbaaf256565326169ecafb9d34b378f5cdea20d8",
+    "src/chronos/intelligence/__init__.py": "ec684ad8f486e967e4f742dc6c68367c71ed56fa03b38a1b58c8f013e572a50e",
+    "src/chronos/intelligence/artifact_policy.py": "162447d338eaf11ae68c3805e7bbec47f0b1f6b500750efc04cf4d064e05fe53",
+    "src/chronos/intelligence/deterministic_renderer.py": "16b00bfef0a831fd4fdfbf97988c0121301cb683aefa3bc315ee10df36e23df2",
+    "src/chronos/intelligence/fallback.py": "01a6d2d0ef69aca2c8ef4a44316b0a89f497b358e954775c2e9e047014a39d62",
+    "src/chronos/intelligence/inference.py": "063fbd095a998b5d4b867e238e53f3185dd19244effca02f2aab38d8ce32cbef",
+    "src/chronos/intelligence/orchestrator.py": "ce235ed4b641e3e3ce0c1b95109271727ab4138bdaf2e0dd20810dfddac93fb6",
+    "src/chronos/intelligence/prepared_artifacts.py": "7f9c102473db3a82dbc241507f38597142633f7c1a63cac005cbc772ee116b93",
+    "src/chronos/intelligence/prompt_builder.py": "9944ac2dcdbf03f27138a99a7c60c0c9d4f6aeedd6322cc4fa2cf842383bf310",
+    "src/chronos/intelligence/provenance.py": "362e70ef62523548c7342387595b7614ab869be244ffd638acb95c4389466cff",
+    "src/chronos/intelligence/ubuntu_profile.py": "033c9dbeb3675b4d7b0a04273e7292ac31715d9bdd4337bee4e93a8486803e61",
+    "src/chronos/intelligence/validator.py": "f83623ac9de77ea84927bcea774afb38b7f73f502548b0beeacbf73f8343159c",
+    "src/chronos/interface/fuse.py": "f6af9b61c8ba7a2fde64d999044aede07c92e455f179975091772977bed4b644",
+    "src/chronos/simulation/event_bus.py": "41e54d3eb8c2285606f188fa662d72b9627d7fe4a0a85004b4cde1b26dde09e7",
+    "src/chronos/simulation/logs/auth.py": "be3c3be771248ab6ff35fa7fdc9e6b14ca9d98d785d4c88136f2ede242ea7300",
+    "src/chronos/simulation/logs/journal.py": "9a49e87c7c05a1b27de07b3031acdad6a4cbac1ec6b9eadebcb821835016e070",
+    "src/chronos/simulation/logs/syslog.py": "324e32cb8ed4f9d39703292cb2ca9b5574f92ed86d19d6f3298710675f6b24de",
+    "src/chronos/simulation/metadata/aging.py": "d5d55c24a23ab9a56fe0fa2459e71298312f7a51f6812de68fbd0d046ac5a6bc",
+    "src/chronos/simulation/metadata/entropy.py": "8e601bdeb76146132658ecf2dea4782fdd7dac6917a54cbe2be0c1915ad2b4a6",
+    "src/chronos/simulation/metadata/profiles.py": "c4dd3c16f91cfbaf5ad4cd94a9226bf04c1629e0b0bad8e4aa4b0268de3cc2cb",
+    "src/chronos/simulation/orchestrator.py": "85f771113bba67d792f747499db32bdaa1dd664ed19306f7d2509ff72b00b37b",
+    "src/chronos/simulation/services/apt.py": "00d134ba8d60a4958141e4192f63892057efb9d28afeb943ad081d47a45f45d7",
+    "src/chronos/simulation/services/cron.py": "d50aee70ff084f5025c9d8a71102ac42eadeb0a70169035be83729c6bd1f94fa",
+    "src/chronos/simulation/services/user_simulator.py": "fd33a5642e664ead5447d788dfe8ab51b54bbfa3539c3be6c625ff3728e3819c",
+    "src/chronos/simulation/world_files.py": "c9f8064a014387aa8d19760a546326e12368b1cb309dd92b33a9be69e3858ec8",
+    "src/chronos/simulation/world_state.py": "0d2efc3e6d3f98835e3b1df1fffe61b31ad999bdd20ea398fe08916598082b1c",
+    "src/chronos/skills/__init__.py": "9e1d932418af811f8a6078240c301157741f6fbeb4e509fdb4f8d7649bd992d8",
+    "src/chronos/skills/command_analyzer.py": "e240fb72883f66a22c3abf7a344459c0c0e34a4de8c5d8ff017490f01ae7c645",
+    "src/chronos/skills/skill_detector.py": "5d3dcea512da481bcd1f54e7f3a8f1288b89d940e04fdf768f29316d3084cff3",
+    "src/chronos/skills/threat_library.py": "5c45e778b77325d8300c5f9f15b45dbcdfc7998d7740bdf5b9f086af997f902a",
+    "src/chronos/utils/inspect_provenance.py": "64d15351834dd50a5cede7fe747ada9f7dfcf6659dca72c4e7f683e88bb08385",
+    "src/chronos/watcher/__init__.py": "a8d90128322319e153594b465daee2f746db1c36475eba04df8337372d621d84",
+    "src/chronos/watcher/event_processor.py": "78225a089d562b018fa2bd6b49b7359b6b96cfcd29f5b91654053e3572005d3f",
+    "src/chronos/watcher/evidence_collector.py": "0983e61dd613f2d3b818135b418c3a84b5ad10dbf6257348a234e2a2464fe6b3",
+    "src/chronos/watcher/export_report.py": "2409185afa3edad73b3008ee05242963ee06845cc13ba69ac961ab15ad6122f7",
+    "src/chronos/watcher/log_streamer.py": "7c33b19a83dce97e1560183968473ae69ab91d546573b8f1e2aed6aa5b9e281a",
+    "src/chronos/watcher/research_report.py": "a868bff26c82c26cc50963451bd622d1aca796d1f6e91df3eb3204b4181a6129"
+  },
+  "architecture": "arm64",
+  "id": "sha256:37aedd15dbea3605ee60ca5a4e40e7ecf1e201472c114483a8bf02cb7ac314ee",
+  "os": "linux",
+  "os_packages": [
+    {
+      "architecture": "all",
+      "name": "adduser",
+      "version": "3.152"
+    },
+    {
+      "architecture": "arm64",
+      "name": "apt",
+      "version": "3.0.3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "base-files",
+      "version": "13.8+deb13u7"
+    },
+    {
+      "architecture": "arm64",
+      "name": "base-passwd",
+      "version": "3.6.7"
+    },
+    {
+      "architecture": "arm64",
+      "name": "bash",
+      "version": "5.2.37-2+b10"
+    },
+    {
+      "architecture": "arm64",
+      "name": "bsdutils",
+      "version": "1:2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "all",
+      "name": "ca-certificates",
+      "version": "20250419"
+    },
+    {
+      "architecture": "arm64",
+      "name": "coreutils",
+      "version": "9.7-3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "dash",
+      "version": "0.5.12-12"
+    },
+    {
+      "architecture": "all",
+      "name": "debconf",
+      "version": "1.5.91"
+    },
+    {
+      "architecture": "all",
+      "name": "debian-archive-keyring",
+      "version": "2025.1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "debianutils",
+      "version": "5.23.2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "diffutils",
+      "version": "1:3.10-4"
+    },
+    {
+      "architecture": "arm64",
+      "name": "dpkg",
+      "version": "1.22.22"
+    },
+    {
+      "architecture": "arm64",
+      "name": "findutils",
+      "version": "4.10.0-3"
+    },
+    {
+      "architecture": "all",
+      "name": "fuse",
+      "version": "3.17.2-3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "fuse3",
+      "version": "3.17.2-3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "gcc-14-base",
+      "version": "14.2.0-19"
+    },
+    {
+      "architecture": "arm64",
+      "name": "grep",
+      "version": "3.11-4+b1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "gzip",
+      "version": "1.13-1+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "hostname",
+      "version": "3.25"
+    },
+    {
+      "architecture": "all",
+      "name": "init-system-helpers",
+      "version": "1.69~deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libacl1",
+      "version": "2.3.2-2+b1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libapt-pkg7.0",
+      "version": "3.0.3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libattr1",
+      "version": "1:2.5.2-3"
+    },
+    {
+      "architecture": "all",
+      "name": "libaudit-common",
+      "version": "1:4.0.2-2+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libaudit1",
+      "version": "1:4.0.2-2+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libblkid1",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libbsd0",
+      "version": "0.12.2-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libbz2-1.0",
+      "version": "1.0.8-6"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libc-bin",
+      "version": "2.41-12+deb13u4"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libc6",
+      "version": "2.41-12+deb13u4"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libcap-ng0",
+      "version": "0.8.5-4+b1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libcap2",
+      "version": "1:2.75-10+deb13u1+b3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libcrypt1",
+      "version": "1:4.4.38-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libdb5.3t64",
+      "version": "5.3.28+dfsg2-9"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libdebconfclient0",
+      "version": "0.280"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libffi8",
+      "version": "3.4.8-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libfuse2t64",
+      "version": "2.9.9-9"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libfuse3-4",
+      "version": "3.17.2-3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libgcc-s1",
+      "version": "14.2.0-19"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libgdbm6t64",
+      "version": "1.24-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libgmp10",
+      "version": "2:6.3.0+dfsg-3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libhogweed6t64",
+      "version": "3.10.1-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "liblastlog2-2",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "liblz4-1",
+      "version": "1.10.0-4"
+    },
+    {
+      "architecture": "arm64",
+      "name": "liblzma5",
+      "version": "5.8.1-1+deb13u2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libmd0",
+      "version": "1.1.0-2+b1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libmount1",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libncursesw6",
+      "version": "6.5+20250216-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libnettle8t64",
+      "version": "3.10.1-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libpam-modules",
+      "version": "1.7.0-5"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libpam-modules-bin",
+      "version": "1.7.0-5"
+    },
+    {
+      "architecture": "all",
+      "name": "libpam-runtime",
+      "version": "1.7.0-5"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libpam0g",
+      "version": "1.7.0-5"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libpcre2-8-0",
+      "version": "10.46-1~deb13u3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libreadline8t64",
+      "version": "8.2-6"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libseccomp2",
+      "version": "2.6.0-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libselinux1",
+      "version": "3.8.1-1"
+    },
+    {
+      "architecture": "all",
+      "name": "libsemanage-common",
+      "version": "3.8.1-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libsemanage2",
+      "version": "3.8.1-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libsepol2",
+      "version": "3.8.1-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libsmartcols1",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libsqlite3-0",
+      "version": "3.46.1-7+deb13u2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libssl3t64",
+      "version": "3.5.7-1~deb13u3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libstdc++6",
+      "version": "14.2.0-19"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libsystemd0",
+      "version": "257.13-1~deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libtinfo6",
+      "version": "6.5+20250216-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libudev1",
+      "version": "257.13-1~deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libuuid1",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libxxhash0",
+      "version": "0.8.3-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "libzstd1",
+      "version": "1.5.7+dfsg-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "login",
+      "version": "1:4.16.0-2+really2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "all",
+      "name": "login.defs",
+      "version": "1:4.17.4-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "mawk",
+      "version": "1.3.4.20250131-1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "mount",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "all",
+      "name": "ncurses-base",
+      "version": "6.5+20250216-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "ncurses-bin",
+      "version": "6.5+20250216-2"
+    },
+    {
+      "architecture": "all",
+      "name": "netbase",
+      "version": "6.5"
+    },
+    {
+      "architecture": "arm64",
+      "name": "openssl",
+      "version": "3.5.7-1~deb13u3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "openssl-provider-legacy",
+      "version": "3.5.7-1~deb13u3"
+    },
+    {
+      "architecture": "arm64",
+      "name": "passwd",
+      "version": "1:4.17.4-2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "perl-base",
+      "version": "5.40.1-6+deb13u1"
+    },
+    {
+      "architecture": "all",
+      "name": "readline-common",
+      "version": "8.2-6"
+    },
+    {
+      "architecture": "arm64",
+      "name": "sed",
+      "version": "4.9-2+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "sqv",
+      "version": "1.3.0-3+b2"
+    },
+    {
+      "architecture": "arm64",
+      "name": "sysvinit-utils",
+      "version": "3.14-4"
+    },
+    {
+      "architecture": "arm64",
+      "name": "tar",
+      "version": "1.35+dfsg-3.1"
+    },
+    {
+      "architecture": "all",
+      "name": "tzdata",
+      "version": "2026c-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "util-linux",
+      "version": "2.41.5-0+deb13u1"
+    },
+    {
+      "architecture": "arm64",
+      "name": "zlib1g",
+      "version": "1:1.3.dfsg+really1.3.1-1+b1"
+    }
+  ],
+  "python_distributions": [
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "bcrypt",
+      "version": "5.0.0"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22"
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2"
+    },
+    {
+      "name": "click",
+      "version": "8.3.3"
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6"
+    },
+    {
+      "name": "cryptography",
+      "version": "50.0.0"
+    },
+    {
+      "name": "fusepy",
+      "version": "3.0.1"
+    },
+    {
+      "name": "idna",
+      "version": "3.20"
+    },
+    {
+      "name": "invoke",
+      "version": "3.0.3"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3"
+    },
+    {
+      "name": "paramiko",
+      "version": "5.0.0"
+    },
+    {
+      "name": "prometheus-client",
+      "version": "0.19.0"
+    },
+    {
+      "name": "psycopg2-binary",
+      "version": "2.9.11"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.11"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.10.4"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.27.2"
+    },
+    {
+      "name": "PyNaCl",
+      "version": "1.6.2"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.8.2"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.1"
+    },
+    {
+      "name": "redis",
+      "version": "5.0.1"
+    },
+    {
+      "name": "requests",
+      "version": "2.33.0"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0"
+    }
+  ],
+  "reference": "apate-release:20261011",
+  "repo_digests": [
+    "apate-release@sha256:37aedd15dbea3605ee60ca5a4e40e7ecf1e201472c114483a8bf02cb7ac314ee"
+  ],
+  "size_bytes": 385157620
+}

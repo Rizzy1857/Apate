@@ -2,14 +2,32 @@
 import json
 import os
 from pathlib import Path
+import re
+import statistics
 import subprocess
 import time
 import uuid
+import hashlib
+from datetime import datetime, timezone
 
 root = Path(__file__).resolve().parents[2]
 prefix = 'apate-load-' + uuid.uuid4().hex[:10]
-image = prefix + ':test'
+image = os.environ.get('APATE_LOAD_IMAGE', prefix + ':test')
+owns_image = 'APATE_LOAD_IMAGE' not in os.environ
 names = {key: prefix + '-' + key for key in ('net', 'redis', 'pg', 'core', 'clients')}
+
+
+def bytes_value(value):
+    """Parse the usage half of Docker's human-readable memory field."""
+    match = re.fullmatch(r'\s*([0-9.]+)\s*([KMGT]?i?B)\s*', value)
+    if not match:
+        raise ValueError(f'Unrecognized Docker size: {value!r}')
+    scales = {
+        'B': 1, 'KB': 1000, 'MB': 1000 ** 2, 'GB': 1000 ** 3,
+        'KiB': 1024, 'MiB': 1024 ** 2, 'GiB': 1024 ** 3,
+        'TiB': 1024 ** 4,
+    }
+    return float(match.group(1)) * scales[match.group(2)]
 
 
 def docker(*args, check=True):
@@ -28,10 +46,26 @@ def main():
     fault_started = None
     fault_recovered = False
     fault = os.environ.get('APATE_LOAD_FAULT', '')
+    output_dir = Path(os.environ.get('APATE_LOAD_OUTPUT', str(root / '.pytest_cache' / prefix)))
+    output_dir.mkdir(parents=True, exist_ok=False)
+    def save(name, value):
+        (output_dir / name).write_text(json.dumps(value, indent=2) + '\n')
+    started_at = datetime.now(timezone.utc).isoformat()
+    source_files = sorted(p for folder in ('src', 'config', 'tests/integration')
+                          for p in (root / folder).rglob('*')
+                          if p.is_file() and not {'target', '__pycache__'}.intersection(p.parts))
+    source_hashes = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
+                     for p in source_files}
+    save('source_hashes.json', source_hashes)
     if fault not in ('', 'postgres', 'redis', 'core'):
         raise ValueError('APATE_LOAD_FAULT must be empty, postgres, redis or core')
     try:
-        docker('build', '-q', '-t', image, str(root))
+        if owns_image:
+            docker('build', '-q', '-t', image, str(root))
+        save('run.json', {'started_at': started_at, 'names': names,
+                         'image_id': docker('image', 'inspect', '--format', '{{.Id}}', image),
+                         'parameters': {key: value for key, value in os.environ.items()
+                                        if key.startswith('APATE_LOAD_')}})
         docker('network', 'create', '--internal', names['net'])
         docker('run', '-d', '--name', names['redis'], '--network', names['net'],
                'redis:7-alpine', 'redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'noeviction')
@@ -56,6 +90,7 @@ def main():
                '--device', '/dev/fuse', '--security-opt', 'apparmor=unconfined',
                '--security-opt', 'no-new-privileges:true', '--pids-limit', '192',
                '--memory', '2g', '--cpus', '2', '-e', 'REDIS_HOST=' + names['redis'],
+               '-e', 'APATE_SESSION_ORIGIN=scripted_test',
                '-e', 'POSTGRES_HOST=' + names['pg'], image, *diagnostic_command)
         for _ in range(60):
             mounted = docker('exec', names['core'], 'python3', '-c',
@@ -69,11 +104,21 @@ def main():
             '--network', names['net'], '-e', 'APATE_CORE_HOST=' + names['core'],
             '-e', 'REDIS_HOST=' + names['redis'], '-e', 'POSTGRES_HOST=' + names['pg'],
             '-e', 'APATE_LOAD_SECONDS=' + os.environ.get('APATE_LOAD_SECONDS', '120'),
+            '-e', 'APATE_LOAD_CLIENTS=' + os.environ.get('APATE_LOAD_CLIENTS', '32'),
+            '-e', 'APATE_LOAD_MAX_COMMANDS=' + os.environ.get('APATE_LOAD_MAX_COMMANDS', '900'),
+            '-e', 'APATE_LOAD_INTERVAL=' + os.environ.get('APATE_LOAD_INTERVAL', '0.2'),
+            '-e', 'APATE_LOAD_ROTATE_SECONDS=' + os.environ.get('APATE_LOAD_ROTATE_SECONDS', '3300'),
             '-e', 'APATE_LOAD_FAULT=' + fault,
             '-v', str(root / 'tests') + ':/app/tests:ro', image,
             'python3', 'tests/integration/' + ('verify_restart.py' if fault in ('redis', 'core') else 'verify_load.py')], stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True)
-        print(json.dumps({'started': names, 'duration': os.environ.get('APATE_LOAD_SECONDS', '120')}), flush=True)
+        print(json.dumps({
+            'started': names,
+            'duration': os.environ.get('APATE_LOAD_SECONDS', '120'),
+            'clients': os.environ.get('APATE_LOAD_CLIENTS', '32'),
+            'max_commands_per_client': os.environ.get('APATE_LOAD_MAX_COMMANDS', '900'),
+            'command_interval_seconds': os.environ.get('APATE_LOAD_INTERVAL', '0.2'),
+        }), flush=True)
         while process.poll() is None:
             if fault and fault_started is None:
                 count = docker('exec', names['pg'], 'psql', '-U', 'chronos', '-Atc',
@@ -107,17 +152,52 @@ def main():
             sample = docker('stats', '--no-stream', '--format', '{{json .}}', names['core'], check=False)
             if sample:
                 samples.append(json.loads(sample))
+                with (output_dir / 'samples.jsonl').open('a') as stream:
+                    stream.write(json.dumps({'at': datetime.now(timezone.utc).isoformat(),
+                                             **samples[-1]}) + '\n')
                 print(sample, flush=True)
             time.sleep(5)
         output = process.communicate()[0]
+        (output_dir / 'client.log').write_text(output)
         print(output, flush=True)
         assert process.returncode == 0, 'Load client failed'
         if fault:
             assert fault_recovered, 'Fault was not injected and recovered during the load test'
         state = json.loads(docker('inspect', '--format', '{{json .State}}', names['core']))
         assert state['Running'] and not state['OOMKilled'], state
-        print(json.dumps({'runtime_state': state, 'samples': len(samples), 'result': 'PASS'}), flush=True)
+        memory = [bytes_value(sample['MemUsage'].split('/')[0]) for sample in samples]
+        pids = [int(sample['PIDs']) for sample in samples]
+        window = min(12, len(memory))
+        memory_start = statistics.median(memory[:window])
+        memory_end = statistics.median(memory[-window:])
+        # Freeze the soak interpretation before the run: tolerate allocator/cache
+        # settling, but not more than 128 MiB median growth across the observation.
+        allowed_growth = 128 * 1024 * 1024
+        assert memory_end <= memory_start + allowed_growth, {
+            'memory_start': memory_start, 'memory_end': memory_end,
+            'allowed_growth': allowed_growth,
+        }
+        resource_summary = {
+            'samples': len(samples),
+            'memory_start_median_bytes': memory_start,
+            'memory_end_median_bytes': memory_end,
+            'memory_max_bytes': max(memory),
+            'pids_start_median': statistics.median(pids[:window]),
+            'pids_end_median': statistics.median(pids[-window:]),
+            'pids_max': max(pids),
+            'allowed_memory_growth_bytes': allowed_growth,
+        }
+        print(json.dumps({'runtime_state': state, 'resources': resource_summary,
+                          'result': 'PASS'}), flush=True)
+        save('result.json', {'result': 'PASS', 'runtime_state': state,
+                             'resources': resource_summary, 'started_at': started_at,
+                             'finished_at': datetime.now(timezone.utc).isoformat()})
+    except BaseException as exc:
+        save('result.json', {'result': 'FAIL', 'error': repr(exc), 'started_at': started_at,
+                             'finished_at': datetime.now(timezone.utc).isoformat()})
+        raise
     finally:
+        (output_dir / 'core.log').write_text(docker('logs', names['core'], check=False))
         if pg_paused:
             docker('unpause', names['pg'], check=False)
         if process is not None and process.poll() not in (0, None):
@@ -137,6 +217,8 @@ def main():
                         break  # Full diagnostics remain in the retained file.
         docker('rm', '-fv', names['clients'], names['core'], names['redis'], names['pg'], check=False)
         docker('network', 'rm', names['net'], check=False)
+        if owns_image:
+            docker('image', 'rm', image, check=False)
 
 
 if __name__ == '__main__':

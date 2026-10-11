@@ -32,6 +32,44 @@ def test_dispatcher_env_vars():
     assert code == 0
     assert out.strip() == "hello"
 
+
+def test_quotes_preserve_literals_and_expansion_context():
+    parser = ShellParser()
+    dispatcher = ASTDispatcher(SessionEnvironment(username="testuser"))
+
+    assert dispatcher.execute_sequence(parser.parse("echo ';'")) == (0, ";\n")
+    assert dispatcher.execute_sequence(parser.parse("echo '$HOME'")) == (0, "$HOME\n")
+    assert dispatcher.execute_sequence(parser.parse('echo "x:$HOME"')) == (
+        0, "x:/home/testuser\n"
+    )
+    assert dispatcher.execute_sequence(parser.parse(r"echo \$HOME")) == (0, "$HOME\n")
+
+
+def test_stderr_redirection_is_not_stdout_redirection(tmp_path):
+    (tmp_path / "home" / "testuser").mkdir(parents=True)
+    env = SessionEnvironment(username="testuser", honeypot_root=str(tmp_path))
+    dispatcher = ASTDispatcher(env)
+    parser = ShellParser()
+
+    code, output = dispatcher.execute_sequence(parser.parse("missing 2>error.txt"))
+    assert (code, output) == (127, "")
+    assert (tmp_path / "home" / "testuser" / "error.txt").read_text() == (
+        "bash: missing: command not found\n"
+    )
+
+
+@pytest.mark.parametrize("command", ["echo hi &&", "|| echo hi", "echo hi |", "echo hi &"])
+def test_malformed_or_unsupported_control_operators_are_rejected(command):
+    with pytest.raises(ParserError):
+        ShellParser().parse(command)
+
+
+def test_descriptor_duplication_is_rejected_explicitly():
+    with pytest.raises(ParserError, match="file descriptor duplication not supported"):
+        ShellParser().parse("echo hi 2>&1")
+    with pytest.raises(ParserError, match="file descriptor 12 is not supported"):
+        ShellParser().parse("echo hi 12>file")
+
 def test_dispatcher_cd():
     env = SessionEnvironment(username="testuser")
     dispatcher = ASTDispatcher(env)

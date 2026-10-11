@@ -1,0 +1,7 @@
+{
+  "accepted": 180,
+  "artifact_type": "deterministic_evaluation",
+  "evaluation_sha256": "3bdfd050688fbdc675589e07c45648c6d3b1b476098d7c7baf8150d6701db5bb",
+  "schema_version": 1,
+  "trials": 180
+}

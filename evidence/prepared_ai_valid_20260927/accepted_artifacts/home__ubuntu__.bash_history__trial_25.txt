@@ -1,0 +1,17 @@
+root@web01:/# curl -s https://example.com
+curl 8.5.0 (Little Brother) built for x86_64 (64 bit) on a linux system
+Copyright (C) 1998-2023, bsh4linux.com
+License: GPL
+
+root@web01:/# git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to restore working directory files)
+  (use "git reset <file>..." to reset working directory files)
+  (use "git restore --cached <file>..." to restore working directory files)
+Unstaged changes include:
+  ...
+root@web01:/# ssh -T user@web01
+OpenSSH_9.6p1 Ubuntu-10ubuntu2.1, OpenSSL 1.1.1n  10Mar2021
+root@web01:/#

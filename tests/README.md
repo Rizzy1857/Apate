@@ -1,126 +1,52 @@
-# Chronos Test Suite
+# Chronos test suite
 
-This directory contains the validation, verification, and integration scripts for the Chronos framework.
+Current release procedure: [docs/VERIFICATION_PLAN.md](../docs/VERIFICATION_PLAN.md). Test presence is not proof of a release gate.
 
-## Structure
+## Default regression
 
-```text
-tests/
-├── validation/    Core system validation and attack simulation
-├── verification/  Phase-by-phase implementation checks
-└── integration/   End-to-end demos
-```
-
-## Running Tests
-
-### Quick start
-
-From the repository root:
+From the repository root, with pinned dependencies and `redis-server` available:
 
 ```bash
-make validate-core
-make verify
+PYTHONPATH=src pytest -q --tb=short
+cargo check --manifest-path src/chronos/dashboard/Cargo.toml
 ```
 
-### Validation tests
+The Python fixtures launch disposable Redis over a Unix socket. Tests named `test_concurrency.py` and `test_crash_recovery.py` are skipped unless `--legacy-infrastructure` is supplied because they can mutate external services. Inspect them and their target configuration before opting in.
 
-The validation scripts focus on core infrastructure and behavior under load.
+Current directories:
+
+- `tests/validation`: default behavioral, hardening, recovery, world-state and reporting regressions plus opt-in legacy tests.
+- `tests/verification`: older phase-oriented scripts and manifest/evidence checks. They remain useful but are not the current phase governance model.
+- `tests/integration`: demos, opt-in local-model checks, and Linux/Docker/FUSE recovery/load paths.
+
+`tests/integration/run_linux.sh` builds a uniquely tagged test image and creates uniquely named disposable Redis/PostgreSQL/core containers and an internal network. Review it before execution. It requires Docker with Linux FUSE/capability support and does not cover all G1–G7. The script removes its containers, network and test image on exit.
+
+Live-model tests require explicit environment opt-ins and an installed model. Record model digest, cache state, hardware and all rejected/fallback trials. Demos illustrate flows; they do not establish attack realism, detection quality or comparison with Cowrie.
+
+For the optional valid-only prepared-artifact engineering comparison, use fresh output directories:
 
 ```bash
-cd tests/validation
-python3 validate_core.py
-python3 test_real_attack.py
-python3 test_concurrency.py
-python3 test_crash_recovery.py
-python3 test_cowrie_comparison.py
-python3 test_stability.py --duration-mins 60
+PYTHONPATH=src python3 tests/integration/evaluate_prepared_ai.py \
+  --output evidence/prepared_ai_valid_RUN_ID --trials 30 \
+  --reference-epoch 1790467200
+PYTHONPATH=src python3 tests/integration/evaluate_deterministic.py \
+  --output evidence/deterministic_valid_RUN_ID --trials 30 \
+  --reference-epoch 1790467200
 ```
 
-### Verification tests
+The AI harness checkpoints each trial, retains rejected attempts and records immutable model digests. Neither harness overwrites an existing run.
 
-The verification scripts confirm that each major subsystem behaves as expected.
+On 2026-10-11, the default suite passed 244 tests with 7 explicit infrastructure skips; the locked native dashboard suite passed 4 tests. See [STATUS.md](../docs/STATUS.md) for release scope and the evidence index for the frozen candidate.
+
+For a deterministic one-hour capacity run, build the candidate image first and use a new evidence directory:
 
 ```bash
-cd tests/verification
-python3 verify_phase1.py
-python3 verify_phase2.py
-python3 verify_phase3.py
-python3 verify_phase4.py
+APATE_LOAD_IMAGE=apate-release:20261011 APATE_LOAD_SECONDS=3600 \
+  APATE_LOAD_CLIENTS=8 APATE_LOAD_MAX_COMMANDS=0 APATE_LOAD_INTERVAL=4 \
+  APATE_LOAD_OUTPUT=evidence/soak_NEW_RUN \
+  python3 tests/integration/run_load.py
 ```
 
-### Integration demos
+Keep the host awake (on macOS, prefix the Python command with `caffeinate -i`). Eight client slots rotate connections after 800 commands or 3,300 seconds, before the server's 1,000-command/one-hour limits. Rotation is recorded, and unexpected disconnects still fail. The verdict reconciles elapsed duration, submissions, distinct successful results, projected command counts, final summaries and namespace cleanup. The output directory retains source hashes, image identity, raw samples, client/core logs and the result. An interrupted process without a passing result is not a completed run. A supplied image is retained; automatically built test images and disposable containers/networks are removed.
 
-The integration demos show the system in a more complete flow.
-
-```bash
-cd tests/integration
-python3 demo_standalone.py
-python3 demo_integration.py
-```
-
-## What Each Suite Checks
-
-### Validation
-
-- Redis and PostgreSQL connectivity
-- State consistency and atomic operations
-- Performance baselines
-- Crash recovery behavior
-- Comparison against Cowrie
-- Long-running stability
-- Real attack detection coverage
-
-### Verification
-
-- State hypervisor behavior
-- FUSE filesystem behavior
-- LLM and persona handling
-- Gateway, watcher, and skills layers
-
-### Integration
-
-- Combined system behavior
-- Full attack-session walkthroughs
-- Realistic multi-component flows
-
-## Requirements
-
-### Infrastructure
-
-- Docker and Docker Compose
-- Redis via Docker
-- PostgreSQL via Docker
-
-Start the stack with:
-
-```bash
-make up
-```
-
-### Python packages
-
-The scripts use the dependencies listed in `requirements.txt`, including:
-
-- redis
-- psycopg2-binary
-- paramiko
-- pydantic
-- python-dateutil
-
-## Validation Status
-
-- Core validation: passed in the current baseline.
-- Implementation verification: all four phases are represented.
-- Attack simulation: provides a realistic detection benchmark.
-
-See [docs/STATUS.md](../docs/STATUS.md) for the broader project state and [docs/ROADMAP.md](../docs/ROADMAP.md) for the next phase of work.
-
-## Extending the Suite
-
-When adding a new test, place it where the intent is clearest:
-
-- `validation/` for infrastructure and behavior checks.
-- `verification/` for component-level correctness.
-- `integration/` for end-to-end demonstrations.
-
-The categories are simple on purpose. A test should earn its filename.
+Add tests around externally observable contracts and failure boundaries. Avoid tests that merely duplicate implementation. Keep disruptive tests on explicitly disposable targets.

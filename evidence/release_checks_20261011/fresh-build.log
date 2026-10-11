@@ -1,0 +1,391 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 968B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim-trixie@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534
+#2 DONE 1.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 292B done
+#3 DONE 0.0s
+
+#4 [1/8] FROM docker.io/library/python:3.11-slim-trixie@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534
+#4 resolve docker.io/library/python:3.11-slim-trixie@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 0.0s done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 359.10kB 0.0s done
+#5 DONE 0.0s
+
+#6 [2/8] RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends     fuse     libfuse2     libseccomp2     && rm -rf /var/lib/apt/lists/*
+#6 0.649 Get:1 http://deb.debian.org/debian trixie InRelease [140 kB]
+#6 0.840 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#6 0.893 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#6 0.953 Get:4 http://deb.debian.org/debian trixie/main arm64 Packages [9614 kB]
+#6 3.494 Get:5 http://deb.debian.org/debian trixie-updates/main arm64 Packages [4424 B]
+#6 3.537 Get:6 http://deb.debian.org/debian-security trixie-security/main arm64 Packages [266 kB]
+#6 4.046 Fetched 10.1 MB in 4s (2554 kB/s)
+#6 4.046 Reading package lists...
+#6 4.289 Reading package lists...
+#6 4.530 Building dependency tree...
+#6 4.587 Reading state information...
+#6 4.605 Calculating upgrade...
+#6 4.724 The following packages will be upgraded:
+#6 4.724   base-files bash gzip libaudit-common libaudit1 libc-bin libc6 libcap2
+#6 4.724   liblzma5 libpcre2-8-0 libsqlite3-0 libssl3t64 openssl
+#6 4.724   openssl-provider-legacy perl-base tzdata
+#6 4.819 16 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#6 4.819 Need to get 12.6 MB of archives.
+#6 4.819 After this operation, 150 kB of additional disk space will be used.
+#6 4.819 Get:1 http://deb.debian.org/debian trixie/main arm64 libc6 arm64 2.41-12+deb13u4 [2484 kB]
+#6 5.231 Get:2 http://deb.debian.org/debian trixie/main arm64 base-files arm64 13.8+deb13u7 [88.2 kB]
+#6 5.238 Get:3 http://deb.debian.org/debian trixie/main arm64 bash arm64 5.2.37-2+b10 [1456 kB]
+#6 7.882 Get:4 http://deb.debian.org/debian trixie/main arm64 gzip arm64 1.13-1+deb13u1 [135 kB]
+#6 8.219 Get:5 http://deb.debian.org/debian trixie/main arm64 perl-base arm64 5.40.1-6+deb13u1 [1529 kB]
+#6 12.08 Get:6 http://deb.debian.org/debian trixie/main arm64 libc-bin arm64 2.41-12+deb13u4 [552 kB]
+#6 13.17 Get:7 http://deb.debian.org/debian trixie/main arm64 libaudit-common all 1:4.0.2-2+deb13u1 [12.8 kB]
+#6 13.19 Get:8 http://deb.debian.org/debian trixie/main arm64 libaudit1 arm64 1:4.0.2-2+deb13u1 [56.9 kB]
+#6 13.27 Get:9 http://deb.debian.org/debian trixie/main arm64 libcap2 arm64 1:2.75-10+deb13u1+b3 [28.6 kB]
+#6 13.31 Get:10 http://deb.debian.org/debian-security trixie-security/main arm64 liblzma5 arm64 5.8.1-1+deb13u2 [303 kB]
+#6 13.71 Get:11 http://deb.debian.org/debian-security trixie-security/main arm64 libpcre2-8-0 arm64 10.46-1~deb13u3 [263 kB]
+#6 14.12 Get:12 http://deb.debian.org/debian trixie/main arm64 libsqlite3-0 arm64 3.46.1-7+deb13u2 [854 kB]
+#6 16.59 Get:13 http://deb.debian.org/debian-security trixie-security/main arm64 openssl-provider-legacy arm64 3.5.7-1~deb13u3 [314 kB]
+#6 17.04 Get:14 http://deb.debian.org/debian-security trixie-security/main arm64 libssl3t64 arm64 3.5.7-1~deb13u3 [2770 kB]
+#6 21.78 Get:15 http://deb.debian.org/debian trixie/main arm64 tzdata all 2026c-0+deb13u1 [264 kB]
+#6 22.69 Get:16 http://deb.debian.org/debian-security trixie-security/main arm64 openssl arm64 3.5.7-1~deb13u3 [1473 kB]
+#6 25.00 debconf: unable to initialize frontend: Dialog
+#6 25.00 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 25.00 debconf: falling back to frontend: Readline
+#6 25.00 debconf: unable to initialize frontend: Readline
+#6 25.00 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/aarch64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 16.)
+#6 25.00 debconf: falling back to frontend: Teletype
+#6 25.00 debconf: unable to initialize frontend: Teletype
+#6 25.00 debconf: (This frontend requires a controlling tty.)
+#6 25.00 debconf: falling back to frontend: Noninteractive
+#6 25.24 Preconfiguring packages ...
+#6 25.27 Fetched 12.6 MB in 20s (623 kB/s)
+#6 25.29 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5649 files and directories currently installed.)
+#6 25.29 Preparing to unpack .../libc6_2.41-12+deb13u4_arm64.deb ...
+#6 25.31 debconf: unable to initialize frontend: Dialog
+#6 25.31 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 25.31 debconf: falling back to frontend: Readline
+#6 25.32 debconf: unable to initialize frontend: Readline
+#6 25.32 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/aarch64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+#6 25.32 debconf: falling back to frontend: Teletype
+#6 25.32 debconf: unable to initialize frontend: Teletype
+#6 25.32 debconf: (This frontend requires a controlling tty.)
+#6 25.32 debconf: falling back to frontend: Noninteractive
+#6 25.33 Unpacking libc6:arm64 (2.41-12+deb13u4) over (2.41-12+deb13u3) ...
+#6 25.64 Setting up libc6:arm64 (2.41-12+deb13u4) ...
+#6 25.67 debconf: unable to initialize frontend: Dialog
+#6 25.67 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 25.67 debconf: falling back to frontend: Readline
+#6 25.67 debconf: unable to initialize frontend: Readline
+#6 25.67 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/aarch64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+#6 25.67 debconf: falling back to frontend: Teletype
+#6 25.67 debconf: unable to initialize frontend: Teletype
+#6 25.67 debconf: (This frontend requires a controlling tty.)
+#6 25.67 debconf: falling back to frontend: Noninteractive
+#6 25.69 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5649 files and directories currently installed.)
+#6 25.69 Preparing to unpack .../base-files_13.8+deb13u7_arm64.deb ...
+#6 25.70 Unpacking base-files (13.8+deb13u7) over (13.8+deb13u6) ...
+#6 25.72 Setting up base-files (13.8+deb13u7) ...
+#6 25.72 Installing new version of config file /etc/debian_version ...
+#6 25.74 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 25.74 Preparing to unpack .../bash_5.2.37-2+b10_arm64.deb ...
+#6 25.74 update-alternatives: warning: alternative /usr/share/man/man7/bash-builtins.7.gz (part of link group builtins.7.gz) doesn't exist; removing from list of alternatives
+#6 25.74 update-alternatives: warning: /etc/alternatives/builtins.7.gz is dangling; it will be updated with best choice
+#6 25.75 Unpacking bash (5.2.37-2+b10) over (5.2.37-2+b9) ...
+#6 25.81 Setting up bash (5.2.37-2+b10) ...
+#6 25.81 update-alternatives: error: alternative path /usr/share/man/man7/bash-builtins.7.gz doesn't exist
+#6 25.82 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 25.82 Preparing to unpack .../gzip_1.13-1+deb13u1_arm64.deb ...
+#6 25.83 Unpacking gzip (1.13-1+deb13u1) over (1.13-1) ...
+#6 25.85 Setting up gzip (1.13-1+deb13u1) ...
+#6 25.86 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 25.87 Preparing to unpack .../perl-base_5.40.1-6+deb13u1_arm64.deb ...
+#6 25.87 Unpacking perl-base (5.40.1-6+deb13u1) over (5.40.1-6) ...
+#6 26.25 Setting up perl-base (5.40.1-6+deb13u1) ...
+#6 26.26 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5659 files and directories currently installed.)
+#6 26.26 Preparing to unpack .../libc-bin_2.41-12+deb13u4_arm64.deb ...
+#6 26.26 Unpacking libc-bin (2.41-12+deb13u4) over (2.41-12+deb13u3) ...
+#6 26.30 Setting up libc-bin (2.41-12+deb13u4) ...
+#6 26.32 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5659 files and directories currently installed.)
+#6 26.32 Preparing to unpack .../libaudit-common_1%3a4.0.2-2+deb13u1_all.deb ...
+#6 26.32 Unpacking libaudit-common (1:4.0.2-2+deb13u1) over (1:4.0.2-2) ...
+#6 26.33 Setting up libaudit-common (1:4.0.2-2+deb13u1) ...
+#6 26.34 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5659 files and directories currently installed.)
+#6 26.34 Preparing to unpack .../libaudit1_1%3a4.0.2-2+deb13u1_arm64.deb ...
+#6 26.34 Unpacking libaudit1:arm64 (1:4.0.2-2+deb13u1) over (1:4.0.2-2+b2) ...
+#6 26.36 Setting up libaudit1:arm64 (1:4.0.2-2+deb13u1) ...
+#6 26.36 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.37 Preparing to unpack .../libcap2_1%3a2.75-10+deb13u1+b3_arm64.deb ...
+#6 26.38 Unpacking libcap2:arm64 (1:2.75-10+deb13u1+b3) over (1:2.75-10+deb13u1+b1) ...
+#6 26.40 Setting up libcap2:arm64 (1:2.75-10+deb13u1+b3) ...
+#6 26.41 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.42 Preparing to unpack .../liblzma5_5.8.1-1+deb13u2_arm64.deb ...
+#6 26.42 Unpacking liblzma5:arm64 (5.8.1-1+deb13u2) over (5.8.1-1+deb13u1) ...
+#6 26.43 Setting up liblzma5:arm64 (5.8.1-1+deb13u2) ...
+#6 26.44 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.45 Preparing to unpack .../libpcre2-8-0_10.46-1~deb13u3_arm64.deb ...
+#6 26.45 Unpacking libpcre2-8-0:arm64 (10.46-1~deb13u3) over (10.46-1~deb13u1) ...
+#6 26.47 Setting up libpcre2-8-0:arm64 (10.46-1~deb13u3) ...
+#6 26.48 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.48 Preparing to unpack .../libsqlite3-0_3.46.1-7+deb13u2_arm64.deb ...
+#6 26.48 Unpacking libsqlite3-0:arm64 (3.46.1-7+deb13u2) over (3.46.1-7+deb13u1) ...
+#6 26.52 Setting up libsqlite3-0:arm64 (3.46.1-7+deb13u2) ...
+#6 26.53 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.53 Preparing to unpack .../openssl-provider-legacy_3.5.7-1~deb13u3_arm64.deb ...
+#6 26.53 Unpacking openssl-provider-legacy (3.5.7-1~deb13u3) over (3.5.7-1~deb13u2) ...
+#6 26.54 Setting up openssl-provider-legacy (3.5.7-1~deb13u3) ...
+#6 26.55 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.55 Preparing to unpack .../libssl3t64_3.5.7-1~deb13u3_arm64.deb ...
+#6 26.56 Unpacking libssl3t64:arm64 (3.5.7-1~deb13u3) over (3.5.7-1~deb13u2) ...
+#6 26.65 Setting up libssl3t64:arm64 (3.5.7-1~deb13u3) ...
+#6 26.66 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 26.66 Preparing to unpack .../tzdata_2026c-0+deb13u1_all.deb ...
+#6 26.67 Unpacking tzdata (2026c-0+deb13u1) over (2026b-0+deb13u1) ...
+#6 26.88 Preparing to unpack .../openssl_3.5.7-1~deb13u3_arm64.deb ...
+#6 26.89 Unpacking openssl (3.5.7-1~deb13u3) over (3.5.7-1~deb13u2) ...
+#6 26.95 Setting up tzdata (2026c-0+deb13u1) ...
+#6 26.97 debconf: unable to initialize frontend: Dialog
+#6 26.97 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 26.97 debconf: falling back to frontend: Readline
+#6 26.97 debconf: unable to initialize frontend: Readline
+#6 26.97 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/aarch64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+#6 26.97 debconf: falling back to frontend: Teletype
+#6 26.97 debconf: unable to initialize frontend: Teletype
+#6 26.97 debconf: (This frontend requires a controlling tty.)
+#6 26.97 debconf: falling back to frontend: Noninteractive
+#6 26.98 
+#6 26.98 Current default time zone: 'Etc/UTC'
+#6 26.98 Local time is now:      Sun Oct 11 04:22:41 UTC 2026.
+#6 26.98 Universal Time is now:  Sun Oct 11 04:22:41 UTC 2026.
+#6 26.98 Run 'dpkg-reconfigure tzdata' if you wish to change it.
+#6 26.98 
+#6 26.99 Setting up openssl (3.5.7-1~deb13u3) ...
+#6 26.99 Processing triggers for debianutils (5.23.2) ...
+#6 27.01 Processing triggers for libc-bin (2.41-12+deb13u4) ...
+#6 27.02 Reading package lists...
+#6 27.25 Building dependency tree...
+#6 27.31 Reading state information...
+#6 27.39 libseccomp2 is already the newest version (2.6.0-2).
+#6 27.39 libseccomp2 set to manually installed.
+#6 27.39 The following additional packages will be installed:
+#6 27.39   fuse3 libfuse3-4
+#6 27.41 The following NEW packages will be installed:
+#6 27.41   fuse fuse3 libfuse2t64 libfuse3-4
+#6 27.55 0 upgraded, 4 newly installed, 0 to remove and 0 not upgraded.
+#6 27.55 Need to get 266 kB of archives.
+#6 27.55 After this operation, 1082 kB of additional disk space will be used.
+#6 27.55 Get:1 http://deb.debian.org/debian trixie/main arm64 libfuse3-4 arm64 3.17.2-3 [93.4 kB]
+#6 27.71 Get:2 http://deb.debian.org/debian trixie/main arm64 fuse3 arm64 3.17.2-3 [40.0 kB]
+#6 27.72 Get:3 http://deb.debian.org/debian trixie/main arm64 fuse all 3.17.2-3 [16.4 kB]
+#6 27.72 Get:4 http://deb.debian.org/debian trixie/main arm64 libfuse2t64 arm64 2.9.9-9 [116 kB]
+#6 27.83 debconf: unable to initialize frontend: Dialog
+#6 27.83 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 27.83 debconf: falling back to frontend: Readline
+#6 27.83 debconf: unable to initialize frontend: Readline
+#6 27.83 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/aarch64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/aarch64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/aarch64-linux-gnu/perl-base /usr/lib/aarch64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 4.)
+#6 27.83 debconf: falling back to frontend: Teletype
+#6 27.84 debconf: unable to initialize frontend: Teletype
+#6 27.84 debconf: (This frontend requires a controlling tty.)
+#6 27.84 debconf: falling back to frontend: Noninteractive
+#6 28.07 Fetched 266 kB in 0s (766 kB/s)
+#6 28.08 Selecting previously unselected package libfuse3-4:arm64.
+#6 28.08 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5658 files and directories currently installed.)
+#6 28.08 Preparing to unpack .../libfuse3-4_3.17.2-3_arm64.deb ...
+#6 28.08 Unpacking libfuse3-4:arm64 (3.17.2-3) ...
+#6 28.10 Selecting previously unselected package fuse3.
+#6 28.10 Preparing to unpack .../fuse3_3.17.2-3_arm64.deb ...
+#6 28.10 Adding 'diversion of /bin/fusermount to /bin/fusermount.usr-is-merged by fuse3'
+#6 28.10 Adding 'diversion of /sbin/mount.fuse to /sbin/mount.fuse.usr-is-merged by fuse3'
+#6 28.10 Unpacking fuse3 (3.17.2-3) ...
+#6 28.11 Selecting previously unselected package fuse.
+#6 28.11 Preparing to unpack .../archives/fuse_3.17.2-3_all.deb ...
+#6 28.11 Unpacking fuse (3.17.2-3) ...
+#6 28.12 Selecting previously unselected package libfuse2t64:arm64.
+#6 28.12 Preparing to unpack .../libfuse2t64_2.9.9-9_arm64.deb ...
+#6 28.12 Adding 'diversion of /lib/aarch64-linux-gnu/libfuse.so.2 to /lib/aarch64-linux-gnu/libfuse.so.2.usr-is-merged by libfuse2t64'
+#6 28.12 Adding 'diversion of /lib/aarch64-linux-gnu/libfuse.so.2.9.9 to /lib/aarch64-linux-gnu/libfuse.so.2.9.9.usr-is-merged by libfuse2t64'
+#6 28.13 Adding 'diversion of /lib/aarch64-linux-gnu/libulockmgr.so.1 to /lib/aarch64-linux-gnu/libulockmgr.so.1.usr-is-merged by libfuse2t64'
+#6 28.13 Adding 'diversion of /lib/aarch64-linux-gnu/libulockmgr.so.1.0.1 to /lib/aarch64-linux-gnu/libulockmgr.so.1.0.1.usr-is-merged by libfuse2t64'
+#6 28.13 Unpacking libfuse2t64:arm64 (2.9.9-9) ...
+#6 28.14 Setting up libfuse3-4:arm64 (3.17.2-3) ...
+#6 28.14 Setting up libfuse2t64:arm64 (2.9.9-9) ...
+#6 28.15 Removing 'diversion of /lib/aarch64-linux-gnu/libfuse.so.2 to /lib/aarch64-linux-gnu/libfuse.so.2.usr-is-merged by libfuse2t64'
+#6 28.15 Removing 'diversion of /lib/aarch64-linux-gnu/libfuse.so.2.9.9 to /lib/aarch64-linux-gnu/libfuse.so.2.9.9.usr-is-merged by libfuse2t64'
+#6 28.15 Removing 'diversion of /lib/aarch64-linux-gnu/libulockmgr.so.1 to /lib/aarch64-linux-gnu/libulockmgr.so.1.usr-is-merged by libfuse2t64'
+#6 28.15 Removing 'diversion of /lib/aarch64-linux-gnu/libulockmgr.so.1.0.1 to /lib/aarch64-linux-gnu/libulockmgr.so.1.0.1.usr-is-merged by libfuse2t64'
+#6 28.15 Setting up fuse3 (3.17.2-3) ...
+#6 28.16 Removing 'diversion of /bin/fusermount to /bin/fusermount.usr-is-merged by fuse3'
+#6 28.16 Removing 'diversion of /sbin/mount.fuse to /sbin/mount.fuse.usr-is-merged by fuse3'
+#6 28.16 Setting up fuse (3.17.2-3) ...
+#6 28.16 Processing triggers for libc-bin (2.41-12+deb13u4) ...
+#6 DONE 28.2s
+
+#7 [3/8] WORKDIR /app
+#7 DONE 0.0s
+
+#8 [4/8] COPY requirements.txt .
+#8 DONE 0.0s
+
+#9 [5/8] RUN pip install --no-cache-dir --upgrade pip==26.2.1 setuptools==84.0.0 wheel==0.48.0     && pip install --no-cache-dir -r requirements.txt     && pip uninstall -y pip setuptools wheel     && rm -r /usr/local/lib/python3.11/ensurepip
+#9 0.919 Collecting pip==26.2.1
+#9 1.123   Downloading pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+#9 1.330 Collecting setuptools==84.0.0
+#9 1.374   Downloading setuptools-84.0.0-py3-none-any.whl.metadata (6.6 kB)
+#9 1.431 Collecting wheel==0.48.0
+#9 1.473   Downloading wheel-0.48.0-py3-none-any.whl.metadata (2.3 kB)
+#9 1.493 Requirement already satisfied: packaging>=24.0 in /usr/local/lib/python3.11/site-packages (from wheel==0.48.0) (26.3)
+#9 1.534 Downloading pip-26.2.1-py3-none-any.whl (1.8 MB)
+#9 3.710    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 837.8 kB/s eta 0:00:00
+#9 3.753 Downloading setuptools-84.0.0-py3-none-any.whl (818 kB)
+#9 4.508    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 818.2/818.2 kB 1.1 MB/s eta 0:00:00
+#9 4.555 Downloading wheel-0.48.0-py3-none-any.whl (33 kB)
+#9 4.637 Installing collected packages: wheel, setuptools, pip
+#9 4.637   Attempting uninstall: wheel
+#9 4.638     Found existing installation: wheel 0.46.3
+#9 4.639     Uninstalling wheel-0.46.3:
+#9 4.646       Successfully uninstalled wheel-0.46.3
+#9 4.658   Attempting uninstall: setuptools
+#9 4.659     Found existing installation: setuptools 79.0.1
+#9 4.669     Uninstalling setuptools-79.0.1:
+#9 4.717       Successfully uninstalled setuptools-79.0.1
+#9 4.892   Attempting uninstall: pip
+#9 4.893     Found existing installation: pip 24.0
+#9 4.906     Uninstalling pip-24.0:
+#9 4.968       Successfully uninstalled pip-24.0
+#9 5.288 Successfully installed pip-26.2.1 setuptools-84.0.0 wheel-0.48.0
+#9 5.288 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 6.511 Collecting fusepy==3.0.1 (from -r requirements.txt (line 1))
+#9 6.669   Downloading fusepy-3.0.1.tar.gz (11 kB)
+#9 6.719   Installing build dependencies: started
+#9 8.841   Installing build dependencies: finished with status 'done'
+#9 8.841   Getting requirements to build wheel: started
+#9 8.977   Getting requirements to build wheel: finished with status 'done'
+#9 8.978   Preparing metadata (pyproject.toml): started
+#9 9.045   Preparing metadata (pyproject.toml): finished with status 'done'
+#9 9.205 Collecting redis==5.0.1 (from -r requirements.txt (line 2))
+#9 9.252   Downloading redis-5.0.1-py3-none-any.whl.metadata (8.9 kB)
+#9 9.419 Collecting psycopg2-binary==2.9.11 (from -r requirements.txt (line 3))
+#9 9.457   Downloading psycopg2_binary-2.9.11-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl.metadata (4.9 kB)
+#9 9.589 Collecting pydantic==2.10.4 (from -r requirements.txt (line 4))
+#9 9.633   Downloading pydantic-2.10.4-py3-none-any.whl.metadata (29 kB)
+#9 9.829 Collecting cryptography==50.0.0 (from -r requirements.txt (line 5))
+#9 9.871   Downloading cryptography-50.0.0-cp311-abi3-manylinux_2_34_aarch64.whl.metadata (4.3 kB)
+#9 9.930 Collecting PyYAML==6.0.1 (from -r requirements.txt (line 6))
+#9 9.973   Downloading PyYAML-6.0.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (2.1 kB)
+#9 10.02 Collecting requests==2.33.0 (from -r requirements.txt (line 7))
+#9 10.08   Downloading requests-2.33.0-py3-none-any.whl.metadata (5.1 kB)
+#9 10.14 Collecting click==8.3.3 (from -r requirements.txt (line 8))
+#9 10.18   Downloading click-8.3.3-py3-none-any.whl.metadata (2.6 kB)
+#9 10.24 Collecting colorama==0.4.6 (from -r requirements.txt (line 9))
+#9 10.29   Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+#9 10.36 Collecting prometheus-client==0.19.0 (from -r requirements.txt (line 10))
+#9 10.39   Downloading prometheus_client-0.19.0-py3-none-any.whl.metadata (1.8 kB)
+#9 10.46 Collecting paramiko==5.0.0 (from -r requirements.txt (line 13))
+#9 10.52   Downloading paramiko-5.0.0-py3-none-any.whl.metadata (3.7 kB)
+#9 10.58 Collecting python-dateutil==2.8.2 (from -r requirements.txt (line 16))
+#9 10.64   Downloading python_dateutil-2.8.2-py2.py3-none-any.whl.metadata (8.2 kB)
+#9 10.70 Collecting annotated-types>=0.6.0 (from pydantic==2.10.4->-r requirements.txt (line 4))
+#9 10.75   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#9 12.56 Collecting pydantic-core==2.27.2 (from pydantic==2.10.4->-r requirements.txt (line 4))
+#9 12.61   Downloading pydantic_core-2.27.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl.metadata (6.6 kB)
+#9 12.67 Collecting typing-extensions>=4.12.2 (from pydantic==2.10.4->-r requirements.txt (line 4))
+#9 12.71   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#9 12.87 Collecting cffi>=2.0.0 (from cryptography==50.0.0->-r requirements.txt (line 5))
+#9 12.91   Downloading cffi-2.1.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl.metadata (2.5 kB)
+#9 13.23 Collecting charset_normalizer<4,>=2 (from requests==2.33.0->-r requirements.txt (line 7))
+#9 13.27   Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl.metadata (46 kB)
+#9 13.34 Collecting idna<4,>=2.5 (from requests==2.33.0->-r requirements.txt (line 7))
+#9 13.38   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#9 13.47 Collecting urllib3<3,>=1.26 (from requests==2.33.0->-r requirements.txt (line 7))
+#9 13.51   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+#9 13.58 Collecting certifi>=2023.5.7 (from requests==2.33.0->-r requirements.txt (line 7))
+#9 13.62   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+#9 13.72 Collecting bcrypt>=3.2 (from paramiko==5.0.0->-r requirements.txt (line 13))
+#9 13.77   Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_aarch64.whl.metadata (10 kB)
+#9 14.08 Collecting invoke>=2.0 (from paramiko==5.0.0->-r requirements.txt (line 13))
+#9 14.14   Downloading invoke-3.0.3-py3-none-any.whl.metadata (3.2 kB)
+#9 14.22 Collecting pynacl>=1.5 (from paramiko==5.0.0->-r requirements.txt (line 13))
+#9 14.27   Downloading pynacl-1.6.2-cp38-abi3-manylinux_2_34_aarch64.whl.metadata (10.0 kB)
+#9 14.35 Collecting six>=1.5 (from python-dateutil==2.8.2->-r requirements.txt (line 16))
+#9 14.41   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+#9 14.47 Collecting pycparser (from cffi>=2.0.0->cryptography==50.0.0->-r requirements.txt (line 5))
+#9 14.51   Downloading pycparser-3.11-py3-none-any.whl.metadata (8.2 kB)
+#9 14.57 Downloading redis-5.0.1-py3-none-any.whl (250 kB)
+#9 14.92 Downloading psycopg2_binary-2.9.11-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl (4.4 MB)
+#9 17.15    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 1.9 MB/s  0:00:02
+#9 17.19 Downloading pydantic-2.10.4-py3-none-any.whl (431 kB)
+#9 17.39 Downloading cryptography-50.0.0-cp311-abi3-manylinux_2_34_aarch64.whl (4.7 MB)
+#9 23.73    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 715.1 kB/s  0:00:06
+#9 24.03 Downloading PyYAML-6.0.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (732 kB)
+#9 24.58    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 732.2/732.2 kB 1.4 MB/s  0:00:00
+#9 24.62 Downloading requests-2.33.0-py3-none-any.whl (65 kB)
+#9 24.71 Downloading click-8.3.3-py3-none-any.whl (110 kB)
+#9 24.83 Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+#9 24.88 Downloading prometheus_client-0.19.0-py3-none-any.whl (54 kB)
+#9 24.94 Downloading paramiko-5.0.0-py3-none-any.whl (208 kB)
+#9 25.13 Downloading python_dateutil-2.8.2-py2.py3-none-any.whl (247 kB)
+#9 25.34 Downloading pydantic_core-2.27.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl (1.8 MB)
+#9 26.41    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 1.8 MB/s  0:00:01
+#9 26.45 Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl (259 kB)
+#9 26.62 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#9 26.69 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#9 26.79 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#9 26.83 Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_aarch64.whl (275 kB)
+#9 27.03 Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+#9 27.29 Downloading cffi-2.1.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl (218 kB)
+#9 27.59 Downloading invoke-3.0.3-py3-none-any.whl (160 kB)
+#9 27.92 Downloading pynacl-1.6.2-cp38-abi3-manylinux_2_34_aarch64.whl (818 kB)
+#9 28.84    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 818.3/818.3 kB 989.1 kB/s  0:00:00
+#9 28.88 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#9 28.93 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#9 29.02 Downloading pycparser-3.11-py3-none-any.whl (51 kB)
+#9 29.10 Building wheels for collected packages: fusepy
+#9 29.11   Building wheel for fusepy (pyproject.toml): started
+#9 29.19   Building wheel for fusepy (pyproject.toml): finished with status 'done'
+#9 29.19   Created wheel for fusepy: filename=fusepy-3.0.1-py3-none-any.whl size=10538 sha256=d7e16404d2d94e2cc40601806ba224f69a401a489ddffb5535517d330b4236a7
+#9 29.19   Stored in directory: /tmp/pip-ephem-wheel-cache-noydfxm9/wheels/db/4a/86/fdda91f8b8ebb0a70e4181dc2423b1f70c3c2d3bd1158685b5
+#9 29.19 Successfully built fusepy
+#9 29.21 Installing collected packages: fusepy, urllib3, typing-extensions, six, redis, PyYAML, pycparser, psycopg2-binary, prometheus-client, invoke, idna, colorama, click, charset_normalizer, certifi, bcrypt, annotated-types, requests, python-dateutil, pydantic-core, cffi, pynacl, pydantic, cryptography, paramiko
+#9 29.82 
+#9 29.83 Successfully installed PyYAML-6.0.1 annotated-types-0.8.0 bcrypt-5.0.0 certifi-2026.7.22 cffi-2.1.1 charset_normalizer-3.5.2 click-8.3.3 colorama-0.4.6 cryptography-50.0.0 fusepy-3.0.1 idna-3.20 invoke-3.0.3 paramiko-5.0.0 prometheus-client-0.19.0 psycopg2-binary-2.9.11 pycparser-3.11 pydantic-2.10.4 pydantic-core-2.27.2 pynacl-1.6.2 python-dateutil-2.8.2 redis-5.0.1 requests-2.33.0 six-1.17.0 typing-extensions-4.16.0 urllib3-2.8.0
+#9 29.83 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 29.96 Found existing installation: pip 26.2.1
+#9 29.97 Uninstalling pip-26.2.1:
+#9 29.97   Successfully uninstalled pip-26.2.1
+#9 29.98 Found existing installation: setuptools 84.0.0
+#9 29.99 Uninstalling setuptools-84.0.0:
+#9 29.99   Successfully uninstalled setuptools-84.0.0
+#9 30.00 Found existing installation: wheel 0.48.0
+#9 30.00 Uninstalling wheel-0.48.0:
+#9 30.00   Successfully uninstalled wheel-0.48.0
+#9 30.00 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 DONE 30.1s
+
+#10 [6/8] RUN mkdir -p /mnt/honeypot
+#10 DONE 0.1s
+
+#11 [7/8] COPY src/ /app/src/
+#11 DONE 0.0s
+
+#12 [8/8] COPY config/ /app/config/
+#12 DONE 0.0s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 1.1s done
+#13 exporting manifest sha256:eed989c064ec563fbc3f04d9ae2d9b6c12b5544bc5e513b7f52a75f7f29e2e57 done
+#13 exporting config sha256:794d5a19f9cfee596dcf96284cb764e8a16a08ded4adc790ce8b61f2e5bc6522 done
+#13 exporting attestation manifest sha256:96a9a758a89199e31340c014f35fc0a7f5cfe71cf357c397fce28fcbab975ff8 done
+#13 exporting manifest list sha256:d845b13704bd3112ca6698285185e2f50288e58e8ce9631e935449738dbe8892 done
+#13 naming to docker.io/library/apate-release-repro:20261011 done
+#13 unpacking to docker.io/library/apate-release-repro:20261011
+#13 unpacking to docker.io/library/apate-release-repro:20261011 0.4s done
+#13 DONE 1.6s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/sqxoehiun2olj8zthwsqa8hm4

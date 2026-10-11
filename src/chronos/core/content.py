@@ -30,7 +30,7 @@ def read_blob(client, digest):
     return value
 
 
-def mutate_content(client, inode, *, buf=None, offset=0, length=None):
+def mutate_content(client, inode, *, buf=None, offset=0, length=None, journal=None):
     if offset < 0 or (length is not None and length < 0):
         raise OSError(errno.EINVAL, "Invalid argument")
     end = length if length is not None else offset + len(buf)
@@ -75,6 +75,10 @@ def mutate_content(client, inode, *, buf=None, offset=0, length=None):
                 )
                 pipe.hincrby(key, "revision", 1)
                 pipe.delete(f"fs:generating:{inode}")
+                if journal:
+                    from chronos.core.mutation_journal import add_to_pipeline
+                    completed = {**journal, "inode": inode, "completed_at": time.time()}
+                    add_to_pipeline(pipe, completed)
                 pipe.execute()
                 return
             except redis.WatchError:

@@ -7,6 +7,7 @@ test_image="apate-integration:$$"
 cleanup() {
   docker rm -fv "$test_prefix-core" "$test_prefix-redis" "$test_prefix-pg" >/dev/null 2>&1 || :
   docker network rm "$test_prefix-net" >/dev/null 2>&1 || :
+  docker image rm -f "$test_image" >/dev/null 2>&1 || :
 }
 trap cleanup EXIT
 docker build -q -t "$test_image" .

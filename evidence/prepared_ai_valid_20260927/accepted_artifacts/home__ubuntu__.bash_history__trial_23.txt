@@ -1,0 +1,7 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu# git config --get user.name
+ubuntu
+root@web01:/home/ubuntu# ssh -o StrictHostKeyChecking=no user@web01
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu# vim /home/ubuntu/.bash_history
+root@web01:/home/ubuntu#

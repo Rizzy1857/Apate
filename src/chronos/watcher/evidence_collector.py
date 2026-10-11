@@ -11,7 +11,7 @@ from chronos.watcher.log_streamer import AuditLogStreamer
 from chronos.core.persistence import PersistenceLayer
 from chronos.skills.command_analyzer import CommandAnalyzer
 from chronos.skills.threat_library import ThreatLibrary
-from chronos.skills.skill_detector import SkillDetector
+from chronos.skills.skill_detector import PatternSummarizer
 
 logger = logging.getLogger(__name__)
 
@@ -40,16 +40,27 @@ class EvidenceCollector:
         self.streamer.subscribe(self._process_event)
         self.command_analyzer = CommandAnalyzer()
         self.threat_library = ThreatLibrary()
-        self.skill_detector = SkillDetector()
+        self.pattern_summarizer = PatternSummarizer()
+        self._working: Dict[str, Dict[str, Any]] = {}
+        self._checkpoint_ids: Dict[str, int] = {}
+        self.checkpoint_interval = max(
+            1, int(os.environ.get("CHRONOS_EVIDENCE_CHECKPOINT_EVENTS", "50"))
+        )
 
         logger.info("[EvidenceCollector] Subscribed to AuditLogStreamer")
 
     def _get_evidence(self, session_id: str, default_timestamp: str | None = None) -> Dict[str, Any]:
+        if session_id in self._working:
+            return self._working[session_id]
         key = f"chronos:evidence:{session_id}"
         # PostgreSQL progress is authoritative; Redis is only a dashboard cache.
         if hasattr(self.persistence, 'load_evidence_progress'):
             progress = self.persistence.load_evidence_progress(session_id)
             if progress is not None:
+                self._working[session_id] = progress
+                self._checkpoint_ids[session_id] = int(
+                    progress.get("last_event_id", 0)
+                )
                 return progress
             data = None
         else:
@@ -57,7 +68,7 @@ class EvidenceCollector:
         if data and isinstance(data, (str, bytes, bytearray)):
             return json.loads(data)
         
-        return {
+        evidence = {
             "session_id": session_id,
             "start_time": default_timestamp or datetime.utcnow().isoformat(),
             "end_time": None,
@@ -71,11 +82,19 @@ class EvidenceCollector:
             "visited_files": [],
             "traversal_graph": {}
         }
+        self._working[session_id] = evidence
+        self._checkpoint_ids[session_id] = 0
+        return evidence
 
-    def _save_evidence(self, session_id: str, data: Dict[str, Any]):
+    def _save_evidence(self, session_id: str, data: Dict[str, Any], *, force=False):
         key = f"chronos:evidence:{session_id}"
-        if hasattr(self.persistence, 'save_evidence_progress'):
+        self._working[session_id] = data
+        current_id = int(data.get("last_event_id", 0))
+        checkpoint_id = self._checkpoint_ids.get(session_id, 0)
+        checkpoint = force or current_id - checkpoint_id >= self.checkpoint_interval
+        if checkpoint and hasattr(self.persistence, 'save_evidence_progress'):
             self.persistence.save_evidence_progress(session_id, data)
+            self._checkpoint_ids[session_id] = current_id
         self.redis.set(key, json.dumps(data), ex=86400)
 
     def _process_event(self, event: Dict[str, Any]):
@@ -107,6 +126,10 @@ class EvidenceCollector:
                     "timestamp": timestamp_str,
                     "command": cmd,
                     "command_id": metadata.get("command_id"),
+                    "claimed_username": metadata.get("claimed_username"),
+                    "effective_username": metadata.get("effective_username"),
+                    "identity_mismatch": metadata.get("identity_mismatch"),
+                    "identity_policy": metadata.get("identity_policy"),
                     "outcome": "unknown",
                     "techniques": analysis.techniques,
                     "risk_score": analysis.risk_score,
@@ -130,7 +153,8 @@ class EvidenceCollector:
                             if command_id and c.get('command_id') == command_id), None)
             if command is not None:
                 command.update({key: metadata.get(key) for key in (
-                    'outcome', 'exit_status', 'server_elapsed_seconds', 'response_bytes', 'reason'
+                    'outcome', 'exit_status', 'server_elapsed_seconds', 'response_bytes',
+                    'reason', 'stage_results'
                 ) if key in metadata})
                 command['completed_at'] = timestamp_str
                 if metadata.get('outcome') == 'emulated_success':
@@ -160,13 +184,15 @@ class EvidenceCollector:
             evidence['duration_seconds'] = int((end_dt - start_dt).total_seconds())
             evidence['exit_reason'] = "disconnect"
 
-            # Persist skill assessment atomically with evidence flush
+            # Persist evidence-linked patterns atomically with evidence flush.
             command_analyses = self.command_analyzer.batch_analyze(
                 [c['command'] for c in evidence['commands'] if 'command' in c]
             )
             if command_analyses:
-                skill_assessment = self.skill_detector.analyze_session(session_id, command_analyses)
-                evidence['skill_assessment'] = skill_assessment
+                pattern_assessment = self.pattern_summarizer.analyze_session(
+                    session_id, command_analyses
+                )
+                evidence['pattern_assessment'] = pattern_assessment
             # Emit basic Prometheus metrics before flushing
             try:
                 SESSION_DURATION_HIST.observe(evidence['duration_seconds'])
@@ -174,7 +200,7 @@ class EvidenceCollector:
             except Exception:
                 logger.exception("Failed to emit Prometheus metrics for session %s", session_id)
 
-            self._save_evidence(session_id, evidence)
+            self._save_evidence(session_id, evidence, force=True)
             self._flush(session_id, evidence)
             return
 
@@ -184,6 +210,8 @@ class EvidenceCollector:
         logger.info(f"[EvidenceCollector] Flushing session {session_id[:8]} to Postgres")
         if self.persistence.flush_evidence(session_id, evidence):
             self.redis.delete(f"chronos:evidence:{session_id}")
+            self._working.pop(session_id, None)
+            self._checkpoint_ids.pop(session_id, None)
         else:
             logger.error('Evidence retained in Redis after failed flush session=%s', session_id)
             raise RuntimeError('Evidence flush failed; retry event')

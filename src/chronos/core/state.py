@@ -1,3 +1,4 @@
+import os
 import time
 from chronos.core.database import Database
 
@@ -6,13 +7,46 @@ class StateHypervisor:
         self.db = Database(prefix=prefix)
         self.redis = self.db.get_connection()
 
-    def initialize_filesystem(self, use_prepared=True):
+    def initialize_filesystem(self, artifact_treatment=None):
+        treatment = artifact_treatment or os.environ.get(
+            "CHRONOS_ARTIFACT_TREATMENT", "deterministic"
+        )
+        if treatment not in ("deterministic", "prepared"):
+            raise ValueError(
+                "CHRONOS_ARTIFACT_TREATMENT must be 'deterministic' or 'prepared'"
+            )
         with self.redis.lock("fs:initialize", timeout=30, blocking_timeout=5):
-            self._initialize_filesystem(use_prepared=use_prepared)
+            self._initialize_filesystem(artifact_treatment=treatment)
 
-    def _initialize_filesystem(self, use_prepared=True):
+    def _initialize_filesystem(self, artifact_treatment="deterministic"):
         """Initialize the root filesystem from the manifest if it doesn't exist"""
         if not self.redis.exists("fs:initialized"):
+            from chronos.intelligence.ubuntu_profile import UbuntuProfile
+            from chronos.intelligence.prepared_artifacts import (
+                bundle_key,
+                install,
+                load_bundle,
+            )
+
+            profile = UbuntuProfile()
+            manifest = profile.filesystem_manifest
+            prepared = {}
+            if artifact_treatment == "prepared":
+                prepared = load_bundle(self.redis.get(bundle_key(profile)))
+                if not prepared:
+                    raise RuntimeError(
+                        "Prepared artifact treatment selected but no current bundle exists"
+                    )
+                required = {
+                    entry["path"] for entry in manifest.get("entries", [])
+                    if entry.get("class") == "ai_backed"
+                }
+                missing = sorted(required - set(prepared))
+                if missing:
+                    raise RuntimeError(
+                        f"Prepared artifact bundle is incomplete: {missing}"
+                    )
+
             print("Initializing root filesystem from manifest...")
             self.redis.set("fs:next_inode", 1, nx=True)
             timestamp = time.time()
@@ -30,15 +64,6 @@ class StateHypervisor:
                     "nlink": 2
                 })
             self.redis.zadd("fs:dir:1", {".": 1, "..": 1})
-            
-            # Load manifest
-            from chronos.intelligence.ubuntu_profile import UbuntuProfile
-            import os
-            profile = UbuntuProfile()
-            import json
-            from chronos.intelligence.prepared_artifacts import bundle_key, install
-            prepared = json.loads(self.redis.get(bundle_key(profile)) or '{}') if use_prepared else {}
-            manifest = profile.filesystem_manifest
             
             # Sort entries by depth to ensure parent directories are created first
             entries = sorted(manifest.get("entries", []), key=lambda x: len(x["path"].split("/")))
@@ -108,7 +133,8 @@ class StateHypervisor:
             current_inode = int(inode)
         return current_inode
 
-    def create_file(self, parent_inode: int, filename: str, mode: int = 33188):
+    def create_file(self, parent_inode: int, filename: str, mode: int = 33188,
+                    uid: int = 0, gid: int = 0, journal=None):
         """
         Create a new file in the given parent directory.
         Default mode: 0100644 (Regular file + 644)
@@ -117,7 +143,8 @@ class StateHypervisor:
         result = self.db.run_script(
             "atomic_create", 
             keys=[], 
-            args=[parent_inode, filename, mode, timestamp]
+            args=[parent_inode, filename, mode, timestamp, uid, gid]
+            + self._journal_args(journal)
         )
         
         if result == -1:
@@ -125,7 +152,8 @@ class StateHypervisor:
         
         return result
 
-    def atomic_mkdir(self, parent_inode: int, filename: str, mode: int = 16877):
+    def atomic_mkdir(self, parent_inode: int, filename: str, mode: int = 16877,
+                     uid: int = 0, gid: int = 0, journal=None):
         """
         Create a new directory in the given parent directory.
         Default mode: 040755 (Directory + 755)
@@ -134,7 +162,8 @@ class StateHypervisor:
         result = self.db.run_script(
             "atomic_mkdir",
             keys=[],
-            args=[parent_inode, filename, mode, timestamp]
+            args=[parent_inode, filename, mode, timestamp, uid, gid]
+            + self._journal_args(journal)
         )
         
         if result == -1:
@@ -142,14 +171,14 @@ class StateHypervisor:
             
         return result
 
-    def atomic_unlink(self, parent_inode: int, filename: str):
+    def atomic_unlink(self, parent_inode: int, filename: str, journal=None):
         """
         Atomically unlink a file and clean up its inode/blob if nlink is 0.
         """
         result = self.db.run_script(
             "atomic_unlink",
             keys=[],
-            args=[parent_inode, filename]
+            args=[parent_inode, filename] + self._journal_args(journal)
         )
         
         if result == -1:
@@ -157,14 +186,14 @@ class StateHypervisor:
             
         return result
 
-    def atomic_rmdir(self, parent_inode: int, filename: str):
+    def atomic_rmdir(self, parent_inode: int, filename: str, journal=None):
         """
         Atomically remove an empty directory.
         """
         result = self.db.run_script(
             "atomic_rmdir",
             keys=[],
-            args=[parent_inode, filename]
+            args=[parent_inode, filename] + self._journal_args(journal)
         )
         
         if result == -1:
@@ -173,3 +202,12 @@ class StateHypervisor:
             raise OSError("Directory not empty")
             
         return result
+
+    @staticmethod
+    def _journal_args(journal):
+        if not journal:
+            return []
+        return [
+            journal["operation_id"], journal["operation"], journal["path"],
+            journal.get("command_id") or "", journal.get("origin") or "unattributed",
+        ]

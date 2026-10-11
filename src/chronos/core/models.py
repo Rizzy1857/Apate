@@ -5,7 +5,7 @@ Data models for API requests/responses, alerts, and logging.
 Defines the structure for honeypot interactions and intelligence data.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
@@ -33,10 +33,9 @@ class Alert(BaseModel):
     interaction_type: InteractionType = Field(..., description="Type of interaction")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional alert data")
     
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    @field_serializer("timestamp")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 class Log(BaseModel):
     """Honeypot interaction log model"""
@@ -50,10 +49,9 @@ class Log(BaseModel):
     user_agent: Optional[str] = Field(None, description="User agent (for HTTP)")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional log data")
     
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    @field_serializer("timestamp")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 class HoneypotInteraction(BaseModel):
     """Generic honeypot interaction model"""

@@ -1,0 +1,7 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu# git config --global user.name ubuntu
+root@web01:/home/ubuntu# vim /home/ubuntu/.bashrc
+root@web01:/home/ubuntu# ssh -T user@web01
+root@web01:/home/ubuntu# ufw enable ssh
+root@web01:/home/ubuntu# curl -s https://example.com
+root@web01:/home/ubuntu#

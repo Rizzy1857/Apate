@@ -1,0 +1,3 @@
+Sep 27 00:00:00 web01 systemd[1]: Started nginx.service - A high performance web server.
+Sep 27 00:00:00 web01 systemd[1]: Started ssh.service - OpenBSD Secure Shell server.
+Sep 27 00:00:00 web01 cron[735]: (CRON) INFO (Running @reboot jobs)

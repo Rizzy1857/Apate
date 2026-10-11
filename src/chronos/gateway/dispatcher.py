@@ -43,7 +43,12 @@ class SessionEnvironment:
             var = match.group(1)
             return self.env.get(var, "")
 
-        return re.sub(r"\$([a-zA-Z_][a-zA-Z0-9_]*)", replace, arg)
+        segments = getattr(arg, "segments", ((str(arg), True),))
+        return "".join(
+            re.sub(r"\$([a-zA-Z_][a-zA-Z0-9_]*)", replace, text)
+            if expand else text
+            for text, expand in segments
+        )
 
     def resolve_path(self, path: str) -> str:
         if not isinstance(path, str) or "\x00" in path or len(path) > 4096:
@@ -140,6 +145,8 @@ class CommandRegistry:
         return 127, b"", f"bash: {cmd}: command not found\n".encode()
 
     def _handle_cd(self, args, stdin):
+        if len(args) > 1 or (args and args[0].startswith("-")):
+            return 1, b"", b"bash: cd: unsupported option or too many arguments\n"
         target = args[0] if args else self.env.env["HOME"]
         real_target = self.env.resolve_path(target)
         if os.path.isdir(real_target):
@@ -156,22 +163,31 @@ class CommandRegistry:
             return 1, b"", f"bash: cd: {target}: No such file or directory\n".encode()
 
     def _handle_pwd(self, args, stdin):
+        if args:
+            return 1, b"", b"pwd: unsupported option or operand\n"
         return 0, (self.env.env["PWD"] + "\n").encode(), b""
 
     def _handle_export(self, args, stdin):
         for arg in args:
-            if "=" in arg:
-                key, val = arg.split("=", 1)
-                if key not in {"PWD", "OLDPWD", "HOME", "USER", "HOSTNAME"}:
-                    self.env.env[key] = val
+            if "=" not in arg:
+                return 1, b"", b"export: expected NAME=VALUE\n"
+            key, val = arg.split("=", 1)
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
+                return 1, b"", b"export: invalid identifier\n"
+            if key not in {"PWD", "OLDPWD", "HOME", "USER", "HOSTNAME"}:
+                self.env.env[key] = val
         return 0, b"", b""
 
     def _handle_env(self, args, stdin):
+        if args:
+            return 1, b"", b"env: arguments are not supported\n"
         out = "".join(f"{k}={v}\n" for k, v in self.env.env.items())
         return 0, out.encode(), b""
 
     def _handle_unset(self, args, stdin):
         for arg in args:
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", arg):
+                return 1, b"", b"unset: invalid identifier\n"
             if arg not in {"PWD", "OLDPWD", "HOME", "USER", "HOSTNAME"}:
                 self.env.env.pop(arg, None)
         return 0, b"", b""
@@ -180,6 +196,8 @@ class CommandRegistry:
         return 0, (" ".join(args) + "\n").encode(), b""
 
     def _handle_whoami(self, args, stdin):
+        if args:
+            return 1, b"", b"whoami: arguments are not supported\n"
         return 0, (self.env.env["USER"] + "\n").encode(), b""
 
     def _handle_id(self, args, stdin):
@@ -211,16 +229,20 @@ class CommandRegistry:
         return 0, f"uid={user['uid']}({name}) gid={gid}({groups[gid]}) groups={memberships}\n".encode(), b''
 
     def _handle_hostname(self, args, stdin):
+        if args:
+            return 1, b"", b"hostname: arguments are not supported\n"
         return 0, (self.env.env["HOSTNAME"] + "\n").encode(), b""
 
     def _handle_uname(self, args, stdin):
-        if "-a" in args:
+        if args == ["-a"]:
             return (
                 0,
                 f"Linux {self.env.profile.hostname} {self.env.profile.kernel_version} #62-Ubuntu SMP x86_64 GNU/Linux\n".encode(),
                 b"",
             )
-        return 0, b"Linux\n", b""
+        if not args:
+            return 0, b"Linux\n", b""
+        return 1, b"", b"uname: unsupported option or operand\n"
 
     def _get_entropy(self) -> Dict[str, Any]:
         if self.env.world_state is not None:
@@ -233,6 +255,8 @@ class CommandRegistry:
         }
 
     def _handle_free(self, args, stdin):
+        if args:
+            return 1, b"", b"free: arguments are not supported\n"
         state = self._get_entropy()
         total = int(state["mem_total"])
         free = int(state["mem_free"])
@@ -258,6 +282,8 @@ class CommandRegistry:
         return rows
 
     def _handle_top(self, args, stdin):
+        if args:
+            return 1, b"", b"top: arguments are not supported\n"
         state = self._get_entropy()
         rows = self._processes('top')
         total, free, cached = (int(state[k]) // 1024 for k in ('mem_total', 'mem_free', 'mem_cached'))
@@ -283,12 +309,16 @@ class CommandRegistry:
         return 0, out.encode(), b''
 
     def _handle_ss(self, args, stdin):
+        if args:
+            return 1, b"", b"ss: arguments are not supported\n"
         out = "Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port\n"
         for port in self.env.profile.open_ports:
             out += f"{port['proto']} LISTEN 0 128 0.0.0.0:{port['port']} 0.0.0.0:*\n"
         return 0, out.encode(), b""
 
     def _handle_df(self, args, stdin):
+        if args:
+            return 1, b"", b"df: arguments are not supported\n"
         drives = json.loads(self.env.profile.build_machine_state()['mounted_drives'])
         out = 'Filesystem 1K-blocks Used Available Use% Mounted on\n'
         for drive in drives:
@@ -305,6 +335,10 @@ class CommandRegistry:
     def _handle_ls(self, args, stdin):
         flags = [a for a in args if a.startswith("-")]
         paths = [a for a in args if not a.startswith("-")]
+        if any(flag not in {"-a", "-l", "-la", "-al"} for flag in flags):
+            return 1, b"", b"ls: unsupported option\n"
+        if len(paths) > 1:
+            return 1, b"", b"ls: multiple paths are not supported\n"
         target = paths[0] if paths else self.env.env["PWD"]
         real_target = self.env.resolve_path(target)
         try:
@@ -348,6 +382,10 @@ class CommandRegistry:
     def _handle_cat(self, args, stdin):
         if not args:
             return 0, stdin, b""
+        if args[0] == "--":
+            args = args[1:]
+        elif any(arg.startswith("-") for arg in args):
+            return 1, b"", b"cat: options are not supported\n"
         out = b""
         err = b""
         ret = 0
@@ -371,10 +409,9 @@ class CommandRegistry:
         return ret, out, err
 
     def _handle_find(self, args, stdin):
-        # Extremely simplified find
-        target = (
-            args[0] if args and not args[0].startswith("-") else self.env.env["PWD"]
-        )
+        if len(args) > 1 or (args and args[0].startswith("-")):
+            return 1, b"", b"find: predicates and options are not supported\n"
+        target = args[0] if args else self.env.env["PWD"]
         real_target = self.env.resolve_path(target)
         if not os.path.exists(real_target):
             return 1, b"", f"find: ‘{target}’: No such file or directory\n".encode()
@@ -393,9 +430,11 @@ class CommandRegistry:
     def _handle_grep(self, args, stdin):
         if not args:
             return 2, b"", b"grep: missing pattern\n"
+        options_ended = False
         if args[0] == '--':
             args = args[1:]
-        if not args or args[0].startswith('-'):
+            options_ended = True
+        if not args or (args[0].startswith('-') and not options_ended):
             return 2, b"", b"grep: unsupported option or missing pattern\n"
         pattern, files = args[0], args[1:]
         out, err = bytearray(), bytearray()
@@ -458,6 +497,8 @@ class CommandRegistry:
     def _handle_stat(self, args, stdin):
         if not args:
             return 1, b"", b"stat: missing operand\n"
+        if any(arg.startswith("-") for arg in args):
+            return 1, b"", b"stat: options are not supported\n"
         out = ""
         for arg in args:
             real = self.env.resolve_path(arg)
@@ -482,6 +523,8 @@ class CommandRegistry:
     def _handle_touch(self, args, stdin):
         if not args:
             return 1, b"", b"touch: missing file operand\n"
+        if any(arg.startswith("-") for arg in args):
+            return 1, b"", b"touch: options are not supported\n"
         for arg in args:
             real = self.env.resolve_path(arg)
             try:
@@ -498,10 +541,17 @@ class CommandRegistry:
     def _handle_mkdir(self, args, stdin):
         if not args:
             return 1, b"", b"mkdir: missing operand\n"
-        for arg in args:
+        parents = args[0] == "-p"
+        paths = args[1:] if parents else args
+        if not paths or any(arg.startswith("-") for arg in paths):
+            return 1, b"", b"mkdir: unsupported option or missing operand\n"
+        for arg in paths:
             real = self.env.resolve_path(arg)
             try:
-                os.mkdir(real)
+                if parents:
+                    os.makedirs(real, exist_ok=True)
+                else:
+                    os.mkdir(real)
             except Exception as e:
                 return (
                     1,
@@ -513,8 +563,23 @@ class CommandRegistry:
     def _handle_rm(self, args, stdin):
         if not args:
             return 1, b"", b"rm: missing operand\n"
-        recursive = "-r" in args or "-rf" in args
-        files = [a for a in args if not a.startswith("-")]
+        options = []
+        files = []
+        options_done = False
+        for arg in args:
+            if not options_done and arg == "--":
+                options_done = True
+            elif not options_done and arg.startswith("-"):
+                options.append(arg)
+            else:
+                options_done = True
+                files.append(arg)
+        if any(set(option[1:]) - {"r", "f"} or option == "-" for option in options):
+            return 1, b"", b"rm: unsupported option\n"
+        if not files:
+            return 1, b"", b"rm: missing operand\n"
+        recursive = any("r" in option[1:] for option in options)
+        force = any("f" in option[1:] for option in options)
         for arg in files:
             real = self.env.resolve_path(arg)
             try:
@@ -530,7 +595,7 @@ class CommandRegistry:
                 else:
                     os.unlink(real)
             except Exception as e:
-                if "-f" not in args and "-rf" not in args:
+                if not force:
                     return (
                         1,
                         b"",
@@ -541,6 +606,8 @@ class CommandRegistry:
     def _handle_rmdir(self, args, stdin):
         if not args:
             return 1, b"", b"rmdir: missing operand\n"
+        if any(arg.startswith("-") for arg in args):
+            return 1, b"", b"rmdir: options are not supported\n"
         for arg in args:
             real = self.env.resolve_path(arg)
             try:
@@ -554,13 +621,17 @@ class CommandRegistry:
         return 0, b"", b""
 
     def _handle_cp(self, args, stdin):
-        if len(args) < 2:
+        recursive = False
+        if args and args[0] in {"-r", "-R"}:
+            recursive = True
+            args = args[1:]
+        if len(args) != 2 or any(arg.startswith("-") for arg in args):
             return 1, b"", b"cp: missing file operand\n"
         src = self.env.resolve_path(args[0])
         dst = self.env.resolve_path(args[1])
         try:
             if os.path.isdir(src):
-                if "-r" in args:
+                if recursive:
                     shutil.copytree(src, dst)
                 else:
                     return (
@@ -579,7 +650,7 @@ class CommandRegistry:
         return 0, b"", b""
 
     def _handle_mv(self, args, stdin):
-        if len(args) < 2:
+        if len(args) != 2 or any(arg.startswith("-") for arg in args):
             return 1, b"", b"mv: missing file operand\n"
         src = self.env.resolve_path(args[0])
         dst = self.env.resolve_path(args[1])
@@ -600,60 +671,95 @@ class ASTDispatcher:
         self.registry = CommandRegistry(env)
 
     def execute_sequence(self, sequence: SequenceNode) -> Tuple[int, str]:
+        returncode, output, _ = self.execute_sequence_with_stages(sequence)
+        return returncode, output
+
+    def execute_sequence_with_stages(self, sequence: SequenceNode):
         last_returncode = 0
         output_buffer = ""
+        pipeline_results = []
 
         if len(sequence.pipelines) > 64:
-            return 1, "bash: command limit exceeded\n"
-        for pipeline, operator in sequence.pipelines:
+            return 1, "bash: command limit exceeded\n", []
+        for pipeline_index, (pipeline, operator) in enumerate(sequence.pipelines):
             if operator == "&&" and last_returncode != 0:
+                pipeline_results.append({
+                    "pipeline_index": pipeline_index,
+                    "preceding_operator": operator,
+                    "executed": False,
+                    "skip_reason": "previous_status_nonzero",
+                    "stages": [],
+                })
                 continue
             if operator == "||" and last_returncode == 0:
+                pipeline_results.append({
+                    "pipeline_index": pipeline_index,
+                    "preceding_operator": operator,
+                    "executed": False,
+                    "skip_reason": "previous_status_zero",
+                    "stages": [],
+                })
                 continue
 
-            returncode, stdout, stderr = self._execute_pipeline(pipeline)
+            returncode, stdout, stderr, stages = self._execute_pipeline(pipeline)
             last_returncode = returncode
+            pipeline_results.append({
+                "pipeline_index": pipeline_index,
+                "preceding_operator": operator,
+                "executed": True,
+                "exit_status": returncode,
+                "stages": stages,
+            })
             output_buffer += stdout.decode("utf-8", errors="replace")
             output_buffer += stderr.decode("utf-8", errors="replace")
             if len(output_buffer) > MAX_IO_BYTES:
-                return 1, "bash: output limit exceeded\n"
+                return 1, "bash: output limit exceeded\n", pipeline_results
 
-        return last_returncode, output_buffer
+        return last_returncode, output_buffer, pipeline_results
 
-    def _execute_pipeline(self, pipeline: PipelineNode) -> Tuple[int, bytes, bytes]:
+    def _execute_pipeline(self, pipeline: PipelineNode):
         current_stdin, errors = b"", b""
         returncode = 0
-        for cmd_node in pipeline.commands:
+        stages = []
+        for stage_index, cmd_node in enumerate(pipeline.commands):
             expanded = [self.env.expand_vars(arg) for arg in cmd_node.args]
+            stage = {
+                "stage_index": stage_index,
+                "command": expanded[0] if expanded else None,
+                "executed": False,
+                "stdout_redirected": bool(cmd_node.redirect_out),
+                "stderr_redirected": bool(cmd_node.redirect_err),
+                "stdin_redirected": bool(cmd_node.redirect_in),
+            }
             try:
                 with ExitStack() as stack:
                     outputs = {}
                     # Open redirections before executing; failures prevent command effects.
-                    for kind, redirect in (
-                        ("stdout", cmd_node.redirect_out),
-                        ("stderr", cmd_node.redirect_err),
-                    ):
-                        if redirect:
-                            target = self.env.resolve_path(
-                                self.env.expand_vars(redirect[0])
-                            )
-                            outputs[kind] = stack.enter_context(
-                                open(target, "ab" if redirect[1] else "wb")
-                            )
-                    if cmd_node.redirect_in:
+                    for kind, redirect_target, append in cmd_node.redirections:
                         target = self.env.resolve_path(
-                            self.env.expand_vars(cmd_node.redirect_in)
+                            self.env.expand_vars(redirect_target)
                         )
-                        file = stack.enter_context(open(target, "rb"))
-                        current_stdin = file.read(MAX_IO_BYTES + 1)
-                        if len(current_stdin) > MAX_IO_BYTES:
-                            raise OSError(errno.EFBIG, "File too large")
+                        if kind == "stdin":
+                            file = stack.enter_context(open(target, "rb"))
+                            current_stdin = file.read(MAX_IO_BYTES + 1)
+                            if len(current_stdin) > MAX_IO_BYTES:
+                                raise OSError(errno.EFBIG, "File too large")
+                        else:
+                            outputs[kind] = stack.enter_context(
+                                open(target, "ab" if append else "wb")
+                            )
                     if expanded:
                         returncode, stdout, stderr = self.registry.handle(
                             expanded[0], expanded[1:], current_stdin
                         )
                     else:
                         returncode, stdout, stderr = 0, b"", b""
+                    stage.update({
+                        "executed": True,
+                        "exit_status": returncode,
+                        "generated_stdout_bytes": len(stdout),
+                        "generated_stderr_bytes": len(stderr),
+                    })
                     if "stdout" in outputs:
                         outputs["stdout"].write(stdout)
                         stdout = b""
@@ -662,6 +768,18 @@ class ASTDispatcher:
                         stderr = b""
                     current_stdin = stdout
                     errors += stderr
+                    stages.append(stage)
             except OSError as exc:
-                return 1, b"", f"bash: {os.strerror(exc.errno or errno.EIO)}\n".encode()
-        return returncode, current_stdin, errors
+                stage.update({
+                    "exit_status": 1,
+                    "failure": "redirection_error",
+                    "errno": exc.errno or errno.EIO,
+                })
+                stages.append(stage)
+                return (
+                    1,
+                    b"",
+                    f"bash: {os.strerror(exc.errno or errno.EIO)}\n".encode(),
+                    stages,
+                )
+        return returncode, current_stdin, errors, stages

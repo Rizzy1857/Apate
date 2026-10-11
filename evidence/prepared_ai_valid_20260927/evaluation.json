@@ -1,0 +1,4002 @@
+{
+  "bundle_spec": {
+    "generation_components": {
+      "orchestrator.py": "5cfd304e449a7248eaa669239dfbce7c5ad61bcfdc54b68e965eafb8af20e492",
+      "prompt_builder.py": "9944ac2dcdbf03f27138a99a7c60c0c9d4f6aeedd6322cc4fa2cf842383bf310",
+      "validator.py": "662f5de1b123c3f31760ab118629637f1c79ecb31fbed9ab3cb195d38f372b9e"
+    },
+    "policy": {
+      "config_file": {
+        "distribution": {
+          "broken": 0.02,
+          "deprecated": 0.08,
+          "valid": 0.9
+        },
+        "max_lines": 80,
+        "regeneration": "static",
+        "validation_strictness": "high"
+      },
+      "credential_file": {
+        "distribution": {
+          "abandoned": 0.3,
+          "corrupted": 0.05,
+          "empty": 0.4,
+          "notes": 0.2,
+          "useful": 0.05
+        },
+        "max_lines": 20,
+        "regeneration": "static",
+        "validation_strictness": "high"
+      },
+      "history_file": {
+        "distribution": {
+          "abandoned": 0.1,
+          "active": 0.75,
+          "empty": 0.15
+        },
+        "max_entries": 300,
+        "regeneration": "dynamic",
+        "validation_strictness": "low"
+      },
+      "log_file": {
+        "distribution": {
+          "active": 0.7,
+          "archived": 0.2,
+          "corrupted": 0.05,
+          "empty": 0.05
+        },
+        "max_days": 7,
+        "max_lines": 16,
+        "regeneration": "dynamic",
+        "validation_strictness": "medium"
+      },
+      "notes_file": {
+        "distribution": {
+          "abandoned": 0.15,
+          "empty": 0.25,
+          "notes": 0.6
+        },
+        "max_lines": 15,
+        "regeneration": "static",
+        "validation_strictness": "low"
+      },
+      "script_file": {
+        "distribution": {
+          "abandoned": 0.1,
+          "functional": 0.7,
+          "incomplete": 0.2
+        },
+        "max_lines": 150,
+        "regeneration": "static",
+        "validation_strictness": "medium"
+      },
+      "temp_file": {
+        "distribution": {
+          "empty": 0.3,
+          "stale": 0.5,
+          "useful": 0.2
+        },
+        "max_lines": 30,
+        "regeneration": "dynamic",
+        "validation_strictness": "low"
+      }
+    },
+    "routing": {
+      "config_file": "llama3:8b",
+      "credential_file": "llama3:8b",
+      "default": "llama3:8b",
+      "history_file": "llama3.2:3b",
+      "log_file": "llama3.2:3b",
+      "notes_file": "llama3.2:3b",
+      "script_file": "llama3:8b",
+      "temp_file": "llama3.2:3b"
+    },
+    "state": {
+      "cron_jobs": "[{\"user\": \"root\", \"schedule\": \"0 2 * * *\", \"command\": \"/usr/bin/certbot renew --quiet\"}, {\"user\": \"ubuntu\", \"schedule\": \"*/15 * * * *\", \"command\": \"/home/ubuntu/scripts/health_check.sh\"}, {\"user\": \"root\", \"schedule\": \"0 0 * * 0\", \"command\": \"apt-get autoremove -y > /dev/null 2>&1\"}]",
+      "filesystem_manifest": "{\"entries\": [{\"path\": \"/\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/bin\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/boot\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/dev\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/nginx\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/nginx/sites-available\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/nginx/sites-enabled\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/ssh\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/fail2ban\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/ssl\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/ssl/certs\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/ssl/private\", \"type\": \"directory\", \"class\": \"static\", \"mode\": \"0700\", \"uid\": 0, \"gid\": 0}, {\"path\": \"/home\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/home/ubuntu\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/home/ubuntu/.ssh\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/home/ubuntu/scripts\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/lib\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/opt\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/proc\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/root\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/run\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/sbin\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/sys\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/tmp\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/usr\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/var\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/var/log\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/var/log/nginx\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/var/www\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/var/www/html\", \"type\": \"directory\", \"class\": \"static\"}, {\"path\": \"/etc/passwd\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/group\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/hostname\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/hosts\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/os-release\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/fstab\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/resolv.conf\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/ssh/sshd_config\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/ssl/certs/ssl-cert-snakeoil.pem\", \"type\": \"file\", \"class\": \"deterministic\"}, {\"path\": \"/etc/ssl/private/ssl-cert-snakeoil.key\", \"type\": \"file\", \"class\": \"deterministic\", \"mode\": \"0600\", \"uid\": 0, \"gid\": 0}, {\"path\": \"/var/log/auth.log\", \"type\": \"file\", \"class\": \"ai_backed\"}, {\"path\": \"/var/log/syslog\", \"type\": \"file\", \"class\": \"ai_backed\"}, {\"path\": \"/home/ubuntu/.bash_history\", \"type\": \"file\", \"class\": \"ai_backed\"}, {\"path\": \"/home/ubuntu/notes.txt\", \"type\": \"file\", \"class\": \"ai_backed\"}, {\"path\": \"/etc/nginx/nginx.conf\", \"type\": \"file\", \"class\": \"ai_backed\"}, {\"path\": \"/var/www/html/index.html\", \"type\": \"file\", \"class\": \"ai_backed\"}]}",
+      "groups": "[{\"name\": \"root\", \"gid\": 0, \"members\": [\"root\"]}, {\"name\": \"ubuntu\", \"gid\": 1000, \"members\": [\"ubuntu\"]}, {\"name\": \"www-data\", \"gid\": 33, \"members\": [\"www-data\", \"ubuntu\"]}, {\"name\": \"sudo\", \"gid\": 27, \"members\": [\"ubuntu\"]}, {\"name\": \"docker\", \"gid\": 998, \"members\": [\"ubuntu\"]}]",
+      "hostname": "web01",
+      "installed_packages": "[{\"name\": \"nginx\", \"version\": \"1.24.0\"}, {\"name\": \"openssh-server\", \"version\": \"9.6p1\"}, {\"name\": \"curl\", \"version\": \"8.5.0\"}, {\"name\": \"vim\", \"version\": \"9.1.0\"}, {\"name\": \"git\", \"version\": \"2.43.0\"}, {\"name\": \"ufw\", \"version\": \"0.36.2\"}, {\"name\": \"fail2ban\", \"version\": \"1.0.2\"}, {\"name\": \"python3\", \"version\": \"3.12.3\"}]",
+      "kernel_version": "6.8.0-51-generic",
+      "mounted_drives": "[{\"device\": \"/dev/sda1\", \"mountpoint\": \"/\", \"fstype\": \"ext4\", \"size_gb\": 50}, {\"device\": \"/dev/sda2\", \"mountpoint\": \"/boot\", \"fstype\": \"vfat\", \"size_gb\": 1}, {\"device\": \"tmpfs\", \"mountpoint\": \"/tmp\", \"fstype\": \"tmpfs\", \"size_gb\": 2}]",
+      "network_interfaces": "[{\"name\": \"eth0\", \"ip\": \"10.0.1.42\", \"netmask\": \"255.255.255.0\", \"gateway\": \"10.0.1.1\"}, {\"name\": \"lo\", \"ip\": \"127.0.0.1\", \"netmask\": \"255.0.0.0\"}]",
+      "open_ports": "[{\"port\": 22, \"proto\": \"tcp\", \"service\": \"ssh\"}, {\"port\": 80, \"proto\": \"tcp\", \"service\": \"nginx\"}, {\"port\": 443, \"proto\": \"tcp\", \"service\": \"nginx\"}]",
+      "primary_user": "ubuntu",
+      "running_services": "[\"nginx\", \"ssh\", \"cron\", \"ufw\", \"fail2ban\"]",
+      "ssh_config": "{\"permit_root_login\": false, \"password_authentication\": true, \"pubkey_authentication\": true, \"port\": 22}",
+      "ubuntu_version": "24.04",
+      "users": "[{\"name\": \"ubuntu\", \"uid\": 1000, \"gid\": 1000, \"shell\": \"/bin/bash\", \"home\": \"/home/ubuntu\"}, {\"name\": \"www-data\", \"uid\": 33, \"gid\": 33, \"shell\": \"/usr/sbin/nologin\", \"home\": \"/var/www\"}, {\"name\": \"root\", \"uid\": 0, \"gid\": 0, \"shell\": \"/bin/bash\", \"home\": \"/root\"}]"
+    },
+    "version": 2
+  },
+  "independence_unit": "one uncached generation trial; up to two attempts",
+  "limitations": [
+    "No independent human plausibility rating is included.",
+    "Ollama/model execution may be nondeterministic because no model seed is set.",
+    "Acceptance means the current automated validator passed, not universal correctness."
+  ],
+  "model_identities": {
+    "llama3.2:3b": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+    "llama3:8b": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1"
+  },
+  "reference_epoch": 1790467200.0,
+  "runtime": {
+    "model_seed": null,
+    "ollama_host": "127.0.0.1",
+    "temperature": 0.1,
+    "timeout_seconds_per_attempt": 30.0
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a098fe02771802de03b9c64c8fbce52d82defc38",
+    "working_tree_dirty": true
+  },
+  "summary": {
+    "by_path": {
+      "/etc/nginx/nginx.conf": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 51.564029624991235,
+          "median": 15.614893270998436,
+          "p95_nearest_rank": 23.255551041002036
+        },
+        "rejected_or_failed": 0,
+        "trials": 30
+      },
+      "/home/ubuntu/.bash_history": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 39.01215370799764,
+          "median": 7.038057270990976,
+          "p95_nearest_rank": 35.95997212501243
+        },
+        "rejected_or_failed": 0,
+        "trials": 30
+      },
+      "/home/ubuntu/notes.txt": {
+        "acceptance_rate": 0.7333333333333333,
+        "accepted": 22,
+        "latency_seconds": {
+          "maximum": 60.014530959000695,
+          "median": 10.168016896001063,
+          "p95_nearest_rank": 47.07102004199987
+        },
+        "rejected_or_failed": 8,
+        "trials": 30
+      },
+      "/var/log/auth.log": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 31.85404141699837,
+          "median": 8.50145695849642,
+          "p95_nearest_rank": 25.050403874993208
+        },
+        "rejected_or_failed": 0,
+        "trials": 30
+      },
+      "/var/log/syslog": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 28.292030124997837,
+          "median": 7.013119312003255,
+          "p95_nearest_rank": 10.625830917007988
+        },
+        "rejected_or_failed": 0,
+        "trials": 30
+      },
+      "/var/www/html/index.html": {
+        "acceptance_rate": 1.0,
+        "accepted": 30,
+        "latency_seconds": {
+          "maximum": 12.336929959012195,
+          "median": 5.801460146001773,
+          "p95_nearest_rank": 9.128548041990143
+        },
+        "rejected_or_failed": 0,
+        "trials": 30
+      }
+    },
+    "overall": {
+      "acceptance_rate": 0.9555555555555556,
+      "accepted": 172,
+      "latency_seconds": {
+        "maximum": 60.014530959000695,
+        "median": 8.336062749993289,
+        "p95_nearest_rank": 35.95997212501243
+      },
+      "rejected_or_failed": 8,
+      "trials": 180
+    }
+  },
+  "treatment": "prepared_ai_valid_only",
+  "trials": [
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.771349749993533,
+          "reason": "",
+          "response_bytes": 520,
+          "response_sha256": "b7889b56777e78e4caf939d2823b38a9f7f34e4efb8f812bb76e63858f2bfdc6"
+        }
+      ],
+      "elapsed_seconds": 8.771680916994228,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_02.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.2780096659989795,
+          "reason": "",
+          "response_bytes": 629,
+          "response_sha256": "602f45d3fdfe3414b030f19427a88584ff35fa7e4b1d03fdb82c5e21554314e8"
+        }
+      ],
+      "elapsed_seconds": 6.278433832994779,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.15022054099245,
+          "reason": "",
+          "response_bytes": 653,
+          "response_sha256": "20d4641c66a060ebd1a70bde1c1d226eee9c208ef7c62488a6817838628a6bcf"
+        }
+      ],
+      "elapsed_seconds": 7.150585166993551,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.316317541990429,
+          "reason": "",
+          "response_bytes": 523,
+          "response_sha256": "30ee74a6709fb5c983c80eeb4ebd95f8fd99a96efbedabdf5e3a4068bdece5f3"
+        }
+      ],
+      "elapsed_seconds": 6.316706084006,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 15.135214499998256,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 5.882948375001433,
+          "reason": "",
+          "response_bytes": 519,
+          "response_sha256": "3a38ff900deacfa7de02e7f12865e48edca33d54bae963df8c1ef9a3235fb18a"
+        }
+      ],
+      "elapsed_seconds": 21.018641791990376,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.058690124991699,
+          "reason": "",
+          "response_bytes": 549,
+          "response_sha256": "a7a215570ea09e0e7190e2bb3cb9edaf71dce04ecc206200eab153f14ce80d9f"
+        }
+      ],
+      "elapsed_seconds": 6.059153875001357,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.527850625003339,
+          "reason": "",
+          "response_bytes": 675,
+          "response_sha256": "e730bc53f649beccf72a3855543535fa893c957196a7173cd4f030dd5299de59"
+        }
+      ],
+      "elapsed_seconds": 7.52830137500132,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_08.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.342510834001587,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "7cc0bde8a5753d34d9ab4722047a462bbcaf63c440244ad6c65a53851ab8ce30"
+        }
+      ],
+      "elapsed_seconds": 6.342903083001147,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.766081875000964,
+          "reason": "",
+          "response_bytes": 619,
+          "response_sha256": "119b0745b8ae94c3b73f4be4021f062430f316cec56dc1d6c490a5369c91f3c6"
+        }
+      ],
+      "elapsed_seconds": 7.7664499590027845,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.853069624994532,
+          "reason": "",
+          "response_bytes": 559,
+          "response_sha256": "3bef703e19653f1934df67087dbf53d1ab7ab76c996574fe147c02d524a6fb47"
+        }
+      ],
+      "elapsed_seconds": 5.853619665998849,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.727038665994769,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "48027a81d6277d4c6f2410229af303b59e1a48b11da2265ee811c48a95cf68e6"
+        }
+      ],
+      "elapsed_seconds": 6.727576666002278,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.1640255830134265,
+          "reason": "",
+          "response_bytes": 559,
+          "response_sha256": "3bef703e19653f1934df67087dbf53d1ab7ab76c996574fe147c02d524a6fb47"
+        }
+      ],
+      "elapsed_seconds": 6.164441957997042,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_13.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.539619375005714,
+          "reason": "",
+          "response_bytes": 780,
+          "response_sha256": "413057778e31e7eceddeee1f9bc26af18faa01fb17b70a4ca26be02c5d9538f5"
+        }
+      ],
+      "elapsed_seconds": 10.540227332996437,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_14.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.923898375011049,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "48027a81d6277d4c6f2410229af303b59e1a48b11da2265ee811c48a95cf68e6"
+        }
+      ],
+      "elapsed_seconds": 7.924343416001648,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.35920133399486,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "48027a81d6277d4c6f2410229af303b59e1a48b11da2265ee811c48a95cf68e6"
+        }
+      ],
+      "elapsed_seconds": 8.359809999994468,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_16.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.311851791993831,
+          "reason": "",
+          "response_bytes": 519,
+          "response_sha256": "3a38ff900deacfa7de02e7f12865e48edca33d54bae963df8c1ef9a3235fb18a"
+        }
+      ],
+      "elapsed_seconds": 8.31231549999211,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 23.10072816599859,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 8.752629750000779,
+          "reason": "",
+          "response_bytes": 516,
+          "response_sha256": "2e023036d22e2eb017a13acea5b31fe5421345837ea3c25a4719f18e25cb5961"
+        }
+      ],
+      "elapsed_seconds": 31.85404141699837,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.775965709006414,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "48027a81d6277d4c6f2410229af303b59e1a48b11da2265ee811c48a95cf68e6"
+        }
+      ],
+      "elapsed_seconds": 9.776380583003629,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_19.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.318238499996369,
+          "reason": "",
+          "response_bytes": 554,
+          "response_sha256": "48027a81d6277d4c6f2410229af303b59e1a48b11da2265ee811c48a95cf68e6"
+        }
+      ],
+      "elapsed_seconds": 9.318675665999763,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.069825415994273,
+          "reason": "",
+          "response_bytes": 717,
+          "response_sha256": "2d00e412609da48d77220636c844416f7df855f6b9d143bc7ca6185585f3f056"
+        }
+      ],
+      "elapsed_seconds": 12.070390999986557,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.53501733399753,
+          "reason": "",
+          "response_bytes": 558,
+          "response_sha256": "b7d3a5617e2313c2bf1f2f173b2569c75faa2138121f44096e18187cfb91adb7"
+        }
+      ],
+      "elapsed_seconds": 9.535412500001257,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.64260066699353,
+          "reason": "",
+          "response_bytes": 529,
+          "response_sha256": "34ebbcee1a34ae5c7054f0b3838c06a6a8fe3008714d417bce66af594bc23a68"
+        }
+      ],
+      "elapsed_seconds": 8.64310391699837,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_23.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.611768333008513,
+          "reason": "",
+          "response_bytes": 463,
+          "response_sha256": "41d63a08dbd9f91716e69855fcdc4c4eab3f1042ace94d14153a32a790670f69"
+        }
+      ],
+      "elapsed_seconds": 7.612483207994956,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.5206229579926,
+          "reason": "",
+          "response_bytes": 640,
+          "response_sha256": "7087aa45139744a190f3d0447e3f21f15b139e7ec94e0c8f8899a3566823d6fc"
+        }
+      ],
+      "elapsed_seconds": 10.52102054200077,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.941587541994522,
+          "reason": "",
+          "response_bytes": 608,
+          "response_sha256": "94eeb3c922a0f9dbc9eb83940ae2fc863d8e41a83fc3dd61f6115388d7201b5e"
+        }
+      ],
+      "elapsed_seconds": 9.94204979200731,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.891288542014081,
+          "reason": "",
+          "response_bytes": 612,
+          "response_sha256": "076cc28b4849871a54ef9264d400ad633ff2fd3e5546649b01f449f93ecc27a8"
+        }
+      ],
+      "elapsed_seconds": 9.891786042004242,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_27.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.815749167013564,
+          "reason": "",
+          "response_bytes": 559,
+          "response_sha256": "3bef703e19653f1934df67087dbf53d1ab7ab76c996574fe147c02d524a6fb47"
+        }
+      ],
+      "elapsed_seconds": 7.8161722920049215,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.811465083999792,
+          "reason": "",
+          "response_bytes": 523,
+          "response_sha256": "4b2c4c53d6f1b6cd6acef79590bf57e5d6645ef99c58f5b729b8088125e19185"
+        }
+      ],
+      "elapsed_seconds": 8.811887457995908,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 11.641133874989464,
+          "reason": "",
+          "response_bytes": 674,
+          "response_sha256": "1c2eb128de00765d314747fb48172d43b86e8e177b37dfaa674e7d154f038022"
+        }
+      ],
+      "elapsed_seconds": 11.641731542011257,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__auth.log__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 13.39135616600106,
+          "reason": "ubuntu_convention: windows reference in Ubuntu file",
+          "response_bytes": 745,
+          "response_sha256": "a52db88535e27a33a09b43d995fa16442ebdaf79c7ce0ee7b8bb09fa6ce19fa4"
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 11.658605791002628,
+          "reason": "",
+          "response_bytes": 789,
+          "response_sha256": "fffadc8fad4548425f8648248b38e02966416cd83497c9470e23f06c71e34464"
+        }
+      ],
+      "elapsed_seconds": 25.050403874993208,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/auth.log",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.308339209004771,
+          "reason": "",
+          "response_bytes": 464,
+          "response_sha256": "a34701482536763ed8052a4ece62bb058c71248560e72f52b9b20382e0d1b847"
+        }
+      ],
+      "elapsed_seconds": 9.309107957989909,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_02.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.070535833991016,
+          "reason": "",
+          "response_bytes": 681,
+          "response_sha256": "e734fbfb7063e2d011d7107615c02ce16688c4234ba119587101343089dc1d35"
+        }
+      ],
+      "elapsed_seconds": 10.071021584008122,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.2248724999954,
+          "reason": "",
+          "response_bytes": 690,
+          "response_sha256": "61783877a440cafe1cf7dbbc5b88989b2befe2b5f8eaaf2036b2ba730fbd4e81"
+        }
+      ],
+      "elapsed_seconds": 10.225319542005309,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.472796250003739,
+          "reason": "",
+          "response_bytes": 467,
+          "response_sha256": "6e099b2dd5ad66000c9f0218cd0c422d863dab27323981bf03914150bfdf98aa"
+        }
+      ],
+      "elapsed_seconds": 7.473236707999604,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.963856125003076,
+          "reason": "",
+          "response_bytes": 519,
+          "response_sha256": "c370b4e0ca20b6683c93c1a48c4685d7338ee627e2d67db09a14aa46146824e9"
+        }
+      ],
+      "elapsed_seconds": 7.964252042002045,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.498670209010015,
+          "reason": "",
+          "response_bytes": 530,
+          "response_sha256": "7ac0f2eb8f2d95d74de04e407de676f22524f2ac53f51c629b260e4e3b96e5d3"
+        }
+      ],
+      "elapsed_seconds": 9.49941362500249,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.565156999989995,
+          "reason": "",
+          "response_bytes": 464,
+          "response_sha256": "a34701482536763ed8052a4ece62bb058c71248560e72f52b9b20382e0d1b847"
+        }
+      ],
+      "elapsed_seconds": 7.565725458989618,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_08.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.540500666000298,
+          "reason": "",
+          "response_bytes": 619,
+          "response_sha256": "3926c20fa2bf4fa1df31a7990ed0d1554f2ddfca5d03f727dbcf1394ea205a1b"
+        }
+      ],
+      "elapsed_seconds": 9.540990166991833,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.417110750000575,
+          "reason": "",
+          "response_bytes": 619,
+          "response_sha256": "3926c20fa2bf4fa1df31a7990ed0d1554f2ddfca5d03f727dbcf1394ea205a1b"
+        }
+      ],
+      "elapsed_seconds": 9.417570666992106,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.608581833992503,
+          "reason": "",
+          "response_bytes": 713,
+          "response_sha256": "68e903406133a335d881e5982afbf37bfc6a762958a563efb18c9ace23d9354a"
+        }
+      ],
+      "elapsed_seconds": 10.609012040993548,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.53387341699272,
+          "reason": "",
+          "response_bytes": 619,
+          "response_sha256": "3926c20fa2bf4fa1df31a7990ed0d1554f2ddfca5d03f727dbcf1394ea205a1b"
+        }
+      ],
+      "elapsed_seconds": 9.534238708001794,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.904051125005935,
+          "reason": "",
+          "response_bytes": 464,
+          "response_sha256": "a34701482536763ed8052a4ece62bb058c71248560e72f52b9b20382e0d1b847"
+        }
+      ],
+      "elapsed_seconds": 7.904633291007485,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_13.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.706420290996903,
+          "reason": "",
+          "response_bytes": 464,
+          "response_sha256": "a34701482536763ed8052a4ece62bb058c71248560e72f52b9b20382e0d1b847"
+        }
+      ],
+      "elapsed_seconds": 7.70689758300432,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_14.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.625258999993093,
+          "reason": "",
+          "response_bytes": 713,
+          "response_sha256": "68e903406133a335d881e5982afbf37bfc6a762958a563efb18c9ace23d9354a"
+        }
+      ],
+      "elapsed_seconds": 10.625830917007988,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 19.998885374996462,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 8.29276170799858,
+          "reason": "",
+          "response_bytes": 681,
+          "response_sha256": "e734fbfb7063e2d011d7107615c02ce16688c4234ba119587101343089dc1d35"
+        }
+      ],
+      "elapsed_seconds": 28.292030124997837,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_16.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.206172500009416,
+          "reason": "",
+          "response_bytes": 345,
+          "response_sha256": "2efa66caefdf592ad97f9cea5aa585d4ae9e8e24da4b6f9d6ba5f7984b1e3bf0"
+        }
+      ],
+      "elapsed_seconds": 4.206612333000521,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.338971290999325,
+          "reason": "",
+          "response_bytes": 486,
+          "response_sha256": "e87f90253cca1135b5de265fdfcc22b4fd85759a8c62ab74c110598d6cb3ba06"
+        }
+      ],
+      "elapsed_seconds": 5.339351333997911,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.552611749997595,
+          "reason": "",
+          "response_bytes": 690,
+          "response_sha256": "b03f057dca54809b95fd362924fb5f193590dbd9642c3932b0dc18e5b41cf39d"
+        }
+      ],
+      "elapsed_seconds": 6.553001916006906,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_19.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.825149791999138,
+          "reason": "",
+          "response_bytes": 627,
+          "response_sha256": "d6dd324a3a0564ca2d6ec0ea20d6a62f0a30572138e71e0a40aa32175ae0c4bd"
+        }
+      ],
+      "elapsed_seconds": 5.825602999990224,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.713013417000184,
+          "reason": "",
+          "response_bytes": 465,
+          "response_sha256": "624687b1cfca7ee4d082465c08ba69fd1d63c4c548c7893a0c6ed9fbbcd8c96f"
+        }
+      ],
+      "elapsed_seconds": 4.713667000003625,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.359531750000315,
+          "reason": "",
+          "response_bytes": 681,
+          "response_sha256": "e734fbfb7063e2d011d7107615c02ce16688c4234ba119587101343089dc1d35"
+        }
+      ],
+      "elapsed_seconds": 6.359929875005037,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 3.3330787500017323,
+          "reason": "",
+          "response_bytes": 362,
+          "response_sha256": "f28e6b46b75c2a1845ce069beb83d0b8ac35e20a446e10d0b98113cdd526a94f"
+        }
+      ],
+      "elapsed_seconds": 3.3334665000002133,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_23.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.5696303339937,
+          "reason": "",
+          "response_bytes": 461,
+          "response_sha256": "7957caeac993ae04a63d1010831fedaf2a485f3b47b5db45cf060a275f6b2964"
+        }
+      ],
+      "elapsed_seconds": 4.570255291997455,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.494552082993323,
+          "reason": "",
+          "response_bytes": 683,
+          "response_sha256": "2536f297329b9c3147084110b260233cacbeb5239ccfeb0fb076a18098f63ecc"
+        }
+      ],
+      "elapsed_seconds": 6.494989250000799,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.415163750003558,
+          "reason": "",
+          "response_bytes": 690,
+          "response_sha256": "61783877a440cafe1cf7dbbc5b88989b2befe2b5f8eaaf2036b2ba730fbd4e81"
+        }
+      ],
+      "elapsed_seconds": 6.415910332987551,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.332609999997658,
+          "reason": "",
+          "response_bytes": 681,
+          "response_sha256": "e734fbfb7063e2d011d7107615c02ce16688c4234ba119587101343089dc1d35"
+        }
+      ],
+      "elapsed_seconds": 6.333197375002783,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_27.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.7861002089921385,
+          "reason": "",
+          "response_bytes": 464,
+          "response_sha256": "a34701482536763ed8052a4ece62bb058c71248560e72f52b9b20382e0d1b847"
+        }
+      ],
+      "elapsed_seconds": 4.786434708003071,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.520626541998354,
+          "reason": "",
+          "response_bytes": 568,
+          "response_sha256": "408684f2e50632e3865925adc9ac6f82429080fd3e55c5cbe1c36ada5dbd1cfe"
+        }
+      ],
+      "elapsed_seconds": 5.5210842919914285,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.776913791996776,
+          "reason": "",
+          "response_bytes": 460,
+          "response_sha256": "bfaea18f3f42d8c1d880365ea2eb9c8e5d7241b661ad2b513a7c3d628d1877f4"
+        }
+      ],
+      "elapsed_seconds": 4.777284499999951,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__log__syslog__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.93962995900074,
+          "reason": "",
+          "response_bytes": 627,
+          "response_sha256": "d6dd324a3a0564ca2d6ec0ea20d6a62f0a30572138e71e0a40aa32175ae0c4bd"
+        }
+      ],
+      "elapsed_seconds": 5.940275333006866,
+      "file_class": "log_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/var/log/syslog",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 22.183735000013257,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 2.340634874999523,
+          "reason": "",
+          "response_bytes": 230,
+          "response_sha256": "37fc6c80e6c568f883feed2970f6076eb75a97c32a50f625d82816d143c4ec1a"
+        }
+      ],
+      "elapsed_seconds": 24.524869417000446,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_02.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 25.350571249990026,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 6.850094458000967,
+          "reason": "",
+          "response_bytes": 558,
+          "response_sha256": "5ca8668d5913cfe0380cc5da2a363e0949c151a13769a4692a95493362e4dd13"
+        }
+      ],
+      "elapsed_seconds": 32.20156220800709,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.571226874992135,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 5.572044291009661,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.754541750007775,
+          "reason": "",
+          "response_bytes": 309,
+          "response_sha256": "14fd2753b8dbbf291c40252f8dfc95cb7ed64d0a3b6b475b3741131982cf1b21"
+        }
+      ],
+      "elapsed_seconds": 5.755128374992637,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.660579167000833,
+          "reason": "",
+          "response_bytes": 308,
+          "response_sha256": "508b6f2e908964fa05c3924f14c1607a382f17ed7599cfdef1786a9cc733df88"
+        }
+      ],
+      "elapsed_seconds": 6.661503374998574,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.878294708003523,
+          "reason": "",
+          "response_bytes": 230,
+          "response_sha256": "37fc6c80e6c568f883feed2970f6076eb75a97c32a50f625d82816d143c4ec1a"
+        }
+      ],
+      "elapsed_seconds": 5.879044792003697,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.595231957995566,
+          "reason": "",
+          "response_bytes": 259,
+          "response_sha256": "d91b4ae10bb26bb97b069e73924ceced7c557710dd3c062a4b6af9bc5589a7b9"
+        }
+      ],
+      "elapsed_seconds": 6.596229500006302,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_08.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.006879791995743,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 9.004739166004583,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 39.01215370799764,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.281847374993959,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 9.282262417007587,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 14.101281499999459,
+          "reason": "",
+          "response_bytes": 557,
+          "response_sha256": "9d9b4b697142a1deade8e637cd563f20c9de3fd1de47229e4fba156286164b91"
+        }
+      ],
+      "elapsed_seconds": 14.101635833008913,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.814982416995917,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 12.81727020899416,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.95758095801284,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 10.958068457999616,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_13.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 26.242789999989327,
+          "reason": "",
+          "response_bytes": 1080,
+          "response_sha256": "01b40f04aaff4bd92e38b45eccaba4beef6b9c8bb6a2e3d50b291892c50de17e"
+        }
+      ],
+      "elapsed_seconds": 26.243260957999155,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_14.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.325316958012991,
+          "reason": "",
+          "response_bytes": 245,
+          "response_sha256": "febc31f803ba8ec5eff3152c34ef5b3f4dc22133f7687c9d6f9a3f6ed3e0366d"
+        }
+      ],
+      "elapsed_seconds": 6.325751958007459,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.960096041992074,
+          "reason": "",
+          "response_bytes": 286,
+          "response_sha256": "bcd35b20d90d8e4d1a1caeb3d108f9551f01c6d9c54c6b4300c08bd317d76973"
+        }
+      ],
+      "elapsed_seconds": 5.960934917005943,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_16.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.075653666004655,
+          "reason": "",
+          "response_bytes": 313,
+          "response_sha256": "c5b6a1ec63ac5510d02c492ac28a487d4b0740ce0f94a8c0b8d18f5199c96e6d"
+        }
+      ],
+      "elapsed_seconds": 7.076106958993478,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.073176915990189,
+          "reason": "",
+          "response_bytes": 313,
+          "response_sha256": "c5b6a1ec63ac5510d02c492ac28a487d4b0740ce0f94a8c0b8d18f5199c96e6d"
+        }
+      ],
+      "elapsed_seconds": 6.073537083997508,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.235622624997632,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 7.236111582999001,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_19.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.531574249995174,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 6.53207062499132,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.8381667920039035,
+          "reason": "",
+          "response_bytes": 309,
+          "response_sha256": "071a84213e23543815f53e4c7dacdad4c9ec93298cc36d2734b2d0a6121b5801"
+        }
+      ],
+      "elapsed_seconds": 6.838625292002689,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.007453708007233,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 5.951975374991889,
+          "reason": "",
+          "response_bytes": 255,
+          "response_sha256": "5adcb7f7f30b2ac6da4fd9301784aa5f7357f35a4bf13b711e47841725375ce8"
+        }
+      ],
+      "elapsed_seconds": 35.95997212501243,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.754992207992473,
+          "reason": "",
+          "response_bytes": 558,
+          "response_sha256": "5ca8668d5913cfe0380cc5da2a363e0949c151a13769a4692a95493362e4dd13"
+        }
+      ],
+      "elapsed_seconds": 9.755578124997555,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_23.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.883299416993395,
+          "reason": "",
+          "response_bytes": 313,
+          "response_sha256": "c5b6a1ec63ac5510d02c492ac28a487d4b0740ce0f94a8c0b8d18f5199c96e6d"
+        }
+      ],
+      "elapsed_seconds": 6.883785665995674,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.118332208003267,
+          "reason": "",
+          "response_bytes": 260,
+          "response_sha256": "8fb0d2f29af395415b8d4996c71ebea827a03bf4a3efa4dcfa0913b07d7d5fb3"
+        }
+      ],
+      "elapsed_seconds": 5.118745832995046,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 13.160767708002822,
+          "reason": "",
+          "response_bytes": 644,
+          "response_sha256": "df1f6188752102a073ef9a8f621e3e7595568b124ab7d72efd918096729b98eb"
+        }
+      ],
+      "elapsed_seconds": 13.161248250005883,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 29.58384804200614,
+          "reason": "",
+          "response_bytes": 1350,
+          "response_sha256": "77a0e4b43db59b884a9bf5043821afbc0820bbf1e303382560d36be5274e9aa2"
+        }
+      ],
+      "elapsed_seconds": 29.58450175001053,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_27.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.647479040999315,
+          "reason": "",
+          "response_bytes": 284,
+          "response_sha256": "3fed6fa4a9fe62dafb30d8b7d19d63c021bcedcde478e81d081ea75c0e9e6281"
+        }
+      ],
+      "elapsed_seconds": 5.647926375007955,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.23652766601299,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 9.237334000004921,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.903721124996082,
+          "reason": "",
+          "response_bytes": 325,
+          "response_sha256": "5bd0c7c3dc89e8387e491c1a17b35b0215da0dcb9eaa5218a257c70fe14830d9"
+        }
+      ],
+      "elapsed_seconds": 6.904309541991097,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__.bash_history__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.999476041994058,
+          "reason": "",
+          "response_bytes": 309,
+          "response_sha256": "14fd2753b8dbbf291c40252f8dfc95cb7ed64d0a3b6b475b3741131982cf1b21"
+        }
+      ],
+      "elapsed_seconds": 7.000007582988474,
+      "file_class": "history_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/.bash_history",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 5.60836208400724,
+          "reason": "density: 18 lines exceeds max_lines=15",
+          "response_bytes": 232,
+          "response_sha256": "e4b49ff07fc7f011c58088bd7c8d521b5ee408dd549b2adb504bd13e304d778e"
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 4.256945624991204,
+          "reason": "",
+          "response_bytes": 268,
+          "response_sha256": "e656951bbb8ad58f6b8b3da3be9bc8baf795bf7b0ef13c7613b4ac8f4f160bf4"
+        }
+      ],
+      "elapsed_seconds": 9.866142791986931,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 1
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 8.042528417005087,
+          "reason": "density: 16 lines exceeds max_lines=15",
+          "response_bytes": 385,
+          "response_sha256": "6087e72422b81140fc256eb0f950b92ffe0f90ab301cc507ee138d6dcfd4c693"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 30.009279667006922,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        }
+      ],
+      "elapsed_seconds": 38.05197075000615,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 10.362678375007818,
+          "reason": "density: 18 lines exceeds max_lines=15",
+          "response_bytes": 404,
+          "response_sha256": "e3f5dfd7a33fe94594740f0660255ddcc0bd3734c62851cc259fcc2688f6b31e"
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 10.969566083003883,
+          "reason": "",
+          "response_bytes": 420,
+          "response_sha256": "664ecd71b78d39e3a325996d3bc8ef25325ff767914c8e296056af3cb217a944"
+        }
+      ],
+      "elapsed_seconds": 21.333157667002524,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.597280665999278,
+          "reason": "",
+          "response_bytes": 324,
+          "response_sha256": "76b038bfb323f8417a9837991bb22d9c86e426614ae5acbaf67b872b2a6d5429"
+        }
+      ],
+      "elapsed_seconds": 9.598323958998662,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.9980532089975895,
+          "reason": "",
+          "response_bytes": 229,
+          "response_sha256": "2067d5bcd0d83912e322d481e0f0e3fd867754175b78a3ea7bb7a97e265b676d"
+        }
+      ],
+      "elapsed_seconds": 5.998670958986622,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 8.31325070800085,
+          "reason": "density: 16 lines exceeds max_lines=15",
+          "response_bytes": 328,
+          "response_sha256": "67c920689f547c483d3cd9416cbb09ba5b7bb474bbaf98fc0b49f473f3f35018"
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 3.7889429589995416,
+          "reason": "",
+          "response_bytes": 165,
+          "response_sha256": "124485afb4588cf6dd0a198994d816bfc1e5e3b845faf1d4ef472be797b1945f"
+        }
+      ],
+      "elapsed_seconds": 12.102654292000807,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.140071540998179,
+          "reason": "",
+          "response_bytes": 336,
+          "response_sha256": "3114cd2d87ef300feb6f30f056a6f2ac6e94a7af38c09ea28758285d03070b5e"
+        }
+      ],
+      "elapsed_seconds": 10.140510041994276,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 7
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.006400749989552,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 12.119322124999599,
+          "reason": "density: 35 lines exceeds max_lines=15",
+          "response_bytes": 498,
+          "response_sha256": "174df048bd9f6206aebffa1033493f2a4daf573de2db09e028cc24f93b780d3c"
+        }
+      ],
+      "elapsed_seconds": 42.1257967089914,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.603633666993119,
+          "reason": "",
+          "response_bytes": 326,
+          "response_sha256": "78a1d51b3d9cc24d69cc7af7a3f9304c43f75c89672a169250c52cc7dcfec54d"
+        }
+      ],
+      "elapsed_seconds": 7.604146875004517,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.08749700000044,
+          "reason": "",
+          "response_bytes": 255,
+          "response_sha256": "ea52a3b57f0aa3d9f0c73011a3ab2cd909e3dc0fc61c4f0236211e82e056eb59"
+        }
+      ],
+      "elapsed_seconds": 6.088088125005015,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.977177875000052,
+          "reason": "",
+          "response_bytes": 255,
+          "response_sha256": "8737fd9f918ce79956d8d93ee076172953c8742fcbbad4f44a08e8a4537f0c3a"
+        }
+      ],
+      "elapsed_seconds": 5.977601082995534,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 3.3720963329978986,
+          "reason": "",
+          "response_bytes": 165,
+          "response_sha256": "b2d5bc00794a3911e46cfc7d0dfed25e6926bc7d76048cb32fa93dd84ee52332"
+        }
+      ],
+      "elapsed_seconds": 3.372525333004887,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 12
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 9.548876040993491,
+          "reason": "density: 16 lines exceeds max_lines=15",
+          "response_bytes": 385,
+          "response_sha256": "6087e72422b81140fc256eb0f950b92ffe0f90ab301cc507ee138d6dcfd4c693"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 17.447801125003025,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 729,
+          "response_sha256": "313e14f4a7cfda6bfc393522b40288c3ea36ef6e6da79ca2d173e5d20fadf1c1"
+        }
+      ],
+      "elapsed_seconds": 26.996730124999885,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 13
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.008306207993883,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 30.00608825001109,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        }
+      ],
+      "elapsed_seconds": 60.014530959000695,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.460104541998589,
+          "reason": "",
+          "response_bytes": 279,
+          "response_sha256": "fa0167e7bc048ff9616dee06926febb2179e01e9bf04c0c94d9fcc2e79e65625"
+        }
+      ],
+      "elapsed_seconds": 5.46063275000779,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 15
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 20.087617709010374,
+          "reason": "density: 30 lines exceeds max_lines=15",
+          "response_bytes": 990,
+          "response_sha256": "2d4df6257be407589961f07280a9037b99230a77b826a8f454b5f95402c0f616"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 15.652246333003859,
+          "reason": "density: 21 lines exceeds max_lines=15",
+          "response_bytes": 812,
+          "response_sha256": "dfea6c5b2248496ccf9e9cd5c5c428c8e10e182127ea85d4da2e4e136a692537"
+        }
+      ],
+      "elapsed_seconds": 35.73991616698913,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.5345301250054035,
+          "reason": "",
+          "response_bytes": 336,
+          "response_sha256": "3114cd2d87ef300feb6f30f056a6f2ac6e94a7af38c09ea28758285d03070b5e"
+        }
+      ],
+      "elapsed_seconds": 7.535067124990746,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.007364124991,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 7.324080417005462,
+          "reason": "",
+          "response_bytes": 277,
+          "response_sha256": "ce4b40478bf14403913a70a77ee724488f0c97eaf8c3e4cd07f4f30be98551da"
+        }
+      ],
+      "elapsed_seconds": 37.331912833004026,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 18
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 9.502263583999593,
+          "reason": "density: 16 lines exceeds max_lines=15",
+          "response_bytes": 385,
+          "response_sha256": "6087e72422b81140fc256eb0f950b92ffe0f90ab301cc507ee138d6dcfd4c693"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 15.693126375001157,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 781,
+          "response_sha256": "d6c5ff922734e4fa7f6ab16d1ee66aa66381d8972814c94f7b8317ee07eb4181"
+        }
+      ],
+      "elapsed_seconds": 25.19544374999532,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 3.155498958003591,
+          "reason": "",
+          "response_bytes": 164,
+          "response_sha256": "4fef9c0cb31b65c3bb182b2cb03605f80f31237d951ffdd02bd7d746a5a94bec"
+        }
+      ],
+      "elapsed_seconds": 3.1559885000024224,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 2.3360365410044324,
+          "reason": "",
+          "response_bytes": 146,
+          "response_sha256": "e26702a8bdb1a5bfa0fc8d38005bbc4f34f4a33f3925f741aa8919f03986bf22"
+        }
+      ],
+      "elapsed_seconds": 2.336509125001612,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.322006624992355,
+          "reason": "",
+          "response_bytes": 294,
+          "response_sha256": "957bd735d73672b1b291a8a6b8d2160d2b282f51e253b8bec45ebc8255b054e8"
+        }
+      ],
+      "elapsed_seconds": 7.322873791999882,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 22
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 18.467735916012316,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 829,
+          "response_sha256": "341fdd30e625447f4fa6c73a038041d3a4684bc650b156585d2bb6c53ab63f9c"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 13.68469887500396,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 603,
+          "response_sha256": "0e97d127216468074e78f323d347626392d487c22d296b44af3734b9b80ffcff"
+        }
+      ],
+      "elapsed_seconds": 32.152492374996655,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.815472165995743,
+          "reason": "",
+          "response_bytes": 229,
+          "response_sha256": "bad4ea3bc818ff35bc6ab2ed21d5afde895cb920fbf5f04d72e4761efa750b86"
+        }
+      ],
+      "elapsed_seconds": 4.8159242080000695,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.006047250004485,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 10.676992459004396,
+          "reason": "",
+          "response_bytes": 368,
+          "response_sha256": "d741c4e9bcf8cbf7dc2cf556f0350b0c29bfd99f2768e6ff1e7f20c2522158be"
+        }
+      ],
+      "elapsed_seconds": 40.68456191699079,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.0084166250017,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 13.395789458998479,
+          "reason": "",
+          "response_bytes": 328,
+          "response_sha256": "5213e8480a7e1abe435b6b5addfbfe90eb41051e946ef495c19e1cf3e3afd14a"
+        }
+      ],
+      "elapsed_seconds": 43.40666245800094,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 26
+    },
+    {
+      "accepted": false,
+      "artifact_file": null,
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 24.341092249989742,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 671,
+          "response_sha256": "75e329571db11334f11e7b2a7d38bdb2e033b479a77d1a295a659ed7d3aa8680"
+        },
+        {
+          "accepted": false,
+          "attempt": 2,
+          "elapsed_seconds": 22.729799292006646,
+          "reason": "density: 19 lines exceeds max_lines=15",
+          "response_bytes": 646,
+          "response_sha256": "c86e133ee55d66c003ed8246336faa6b1c40844d06dc086c1b36fe687c3810c4"
+        }
+      ],
+      "elapsed_seconds": 47.07102004199987,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 13.953155042006983,
+          "reason": "",
+          "response_bytes": 356,
+          "response_sha256": "1a3386fa369c05bedf29949b48da789aaf5c8700abf521b72f812eee4ffe78a4"
+        }
+      ],
+      "elapsed_seconds": 13.954290458001196,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.921534458000679,
+          "reason": "",
+          "response_bytes": 164,
+          "response_sha256": "8120b85f4a91b6494a214ce06f6936e9be77e01d45704d30b7ddcac72e3968db"
+        }
+      ],
+      "elapsed_seconds": 4.923436749988468,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "home__ubuntu__notes.txt__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.194339916997706,
+          "reason": "",
+          "response_bytes": 263,
+          "response_sha256": "75b6f08f7db3041ca519803b361450da903c426e51d2c8050d7e743e2ed827f9"
+        }
+      ],
+      "elapsed_seconds": 10.195523750007851,
+      "file_class": "notes_file",
+      "model": "llama3.2:3b",
+      "model_digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+      "path": "/home/ubuntu/notes.txt",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": false,
+          "attempt": 1,
+          "elapsed_seconds": 30.01485700000194,
+          "reason": "transport:ModelUnreachableError",
+          "response_bytes": 0,
+          "response_sha256": null
+        },
+        {
+          "accepted": true,
+          "attempt": 2,
+          "elapsed_seconds": 21.54704504199617,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 51.564029624991235,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_02.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.72534312501375,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.726871083999868,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 23.254264458999387,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 23.255551041002036,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.65048924999428,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.651657334004994,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.713618916008272,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.715638583991677,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.209521790995495,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.21143154099991,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.859504833992105,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.860921833998873,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_08.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 20.077604707999853,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 20.078072500007693,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.002765750003164,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.003522624989273,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 21.343549917000928,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 21.34403429199301,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.36997691699071,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.370857334011816,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 22.616782708995743,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 22.617538500009687,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_13.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 14.038566542003537,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 14.039694416002021,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_14.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 11.856916457996704,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 11.857514083996648,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.765238040999975,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 12.765944416998536,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_16.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 13.479398541996488,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 13.4799612909992,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 13.644654540999909,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 13.645255958996131,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 15.908222041995032,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 15.908769583998946,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_19.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 15.677983916000812,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 15.678687666993937,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 15.484559124990483,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 15.485198541995487,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 16.846318916999735,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 16.84692387501127,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 15.550466125001549,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 15.551098875002936,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_23.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 14.363123792005354,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 14.36370387498755,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 14.053167750011198,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 14.053695333001087,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.803510958998231,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 12.804093250000733,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.613763540997752,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 12.614442917009,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_27.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 13.220481040989398,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 13.2209626249969,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 11.113880958000664,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 11.114491250002175,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 10.944692959004897,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 10.945400250013336,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "etc__nginx__nginx.conf__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.05332904199895,
+          "reason": "",
+          "response_bytes": 363,
+          "response_sha256": "a0a874718ac63c27f868ef82023aa5dabaf0e3e76363cb241a72fdb9cd635913"
+        }
+      ],
+      "elapsed_seconds": 12.053992125001969,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/etc/nginx/nginx.conf",
+      "trial": 30
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_01.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 12.336500083998544,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 12.336929959012195,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 1
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_02.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.787804833002156,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "944c4acd8df305f961d7fc1ef1ee33601a2506c89127fad236faacbc45261544"
+        }
+      ],
+      "elapsed_seconds": 4.788401249999879,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 2
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_03.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 8.702690417005215,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 8.703805750003085,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 3
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_04.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.146704792001401,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 5.147331875006785,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 4
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_05.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.274082040996291,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 7.275518291993649,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 5
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_06.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.381385999993654,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 7.382607833002112,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 6
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_07.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.117619458003901,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 7.119064958998933,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 7
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_08.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.9036701250006445,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 6.904917958003352,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 8
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_09.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 9.127200917006121,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 9.128548041990143,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 9
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_10.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 7.345615583006293,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 7.346734624996316,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 10
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_11.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.940997666999465,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.941717082998366,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 11
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_12.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.853194125011214,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.85376404201088,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 12
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_13.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.093997374991886,
+          "reason": "",
+          "response_bytes": 146,
+          "response_sha256": "aa9dab25931dca7be5af01742c5411fcdbd581028e2a5ceb740746612fe972c2"
+        }
+      ],
+      "elapsed_seconds": 6.094554999988759,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 13
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_14.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.713941750000231,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.714576666010544,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 14
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_15.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.908527958003106,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.9091602910048096,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 15
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_16.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.8734261249919655,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.874060916001326,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 16
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_17.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 6.35201675001008,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 6.352605707987095,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 17
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_18.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.723649250008748,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.7241741249890765,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 18
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_19.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.866586249991087,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.8671867919911165,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 19
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_20.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.689098041999387,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.689543582993792,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 20
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_21.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.806863417004934,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.807487792000757,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 21
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_22.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.794605290997424,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.795432500002789,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 22
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_23.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.878333083004691,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.879012582998257,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 23
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_24.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.6815944999980275,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.682924249995267,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 24
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_25.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.3477251670119585,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.3482860419899225,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 25
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_26.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.312173040991183,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "7045cb4b5b309e443ceed11caa06414edb1bf7994812485b1592d1b11e7431c8"
+        }
+      ],
+      "elapsed_seconds": 4.312735083003645,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 26
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_27.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.876765541994246,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.877531083999202,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 27
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_28.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.449388624998392,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "944c4acd8df305f961d7fc1ef1ee33601a2506c89127fad236faacbc45261544"
+        }
+      ],
+      "elapsed_seconds": 4.449952499999199,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 28
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_29.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 4.39823258400429,
+          "reason": "",
+          "response_bytes": 107,
+          "response_sha256": "944c4acd8df305f961d7fc1ef1ee33601a2506c89127fad236faacbc45261544"
+        }
+      ],
+      "elapsed_seconds": 4.398858957996708,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 29
+    },
+    {
+      "accepted": true,
+      "artifact_file": "var__www__html__index.html__trial_30.txt",
+      "attempts": [
+        {
+          "accepted": true,
+          "attempt": 1,
+          "elapsed_seconds": 5.998020667000674,
+          "reason": "",
+          "response_bytes": 152,
+          "response_sha256": "6ee4af2d1c8236ef5e6b490a845b5af089a6f4fc69269976d592e49a3cc96954"
+        }
+      ],
+      "elapsed_seconds": 5.998656374998973,
+      "file_class": "config_file",
+      "model": "llama3:8b",
+      "model_digest": "365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1",
+      "path": "/var/www/html/index.html",
+      "trial": 30
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+curl 8.5.0 (Little Brother) built for x86_64 (64 bit) on a linux (3.10.0-1160.16.4.el9.x86_64) kernel 6.8.0-51-generic
+Copyright (c) 1998-2022, Bob Ippolito and the curlteam
+Released under the BSD 3-clause license.
+
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# git config --get user.name
+ubuntu
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# ssh -o StrictHostKeyChecking=no user@web01
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# ufw status
+Status: active
+To Action: Allow, Allow, Allow, Allow, Allow, Allow, Allow, Allow
+From     To     Action      Allow
+--     ----     --------      ----
+ssh    any     Allow       ssh
+http    any     Allow       http
+https   any     Allow       https
+tcp    22      Allow       ssh
+tcp    80      Allow       http
+tcp    443     Allow       https
+udp    53      Allow       dns
+ufw status allow all
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# fail2ban status
+Status: enabled
+Failed logins: 0
+Successful logins: 0
+IP addresses:
+ 192.168.1.100
+root@web01:/home/ubuntu#

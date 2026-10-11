@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "event_id": "04285ec9-0fb2-5366-bbee-c8bc59b3da56",
+    "session_id": "b7357992-511b-5fd0-b031-5826bfe97af7",
+    "timestamp": "2026-10-11T00:00:01+00:00",
+    "operation": "ssh_command",
+    "path": "",
+    "metadata": {
+      "command_id": "f5355056-6110-562b-81e9-05d2f8e783e9",
+      "command": "echo SYNTHETIC_SECRET",
+      "origin": "synthetic"
+    }
+  },
+  {
+    "id": 2,
+    "event_id": "c56222f2-ee46-5ab9-9ece-147719a382f9",
+    "session_id": "b7357992-511b-5fd0-b031-5826bfe97af7",
+    "timestamp": "2026-10-11T00:00:02+00:00",
+    "operation": "ssh_command_result",
+    "path": "",
+    "metadata": {
+      "command_id": "f5355056-6110-562b-81e9-05d2f8e783e9",
+      "outcome": "emulated_success",
+      "exit_status": 0,
+      "origin": "synthetic"
+    }
+  }
+]

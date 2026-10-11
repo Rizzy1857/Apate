@@ -1,0 +1,11 @@
+Hello Ubuntu Team,
+
+I'm having some issues with the update process. The last update was successful but the network connection is not stable.
+
+- DNS resolution is not working.
+- The network connection drops frequently.
+
+Can you please help me with this?
+
+Thanks,
+ubuntu

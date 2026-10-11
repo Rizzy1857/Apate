@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "policy": "apate-structural-allowlist-v1",
+  "strategy": "structural allowlist with stable truncated SHA-256 pseudonyms",
+  "omitted_field_event_counts": {
+    "command": 1
+  },
+  "limitations": [
+    "This artifact minimizes known free-text fields; it cannot guarantee removal of every secret.",
+    "Pseudonyms permit within-bundle correlation and may still reveal equality.",
+    "Use the private raw bundle for authoritative incident review."
+  ],
+  "parent_raw_input_sha256": "3ba44cce9fe3bdc2059fc108eb8702a05f4dba0f404bdf3951e390a7eb1b174d"
+}

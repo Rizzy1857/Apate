@@ -1,0 +1,2 @@
+session_id,command_id,origin,claimed_username,effective_username,identity_mismatch,identity_policy,outcome,exit_status,server_elapsed_seconds,submission_event_id
+session:sha256:d00d4dc5b4ce6066,command_id:sha256:f5cfd67937138ef8,synthetic,,,,,emulated_success,0,,04285ec9-0fb2-5366-bbee-c8bc59b3da56

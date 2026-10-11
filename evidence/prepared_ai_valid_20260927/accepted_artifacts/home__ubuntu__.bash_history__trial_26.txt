@@ -1,0 +1,44 @@
+root@web01:/home/ubuntu# curl -s https://example.com
+curl 8.5.0 (Little Brother) built for x86_64 (64 bit) on a linux (3.10.0-1160.16.4.el9.x86_64) kernel 6.8.0-51-generic
+Copyright (c) 1998-2022, Bob Ippolito and the curlteam
+Released under the GNU GPL, see https://curl.se/docs/copyright.html
+> 
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to restore working tree files)
+  (use "git reset <file>..." to reset working tree files)
+  (use "git restore --cached <file>..." to restore working tree files to the index)
+Unstaged changes:
+  (add all untracked files and ignore untracked files in next commit)
+  M   .bashrc
+  M   .bash_history
+  M   .bash_profile
+  M   .bash_profile.sh
+  M   .bashrc.sh
+  M   .bashenv
+  M   .bash_login
+  M   .bash_logout
+  M   .bash_aliases
+  M   .bash_history
+  M   .bash_prompt
+  M   .bash_shebangs
+  M   .bashrc.sh
+  M   .bash_profile.sh
+  M   .bashenv
+  M   .bash_login
+  M   .bash_logout
+  M   .bash_aliases
+  M   .bash_history
+  M   .bash_prompt
+  M   .bash_shebangs
+> 
+root@web01:/home/ubuntu# 
+root@web01:/home/ubuntu# ssh -T user@web01
+The programs command not given
+  Usage: ssh [HOST] [COMMAND]
+  or ssh [USER@]HOST [COMMAND]
+> 
+root@web01:/home/ubuntu#

@@ -1,0 +1,7 @@
+Sep 26 00:00:01 web01 cron[1234]: crontab has been updated
+Sep 26 00:00:01 web01 cron[1234]: No new crontab's were installed
+Sep 26 00:00:01 web01 cron[1234]: No new crontab's were installed
+Sep 26 00:00:01 web01 sshd[5678]: Connection from 192.168.1.100 on port 22
+Sep 26 00:00:01 web01 nginx[9012]: 192.168.1.100 - - [26/09/2026:00:00:01 +0000] "GET / HTTP/1.1" 200 1234
+Sep 26 00:00:01 web01 fail2ban[3456]: Connection from 192.168.1.100 on port 22
+Sep 26 00:00:01 web01 fail2ban[3456]: Connection from 192.168.1.100 on port 22

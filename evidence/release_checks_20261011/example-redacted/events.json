@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "event_id": "04285ec9-0fb2-5366-bbee-c8bc59b3da56",
+    "timestamp": "2026-10-11T00:00:01+00:00",
+    "operation": "ssh_command",
+    "session_id": "session:sha256:d00d4dc5b4ce6066",
+    "path": "path:sha256:12ae32cb1ec02d01",
+    "metadata": {
+      "redaction_policy": "apate-structural-allowlist-v1",
+      "command_id": "command_id:sha256:f5cfd67937138ef8",
+      "command_token": "command:sha256:14dd382eb43c69b5",
+      "origin": "synthetic",
+      "redaction_omitted_fields": [
+        "command"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "event_id": "c56222f2-ee46-5ab9-9ece-147719a382f9",
+    "timestamp": "2026-10-11T00:00:02+00:00",
+    "operation": "ssh_command_result",
+    "session_id": "session:sha256:d00d4dc5b4ce6066",
+    "path": "path:sha256:12ae32cb1ec02d01",
+    "metadata": {
+      "redaction_policy": "apate-structural-allowlist-v1",
+      "command_id": "command_id:sha256:f5cfd67937138ef8",
+      "outcome": "emulated_success",
+      "exit_status": 0,
+      "origin": "synthetic"
+    }
+  }
+]

@@ -1,0 +1,12 @@
+Hello Ubuntu Team,
+
+I'm having trouble with the network connection. It's not connecting to the internet.
+
+The Wi-Fi is working fine, but the Ethernet connection is not.
+
+I've tried restarting the network service, but it's still not working.
+
+Can you please help me?
+
+Best,
+ubuntu

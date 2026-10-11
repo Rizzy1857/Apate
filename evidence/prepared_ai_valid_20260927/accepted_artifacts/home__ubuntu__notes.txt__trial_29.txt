@@ -1,0 +1,8 @@
+Hello Ubuntu Team,
+
+I'm having some issues with the network connection. The DNS server is not resolving properly.
+
+Can you please help me with this?
+
+Thanks,
+Ubuntu

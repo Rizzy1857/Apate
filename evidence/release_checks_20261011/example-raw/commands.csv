@@ -1,0 +1,2 @@
+session_id,command_id,origin,claimed_username,effective_username,identity_mismatch,identity_policy,outcome,exit_status,server_elapsed_seconds,submission_event_id
+b7357992-511b-5fd0-b031-5826bfe97af7,f5355056-6110-562b-81e9-05d2f8e783e9,synthetic,,,,,emulated_success,0,,04285ec9-0fb2-5366-bbee-c8bc59b3da56

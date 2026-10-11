@@ -27,6 +27,13 @@ import redis
 import codecs
 import json
 
+from chronos.core.session_cleanup import (
+    LIFECYCLE_KEY,
+    acknowledge_disconnect,
+    prepare_disconnect,
+    register_lifecycle,
+)
+
 try:
     from chronos.intelligence.ubuntu_profile import UbuntuProfile as _UbuntuProfile
 
@@ -38,7 +45,52 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def session_worker(session_id, primary_user, pipe_conn):
+class ChannelWriteError(ConnectionError):
+    def __init__(self, message, bytes_sent=0):
+        super().__init__(message)
+        self.bytes_sent = bytes_sent
+
+
+def _send_all(channel, payload):
+    """Write the complete payload or raise with the locally accepted byte count."""
+    payload = bytes(payload)
+    sent_total = 0
+    while sent_total < len(payload):
+        try:
+            sent = channel.send(payload[sent_total:])
+        except Exception as exc:
+            raise ChannelWriteError("SSH channel write failed", sent_total) from exc
+        if not isinstance(sent, int) or sent <= 0:
+            raise ChannelWriteError("SSH channel closed during write", sent_total)
+        if sent > len(payload) - sent_total:
+            raise ChannelWriteError("SSH channel reported an invalid write count", sent_total)
+        sent_total += sent
+    return sent_total
+
+
+def _refresh_session_pid(client, pid, session_id, ttl=120):
+    """Renew an owned, live lease; never resurrect an expired namespace.
+
+    The reaper may already have selected a missing mapping for cleanup, even if
+    its lifecycle record still exists. Recreating that mapping races deletion.
+    """
+    result = client.eval(
+        "local owner = redis.call('GET', KEYS[1]); "
+        "if not owner then return 0 end; "
+        "if owner ~= ARGV[1] then return -1 end; "
+        "if redis.call('EXISTS', KEYS[2]) == 0 then return 0 end; "
+        "if redis.call('HEXISTS', KEYS[2], 'completed_at') == 1 then return 0 end; "
+        "return redis.call('EXPIRE', KEYS[1], ARGV[2])",
+        2,
+        f"session_pid:{pid}",
+        LIFECYCLE_KEY.format(session_id=session_id),
+        session_id,
+        int(ttl),
+    )
+    return int(result)
+
+
+def session_worker(session_id, primary_user, session_origin, pipe_conn):
     """Runs in a separate process per SSH session. Emulates commands and touches FUSE."""
     pid = os.getpid()
     redis_host = os.environ.get("REDIS_HOST", "localhost")
@@ -62,14 +114,20 @@ def session_worker(session_id, primary_user, pipe_conn):
 
         resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
         resource.setrlimit(resource.RLIMIT_FSIZE, (1024 * 1024, 1024 * 1024))
-        resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
+        # Keep a cumulative CPU bound separate from the one-hour wall deadline.
+        worker_cpu_seconds = int(os.environ.get("CHRONOS_WORKER_CPU_SECONDS", "300"))
+        if not 60 <= worker_cpu_seconds <= 600:
+            raise ValueError("CHRONOS_WORKER_CPU_SECONDS must be between 60 and 600")
+        resource.setrlimit(
+            resource.RLIMIT_CPU, (worker_cpu_seconds, worker_cpu_seconds)
+        )
         resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
         # Register PID mapping for FUSE attribution
         r.setex(f"session_pid:{pid}", 120, session_id)
 
         # Local imports after fork
         from chronos.gateway.dispatcher import SessionEnvironment, ASTDispatcher
-        from chronos.gateway.shell_parser import ShellParser
+        from chronos.gateway.shell_parser import ShellParser, ParserError
         from chronos.gateway.containment import contain_worker
         from chronos.simulation.orchestrator import world_simulation
         from chronos.simulation.event_bus import CommandStarted, CommandSucceeded, CommandFailed, CommandParsed
@@ -93,7 +151,7 @@ def session_worker(session_id, primary_user, pipe_conn):
         while True:
             if time.monotonic() >= deadline:
                 break
-            if not r.expire(f"session_pid:{pid}", 120):
+            if _refresh_session_pid(r, pid, session_id) <= 0:
                 raise RuntimeError('Session attribution expired')
 
             if pipe_conn.poll(timeout=1.0):
@@ -109,7 +167,9 @@ def session_worker(session_id, primary_user, pipe_conn):
                     # Publish context before any command-triggered FUSE callback.
                     # Session-scoped TTL prevents stale attribution after a crash.
                     command_key = f"session:{session_id}:active_command"
+                    origin_key = f"session:{session_id}:active_command_origin"
                     r.setex(command_key, 120, command_id)
+                    r.setex(origin_key, 120, session_origin)
                     world_raw = r.get('env:world')
                     env.world_state = json.loads(world_raw) if world_raw else None
                     try:
@@ -131,7 +191,9 @@ def session_worker(session_id, primary_user, pipe_conn):
                             CommandParsed(session_id, cmd_str, time.time())
                         )
 
-                        returncode, response = dispatcher.execute_sequence(sequence)
+                        returncode, response, stage_results = (
+                            dispatcher.execute_sequence_with_stages(sequence)
+                        )
 
                         if returncode == 0:
                             world_simulation.event_bus.publish(
@@ -145,8 +207,18 @@ def session_worker(session_id, primary_user, pipe_conn):
                                     session_id, cmd_str, response, time.time()
                                 )
                             )
+                    except ParserError as exc:
+                        returncode = 2
+                        stage_results = []
+                        response = str(exc) + "\n"
+                        world_simulation.event_bus.publish(
+                            CommandFailed(
+                                session_id, cmd_str, response, time.time()
+                            )
+                        )
                     except Exception as e:
                         returncode = 1
+                        stage_results = []
                         logger.exception(
                             "Session command failed session=%s", session_id
                         )
@@ -166,13 +238,14 @@ def session_worker(session_id, primary_user, pipe_conn):
                     cwd = env.env["PWD"]
                     home = env.env["HOME"]
                     prompt_cwd = "~" if cwd == home else cwd
-                    r.delete(command_key)
+                    r.delete(command_key, origin_key)
                     pipe_conn.send(
                         {
                             "returncode": returncode,
                             "response": response,
                             "cwd": prompt_cwd,
                             "world_snapshot": env.world_state,
+                            "stage_results": stage_results,
                         }
                     )
     except Exception as e:
@@ -188,36 +261,67 @@ def session_worker(session_id, primary_user, pipe_conn):
 
 
 class SSHServer(paramiko.ServerInterface):
-    def __init__(self, audit_callback=None):
+    IDENTITY_POLICY = "accept_any_claim_profile_identity"
+
+    def __init__(self, audit_callback=None, effective_username="ubuntu"):
         self.event = threading.Event()
         self.audit_callback = audit_callback
+        self.effective_username = effective_username
+        self.claimed_username = None
+        self.authentication_method = None
+
+    def identity_metadata(self):
+        return {
+            "claimed_username": self.claimed_username,
+            "effective_username": self.effective_username,
+            "identity_mismatch": (
+                self.claimed_username is not None
+                and self.claimed_username != self.effective_username
+            ),
+            "identity_policy": self.IDENTITY_POLICY,
+        }
+
+    def _accept_authentication(self, username, method, **details):
+        self.claimed_username = str(username)
+        self.authentication_method = method
+        if self.audit_callback:
+            self.audit_callback("ssh_login", {
+                **self.identity_metadata(),
+                "method": method,
+                "accepted": True,
+                "outcome": "completed",
+                "schema_version": 1,
+                **details,
+            })
+        return AUTH_SUCCESSFUL
+
+    def _reject_request(self, request_type, outcome="unsupported", **details):
+        if self.audit_callback:
+            self.audit_callback("ssh_request", {
+                "request_id": str(uuid.uuid4()),
+                "request_type": request_type,
+                "outcome": outcome,
+                "accepted": False,
+                "schema_version": 1,
+                **self.identity_metadata(),
+                **details,
+            })
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
             return OPEN_SUCCEEDED
+        self._reject_request("channel", channel_kind=kind, channel_id=chanid)
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
-        if self.audit_callback:
-            self.audit_callback(
-                "ssh_login",
-                {"username": username, "method": "password"},
-            )
         logger.info('[SSH] Password login attempt (credential redacted)')
-        return AUTH_SUCCESSFUL
+        return self._accept_authentication(username, "password")
 
     def check_auth_publickey(self, username, key):
-        if self.audit_callback:
-            self.audit_callback(
-                "ssh_login",
-                {
-                    "username": username,
-                    "key_type": key.get_name(),
-                    "method": "publickey",
-                },
-            )
         logger.info(f"[SSH] Key auth: {username}")
-        return AUTH_SUCCESSFUL
+        return self._accept_authentication(
+            username, "publickey", key_type=key.get_name()
+        )
 
     def get_allowed_auths(self, username):
         return "password,publickey"
@@ -232,10 +336,29 @@ class SSHServer(paramiko.ServerInterface):
         return True
 
     def check_channel_exec_request(self, channel, command):
-        if self.audit_callback:
-            self.audit_callback("ssh_exec", {"command": command.decode("utf-8")})
+        decoded = command.decode("utf-8", errors="replace")
+        self._reject_request("exec", command=decoded)
         logger.info(f"[SSH] Exec: {command}")
         return False  # Exec channels are not yet supported; reject explicitly.
+
+    def check_channel_subsystem_request(self, channel, name):
+        self._reject_request("subsystem", subsystem=name)
+        return False
+
+    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        self._reject_request(
+            "direct_tcpip", outcome="denied", channel_id=chanid,
+            origin_host=str(origin[0]), origin_port=int(origin[1]),
+            destination_host=str(destination[0]), destination_port=int(destination[1]),
+        )
+        return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+
+    def check_port_forward_request(self, address, port):
+        self._reject_request(
+            "remote_port_forward", outcome="denied",
+            bind_address=str(address), bind_port=int(port),
+        )
+        return False
 
 
 class SSHHoneypot:
@@ -248,11 +371,16 @@ class SSHHoneypot:
         self._connections = threading.BoundedSemaphore(32)
 
     def _generate_hostkey(self):
-        key_path = "/tmp/chronos_ssh_host_key"
+        # /var/lib/chronos is a persistent, private deployment volume. Keeping
+        # identity here avoids alarming host-key changes after image rebuilds.
+        key_path = os.environ.get(
+            "APATE_SSH_HOST_KEY", "/var/lib/chronos/ssh_host_rsa_key"
+        )
         if not os.path.exists(key_path):
             logger.info("[SSH] Generating host key...")
             key = paramiko.RSAKey.generate(2048)
             key.write_private_key_file(key_path)
+            os.chmod(key_path, 0o600)
         return key_path
 
     def audit_log(self, event_type, data):
@@ -268,9 +396,16 @@ class SSHHoneypot:
 
         client_socket.settimeout(120)
         worker_proc = None
+        worker_heartbeat = None
+        heartbeat_stop = threading.Event()
         parent_conn = None
         transport = None
         pending_command = None
+        server = None
+        lifecycle_client = None
+        disconnect_outcome = "completed"
+        disconnect_reason = "connection_closed"
+        primary_user = _profile.primary_user if _profile else "ubuntu"
         session_origin = os.environ.get('APATE_SESSION_ORIGIN',
                                         'scripted_test' if os.environ.get('CHRONOS_TEST_AUDIT') == '1' else 'participant')
         if session_origin not in ('participant', 'scripted_test'):
@@ -283,8 +418,10 @@ class SSHHoneypot:
 
             server = SSHServer(
                 audit_callback=lambda kind, data: self.audit_log(
-                    kind, {**data, "session_id": session_id, "attacker_ip": addr[0]}
-                )
+                    kind, {**data, "session_id": session_id, "attacker_ip": addr[0],
+                           "origin": session_origin}
+                ),
+                effective_username=primary_user,
             )
             transport.start_server(server=server)
 
@@ -299,18 +436,66 @@ class SSHHoneypot:
                 logger.warning("[SSH] Client never requested shell")
                 return
 
+            self.audit_log("ssh_session_opened", {
+                "session_id": session_id,
+                "schema_version": 1,
+                "origin": session_origin,
+                **server.identity_metadata(),
+            })
+            lifecycle_client = redis.Redis(
+                host=os.environ.get("REDIS_HOST", "localhost"),
+                decode_responses=True,
+                socket_timeout=3,
+                socket_connect_timeout=3,
+            )
+            register_lifecycle(
+                lifecycle_client, session_id, origin=session_origin,
+                identity=server.identity_metadata(),
+            )
+
             ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
             kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"
             hostname = _profile.hostname if _profile else "web01"
-            primary_user = _profile.primary_user if _profile else "ubuntu"
-
             context = multiprocessing.get_context("spawn")
             parent_conn, child_conn = context.Pipe()
             worker_proc = context.Process(
-                target=session_worker, args=(session_id, primary_user, child_conn)
+                target=session_worker,
+                args=(session_id, primary_user, session_origin, child_conn),
             )
             worker_proc.start()
             child_conn.close()
+
+            def refresh_worker_mapping():
+                heartbeat_client = redis.Redis(
+                    host=os.environ.get("REDIS_HOST", "localhost"),
+                    decode_responses=True,
+                    socket_timeout=3,
+                    socket_connect_timeout=3,
+                )
+                try:
+                    while not heartbeat_stop.wait(30):
+                        if not worker_proc.is_alive():
+                            return
+                        refresh_result = _refresh_session_pid(
+                            heartbeat_client, worker_proc.pid, session_id
+                        )
+                        if refresh_result <= 0:
+                            logger.error(
+                                "Worker attribution heartbeat rejected session=%s pid=%s result=%s",
+                                session_id, worker_proc.pid, refresh_result,
+                            )
+                            return
+                except Exception:
+                    logger.exception("Worker attribution heartbeat failed")
+                finally:
+                    heartbeat_client.close()
+
+            worker_heartbeat = threading.Thread(
+                target=refresh_worker_mapping,
+                name=f"session-heartbeat-{session_id[:8]}",
+                daemon=True,
+            )
+            worker_heartbeat.start()
             channel.settimeout(1)
 
             # Wait for init from worker
@@ -319,17 +504,17 @@ class SSHHoneypot:
             init_msg = parent_conn.recv()
             prompt_cwd = init_msg.get("cwd", "~")
 
-            channel.send(
+            _send_all(channel,
                 f"Welcome to Ubuntu {ubuntu_version} LTS (GNU/Linux {kernel_version} x86_64)\r\n\r\n".encode()
             )
-            channel.send(
+            _send_all(channel,
                 b"The programs included with the Ubuntu system are free software;\r\n"
             )
-            channel.send(
+            _send_all(channel,
                 b"the exact distribution terms for each program are described in the\r\n"
             )
-            channel.send(b"individual files in /usr/share/doc/*/copyright.\r\n\r\n")
-            channel.send(f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
+            _send_all(channel, b"individual files in /usr/share/doc/*/copyright.\r\n\r\n")
+            _send_all(channel, f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
 
             command_buffer = ""
             decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
@@ -355,7 +540,7 @@ class SSHHoneypot:
                 for char in decoder.decode(data):
 
                     if char == "\r" or char == "\n":
-                        channel.send(b"\r\n")
+                        _send_all(channel, b"\r\n")
                         if command_buffer.strip():
                             command_id = str(uuid.uuid4())
                             command_started = time.monotonic()
@@ -367,6 +552,7 @@ class SSHHoneypot:
                                     "command_id": command_id,
                                     "schema_version": 1,
                                     "origin": session_origin,
+                                    **server.identity_metadata(),
                                 },
                             )
                             logger.info(
@@ -383,50 +569,80 @@ class SSHHoneypot:
                                     "session_id": session_id, "command_id": command_id,
                                     "outcome": "unknown", "reason": "worker_timeout",
                                     "server_elapsed_seconds": time.monotonic() - command_started,
+                                    **server.identity_metadata(),
                                 })
                                 pending_command = None
                                 raise TimeoutError("Session worker command timed out")
                             result = parent_conn.recv()
                             response = result.get("response", "")
-                            self.audit_log("ssh_command_result", {
-                                "session_id": session_id, "command_id": command_id,
-                                "exit_status": result.get("returncode"),
-                                "outcome": "emulated_success" if result.get("returncode") == 0 else "command_failed",
-                                "server_elapsed_seconds": time.monotonic() - command_started,
-                                "response_bytes": len(response.encode("utf-8")),
-                                "world_snapshot": result.get("world_snapshot"),
-                            })
-                            pending_command = None
+                            execution_elapsed = time.monotonic() - command_started
                             prompt_cwd = result.get("cwd", prompt_cwd)
 
-                            if response:
-                                if not response.endswith("\n"):
-                                    response += "\n"
-                                channel.send(response.replace("\n", "\r\n").encode())
+                            generated_bytes = len(response.encode("utf-8"))
+                            wire_response = response
+                            if wire_response and not wire_response.endswith("\n"):
+                                wire_response += "\n"
+                            payload = wire_response.replace("\n", "\r\n").encode()
+                            transmitted_bytes = 0
+                            delivery = "no_response" if not payload else "accepted_by_transport"
+                            delivery_reason = None
+                            try:
+                                if payload:
+                                    transmitted_bytes = _send_all(channel, payload)
+                            except ChannelWriteError as exc:
+                                transmitted_bytes = exc.bytes_sent
+                                delivery = "uncertain"
+                                delivery_reason = "transport_write_failed"
+                                raise
+                            finally:
+                                self.audit_log("ssh_command_result", {
+                                    "session_id": session_id, "command_id": command_id,
+                                    "exit_status": result.get("returncode"),
+                                    "outcome": "emulated_success" if result.get("returncode") == 0 else "command_failed",
+                                    "server_elapsed_seconds": execution_elapsed,
+                                    "response_bytes": generated_bytes,
+                                    "generated_response_bytes": generated_bytes,
+                                    "transport_response_bytes": transmitted_bytes,
+                                    "response_delivery": delivery,
+                                    "delivery_reason": delivery_reason,
+                                    "world_snapshot": result.get("world_snapshot"),
+                                    "stage_results": result.get("stage_results", []),
+                                    **server.identity_metadata(),
+                                })
+                                pending_command = None
 
                         command_buffer = ""
-                        channel.send(
+                        _send_all(channel,
                             f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode()
                         )
                     elif char == "\x03":  # Ctrl+C
-                        channel.send(b"^C\r\n")
+                        _send_all(channel, b"^C\r\n")
                         command_buffer = ""
-                        channel.send(
+                        _send_all(channel,
                             f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode()
                         )
                     elif char == "\x7f" or char == "\b":  # Backspace
                         if command_buffer:
                             command_buffer = command_buffer[:-1]
-                            channel.send(b"\b \b")
+                            _send_all(channel, b"\b \b")
                     else:
                         if len((command_buffer + char).encode('utf-8')) > 8192:
                             raise ValueError("SSH command exceeds input limit")
                         command_buffer += char
-                        channel.send(char.encode("utf-8"))
+                        _send_all(channel, char.encode("utf-8"))
 
         except Exception as e:
+            disconnect_outcome = (
+                "timed_out" if isinstance(e, TimeoutError) else "interrupted"
+            )
+            disconnect_reason = (
+                "session_timeout" if isinstance(e, TimeoutError) else "session_error"
+            )
             logger.error(f"[SSH] Error: {e}")
         finally:
+            heartbeat_stop.set()
+            if worker_heartbeat is not None:
+                worker_heartbeat.join(timeout=4)
             # Fail closed before any worker or external-state cleanup can block.
             if transport is not None:
                 transport.close()
@@ -437,6 +653,7 @@ class SSHHoneypot:
                         "session_id": session_id, "command_id": pending_command[0],
                         "outcome": "unknown", "reason": "session_interrupted",
                         "server_elapsed_seconds": time.monotonic() - pending_command[1],
+                        **server.identity_metadata(),
                     })
                 except Exception:
                     logger.exception('Unable to persist interrupted command outcome')
@@ -468,12 +685,26 @@ class SSHHoneypot:
             if parent_conn:
                 parent_conn.close()
 
-            self.audit_log(
-                "ssh_disconnect",
-                {
-                    "session_id": session_id,
-                },
+            identity = server.identity_metadata() if server is not None else {
+                "claimed_username": None,
+                "effective_username": primary_user,
+                "identity_mismatch": False,
+                "identity_policy": SSHServer.IDENTITY_POLICY,
+            }
+            lifecycle = (
+                prepare_disconnect(
+                    lifecycle_client, session_id,
+                    outcome=disconnect_outcome, reason=disconnect_reason,
+                )
+                if lifecycle_client is not None else None
             )
+            self.audit_log("ssh_disconnect", {
+                "session_id": session_id,
+                **(lifecycle or identity),
+            })
+            if lifecycle is not None:
+                acknowledge_disconnect(lifecycle_client, session_id)
+                lifecycle_client.close()
             logger.info(f"[SSH] Connection closed: {addr}")
 
     def start(self):

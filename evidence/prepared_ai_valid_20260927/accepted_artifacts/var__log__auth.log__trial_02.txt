@@ -1,0 +1,9 @@
+Sep 26 00:00:01 web01 sshd[1234]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Connection closed by authenticator.
+Sep 25 23:59:58 web01 sshd[1233]: Connection closed by authenticator.
+Sep 25 23:59:57 web01 sshd[1232]: Connection closed by authenticator.
+Sep 25 23:59:57 web01 sshd[1232]: Connection closed by authenticator.
+Sep 25 23:59:56 web01 sshd[1231]: Connection closed by authenticator.
+Sep 25 23:59:56 web01 sshd[1231]: Connection closed by authenticator.
+Sep 25 23:59:55 web01 sshd[1230]: Connection closed by authenticator.
+Sep 25 23:59:55 web01 sshd[1230]: Connection closed by authenticator.

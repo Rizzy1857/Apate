@@ -1,81 +1,44 @@
-# Mirage Status
+# Mirage current status
 
-**Date:** March 22, 2026
-**Overall Status:** Phase 1 complete, Phase 2 in progress
+Reviewed 2026-10-11 against commit `a098fe02771802de03b9c64c8fbce52d82defc38` plus the working-tree changes tracked in [IMPLEMENTATION_BACKLOG.md](IMPLEMENTATION_BACKLOG.md). Results cannot be attributed to the commit alone.
 
-## Project Framing
+**Status: Research MVP implemented; G1–G6 have passed their bounded procedures. The [release evidence index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the final G7 decision and frozen-source identity. Mirage Home is a future design.**
 
-- Repository codename: Apate
-- Product name: Mirage
-- Framework name: Chronos
-- Delivery model: two six-month phases
+## Implemented paths observed in source
 
-## Completed Components
+- Paramiko SSH authentication/shell endpoint, spawned restricted worker and strict command registry.
+- Session-prefixed Redis filesystem state, Lua-backed mutations and FUSE PID attribution.
+- Bounded SQLite audit outbox with idempotent PostgreSQL event delivery.
+- Submission/result command IDs, evidence projection and deterministic snapshot report builder.
+- Native Rust console with configurable PostgreSQL connection and session export.
+- Local Ollama transport, artifact policy, validation, fallback, fenced commits, prepared artifacts and provenance.
+- Smaller seeded resource-world publisher; broader legacy simulation remains deferred.
 
-### Core state management
+These statements are implementation observations, not full runtime verification.
 
-- State hypervisor for filesystem consistency
-- Redis-backed atomic operations through Lua
-- Inode allocation and path resolution
-- Database connection and persistence layers
-- Pydantic models for structured data
+## Current test evidence
 
-### FUSE interface
+- After the B1–B12, command-contract/stage-evidence, recovery/capacity, prepared-treatment, deterministic-template and validator fixes recorded in the backlog, `PYTHONPATH=src pytest -q` outside the sandbox: **244 passed, 7 skipped**. Skips are not passes. This includes a 107-case machine-readable v1 command matrix plus its identity/30-handler coverage check. The fixtures caught and fixed broken recursive `cp`, silently ineffective combined `rm -fr`, unbounded parser input, undeclared flags/arities and a declared `grep --` form that rejected dash-prefixed patterns. Stage regressions preserve an earlier pipeline failure even when its final stage succeeds. This establishes the bounded declared contract, not Bash/GNU/POSIX compatibility.
+- The same suite inside the restricted sandbox produced disposable Redis startup errors; that run does not characterize code behavior.
+- After upgrading the dashboard to eframe/egui 0.36.2, `cargo test --manifest-path src/chronos/dashboard/Cargo.toml` returned **4 passed**, `cargo check` passed and `git diff --check` passed. Compilation/unit checks are supplemented by the native walkthrough below.
+- `bash tests/integration/run_linux.sh` passed on Docker Engine 29.8.1 on 2026-10-05. Its disposable Linux stack exercised all 30 declared handler names and reconciled each command to durable result/stage evidence, including the repaired `grep --` form. It also verified explicit parser rejection over SSH, password/public-key login, identity mismatch, rejected exec/subsystem/direct-TCP/remote-forward requests, restricted-worker containment, cross-session SSH/FUSE isolation, deterministic generation, forced worker death, PostgreSQL outage retention, uncertain-commit deduplication and export correlation. Together with the versioned option/error/effect and parser matrices, this passes G1 for the bounded v1 contract.
+- The expanded G2 procedure passed on 2026-10-08. Two simultaneous real SSH sessions retained distinct content at the same path and distinct environment values; peer deletion/listing could not affect or reveal the other namespace. Absolute/relative traversal, runtime/procfs reads and protected-path write/create/mkdir/remove/copy/move attempts stayed contained. Restricted workers ran as UID/GID 1000 with zero effective capabilities, no-new-privileges and seccomp filtering; socket creation, fork, exec and privilege regain failed. One worker's forced death did not affect its peer. See [G2_ISOLATION_ASSESSMENT_2026-10-08.md](G2_ISOLATION_ASSESSMENT_2026-10-08.md).
+- G3 passes the named evidence/lifecycle boundary: matching result identities, per-stage outcomes, exact filesystem attribution, deterministic transport short-write accounting, worker/core interruption, outbox crash/retry, lifecycle replay and mutation-journal recovery are reconciled without inferred success. See [G3_EVIDENCE_ASSESSMENT_2026-10-08.md](G3_EVIDENCE_ASSESSMENT_2026-10-08.md).
+- G5 passes its operational criterion with deterministic mode as the release baseline and prepared AI as an explicit offline treatment. Missing/invalid/slow/incomplete inference, concurrent preparation and participant-write fencing are covered. No AI realism-superiority claim is made. See [G5_TREATMENT_ASSESSMENT_2026-10-08.md](G5_TREATMENT_ASSESSMENT_2026-10-08.md).
+- The disposable load harness passed whole-core `SIGKILL`/restart with 32 sessions: all 32 received durable `interrupted/orphaned_session` closes after the 120-second attribution lease. At the supported 8-session envelope, a 30-second PostgreSQL outage passed with **1,378/1,378 commands audited**, 8/8 summaries finalized and client latency p50 **52 ms**, p95 **138 ms**, max **227 ms**. Redis stop/restart passed with 8/8 interrupted sessions reconciled and clean post-restart state.
+- A 32-session PostgreSQL-outage stress run exceeded the 30-second client prompt timeout for 7 sessions while the durable SQLite backlog drained. This is recorded saturation evidence, not a passing 32-session service-level claim. Eliminating per-event full-summary PostgreSQL rewrites fixed the supported 8-session case; the 32-session ceiling remains a stress boundary.
+- `bash tests/integration/run_dashboard_scale.sh` passed with **125 finalized sessions and 1,250 events**. Snapshot pagination returned 50/50/25 unique sessions; a concurrently finalized session was excluded from the frozen page set and became visible only after refresh. Raw and redacted export of an older session both completed and reconciled its 10 events. This verifies the backend/export contract, not the native UI's visual interaction quality.
+- A 2026-09-27 `pip-audit` resolution found **0 known vulnerabilities** across 25 Python packages. A refreshed RustSec audit of the 502-package cross-platform dashboard lockfile found **0 vulnerabilities**, no unsound advisories and no yanked crates. It retains one informational unmaintained warning for `ttf-parser` through a non-macOS `ab_glyph` target path; the active macOS renderer uses `skrifa`. The 2026-10-11 Trivy scan ran with networking disabled: 0 Python findings; 164 Debian package/advisory matches (44 high, 58 medium, 61 low, 1 unknown; 71 unique identifiers). No fixed Debian version is listed for these matches. Their scope and residual risks are recorded in [G7_RELEASE_ASSESSMENT_2026-10-11.md](G7_RELEASE_ASSESSMENT_2026-10-11.md).
+- The frozen valid-only G5 engineering run completed 30 uncached trials for each of six prepared-AI artifacts: **172/180 (95.6%)** were accepted after at most two attempts. Derived AI generation-plus-validation time was median **8.336 s**, p95 **35.959 s**, maximum **60.014 s**. The final schema-2 deterministic rerun accepted **180/180** with median **0.077 ms** generation-plus-validation time. All eight AI failures were `notes.txt`. This does not measure the randomized production category distribution, independent plausibility or resource use, and does not establish AI superiority. See [PREPARED_AI_EVALUATION_2026-09-27.md](PREPARED_AI_EVALUATION_2026-09-27.md).
+- Earlier candidates are historical. The [current release index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the frozen source, extracted-copy checks and final G7 decision. The image scan has been completed locally; no bit-identical future rebuild is claimed.
+- Historical Linux/outage/model results remain in [VERIFICATION_HANDOFF_2026-09-10.md](VERIFICATION_HANDOFF_2026-09-10.md). Later local changes mean they are not current release evidence.
 
-- POSIX-style filesystem behavior
-- Path resolution and file descriptor tracking
-- Integration with the state hypervisor
+## Confirmed current issues
 
-### Intelligence layer
+B1–B6 and B8–B12 are regression/config verified. B7 and the G4 UI/export gate are verified for the frozen synthetic procedure: a packaged native macOS console displayed 126 sessions/1,250 events, navigated snapshot pages and populated detail/analytics/provenance views, paused/resumed the stream, exported complete private and redacted bundles, restarted, and showed Redis/PostgreSQL disconnect plus Redis reconnect. The walkthrough exposed and fixed scroll-ID collisions, inaccessible table selection, capped-preview labeling, stale provenance, scoped blob-hash parsing, omitted model digests and premature PostgreSQL readiness. B3 now reconciles application-process crashes through a state-associated Redis journal and deterministic outbox identities; simultaneous Redis durability loss remains outside that guarantee. Consult the release index for the final release decision.
 
-- OpenAI, Anthropic, and mock LLM providers
-- Persona engine for file content generation
-- Context-aware response generation
+The authoritative definition of completion is R1–R15 in [RESEARCH_MVP.md](RESEARCH_MVP.md) plus G1–G7 in [VERIFICATION_PLAN.md](VERIFICATION_PLAN.md). “Phase 1 complete,” “functionally complete,” HTTP integration, integrated Layer 0, cloud model providers, public readiness, reliable expertise inference, measured MTTD and all-attack coverage are not current project claims.
 
-### Gateway and monitoring
+## Next work
 
-- SSH honeypot with interactive shell behavior
-- HTTP honeypot with multiple endpoints
-- Log streaming and event processing
-- Risk scoring and session correlation
-
-### Skills and Layer 0
-
-- Command analysis and MITRE ATT&CK mapping
-- Threat signature library
-- Attacker skill profiling
-- Rust-based protocol analysis and circuit breaking
-
-## Test Coverage
-
-- `tests/verification/verify_phase1.py`: state and database verification
-- `tests/verification/verify_phase2.py`: FUSE verification
-- `tests/verification/verify_phase3.py`: intelligence and persona verification
-- `tests/verification/verify_phase4.py`: gateway, watcher, and skills verification
-- `tests/validation/validate_core.py`: core infrastructure checks
-- `tests/validation/test_real_attack.py`: attack simulation coverage
-
-## Current Strengths
-
-- State remains consistent across sequential actions.
-- Generated content is cached rather than regenerated on every read.
-- Analysis and monitoring are wired into the attack flow.
-- The system can be exercised through the repository test suite.
-
-## Remaining Work
-
-- Tighten AI boundaries so model output cannot affect state truth.
-- Improve explainability for AI-assisted analysis.
-- Expand regression checks for noisy or contradictory content.
-- Keep the Phase 2 surface useful without making it busier than necessary.
-
-## Suggested Next Actions
-
-```bash
-make up
-make validate-core
-make validate-attacks
-make verify
-```
-
-If you want a quick sanity check after changes, that sequence is the least dramatic place to start.
+The 60-minute G6 soak passed: eight concurrent client slots, 16 sessions and 7,055 commands reconciled to successful durable results and projected records; p95 latency was 139 ms and median memory growth was 41.95 MiB. See the [capacity assessment](G6_CAPACITY_ASSESSMENT_2026-10-11.md). Final frozen-source/extracted-copy evidence is recorded in the release index. The image assessment is complete with disclosed residual vulnerabilities. Re-freeze after any change. Keep AI-superiority claims, experimental protocols, world plugins, Layer 0 and Home implementation outside the MVP release.

@@ -1,0 +1,15 @@
+This is my first Ubuntu server
+It's running 24.04
+I'm using the generic kernel
+I'm excited to try new things
+I'll start with some notes
+On how to use the terminal
+And navigate the file system
+I'll also learn about packages
+And how to install new software
+I'll explore the web server
+And set up a new site
+I'll learn about security
+And how to keep my server safe
+I'll also learn about backups
+And how to restore my server

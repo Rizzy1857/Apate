@@ -7,9 +7,16 @@ from unittest.mock import Mock
 
 import pytest
 import redis
+from paramiko.common import OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
 from chronos.core.audit_spool import AuditSpool
-from chronos.core.session_cleanup import orphan_sessions, delete_namespace
+from chronos.core.session_cleanup import (
+    acknowledge_disconnect,
+    delete_namespace,
+    orphan_sessions,
+    prepare_disconnect,
+    register_lifecycle,
+)
 from chronos.core.scoped_redis import ScopedRedis
 from chronos.core.content import mutate_content, read_blob
 from chronos.gateway.dispatcher import SessionEnvironment, CommandRegistry
@@ -47,12 +54,57 @@ def test_outbox_rejects_large_events(tmp_path):
     spool.close()
 
 
+def test_outbox_deterministic_event_ids_are_idempotent(tmp_path):
+    spool = AuditSpool(str(tmp_path / 'audit.sqlite3'), max_events=1)
+    event_id = str(uuid.uuid4())
+    assert spool.append(['same'], event_id=event_id) == event_id
+    assert spool.append(['same'], event_id=event_id) == event_id
+    assert spool.pending() == [(event_id, ['same'])]
+    with pytest.raises(RuntimeError, match='Conflicting'):
+        spool.append(['different'], event_id=event_id)
+    assert spool.pending() == [(event_id, ['same'])]
+    spool.close()
+
+
 def test_password_not_recorded(caplog):
     callback = Mock()
-    server = SSHServer(audit_callback=callback)
-    server.check_auth_password('ubuntu', 'not-for-logs')
+    server = SSHServer(audit_callback=callback, effective_username='ubuntu')
+    server.check_auth_password('root', 'not-for-logs')
     assert 'not-for-logs' not in repr(callback.call_args)
     assert 'not-for-logs' not in caplog.text
+    operation, metadata = callback.call_args.args
+    assert operation == 'ssh_login'
+    assert metadata['claimed_username'] == 'root'
+    assert metadata['effective_username'] == 'ubuntu'
+    assert metadata['identity_mismatch'] is True
+    assert metadata['identity_policy'] == 'accept_any_claim_profile_identity'
+    assert metadata['accepted'] is True
+    assert 'username' not in metadata
+
+
+def test_rejected_ssh_requests_have_structured_terminal_outcomes():
+    callback = Mock()
+    server = SSHServer(audit_callback=callback, effective_username='ubuntu')
+    server.check_auth_password('admin', 'redacted')
+
+    assert server.check_channel_exec_request(None, b'id\xff') is False
+    operation, metadata = callback.call_args.args
+    assert operation == 'ssh_request'
+    assert metadata['request_type'] == 'exec'
+    assert metadata['command'] == 'id�'
+    assert metadata['outcome'] == 'unsupported'
+    assert metadata['accepted'] is False
+    assert metadata['claimed_username'] == 'admin'
+    assert metadata['effective_username'] == 'ubuntu'
+    assert metadata['identity_mismatch'] is True
+    uuid.UUID(metadata['request_id'])
+
+    assert server.check_channel_direct_tcpip_request(
+        7, ('127.0.0.1', 1234), ('10.0.0.2', 22)
+    ) == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+    _, metadata = callback.call_args.args
+    assert metadata['request_type'] == 'direct_tcpip'
+    assert metadata['outcome'] == 'denied'
 
 
 def test_orphan_recovery_preserves_live_and_unrelated_state(isolated_redis):
@@ -73,6 +125,35 @@ def test_orphan_recovery_preserves_live_and_unrelated_state(isolated_redis):
     assert orphan_sessions(r) == {live}
     with pytest.raises(ValueError):
         delete_namespace(r, '*')
+
+
+def test_lifecycle_recovery_is_stable_and_first_closer_wins(isolated_redis):
+    sid = str(uuid.uuid4())
+    register_lifecycle(
+        isolated_redis, sid, origin='participant',
+        identity={
+            'claimed_username': 'root', 'effective_username': 'ubuntu',
+            'identity_mismatch': True,
+            'identity_policy': 'accept_any_claim_profile_identity',
+        },
+    )
+    assert orphan_sessions(isolated_redis) == {sid}
+    first = prepare_disconnect(
+        isolated_redis, sid, outcome='interrupted', reason='orphaned_session'
+    )
+    retry = prepare_disconnect(
+        isolated_redis, sid, outcome='completed', reason='connection_closed'
+    )
+    assert retry == first
+    assert first['outcome'] == 'interrupted'
+    assert first['reason'] == 'orphaned_session'
+    assert first['claimed_username'] == 'root'
+    assert first['effective_username'] == 'ubuntu'
+    uuid.UUID(first['operation_id'])
+    acknowledge_disconnect(isolated_redis, sid)
+    assert prepare_disconnect(
+        isolated_redis, sid, outcome='interrupted', reason='orphaned_session'
+    ) is None
 
 
 def test_manifest_partial_recovery_and_permissions(isolated_redis):
@@ -126,6 +207,48 @@ def test_evidence_survives_redis_cache_loss(isolated_redis):
     collector._process_event({'id': 2, 'session_id': sid, 'timestamp': '2026-09-09T00:00:01',
                              'operation': 'ssh_disconnect'})
     assert len(persistence.final['commands']) == 1
+
+
+def test_evidence_projection_checkpoints_instead_of_rewriting_every_event(
+        isolated_redis):
+    from chronos.watcher.evidence_collector import EvidenceCollector
+
+    class DurableProgress:
+        def __init__(self):
+            self.progress = None
+            self.save_calls = 0
+
+        def load_evidence_progress(self, _sid):
+            return self.progress
+
+        def save_evidence_progress(self, _sid, data):
+            self.save_calls += 1
+            self.progress = json.loads(json.dumps(data))
+
+        def flush_evidence(self, _sid, data):
+            self.final = data
+            return True
+
+    persistence = DurableProgress()
+    collector = EvidenceCollector(Mock(), persistence)
+    collector.redis.close()
+    collector.redis = isolated_redis
+    sid = str(uuid.uuid4())
+    for event_id in range(1, 121):
+        collector._process_event({
+            'id': event_id,
+            'session_id': sid,
+            'timestamp': f'2026-09-09T00:00:{event_id % 60:02d}',
+            'operation': 'getattr',
+            'path': '/etc/hostname',
+        })
+    assert persistence.save_calls == 2
+    collector._process_event({
+        'id': 121, 'session_id': sid,
+        'timestamp': '2026-09-09T00:02:01', 'operation': 'ssh_disconnect',
+    })
+    assert persistence.save_calls == 3
+    assert persistence.final['last_event_id'] == 121
 
 
 def test_command_errors_and_output_budget(tmp_path):
@@ -209,6 +332,48 @@ def test_nginx_rejects_invented_backend_and_missing_include():
     assert not validator.validate('include /missing.conf; root /var/www/html;', policy, machine).accepted
     fallback = FallbackProvider().get_degraded_content('nginx.conf', policy, path, machine)
     assert validator.validate(fallback.decode(), policy, machine).accepted
+
+
+def test_deterministic_ai_backed_templates_are_nonempty_and_valid():
+    from pathlib import Path
+    from chronos.intelligence.artifact_policy import ArtifactPolicyEngine
+    from chronos.intelligence.ubuntu_profile import UbuntuProfile
+    from chronos.intelligence.validator import SemanticValidator
+    from chronos.intelligence.fallback import FallbackProvider
+
+    profile = UbuntuProfile()
+    machine = profile.build_machine_state()
+    machine['created_at'] = '1790467200'
+    engine = ArtifactPolicyEngine()
+    validator = SemanticValidator()
+    fallback = FallbackProvider()
+    paths = [entry['path'] for entry in profile.filesystem_manifest['entries']
+             if entry.get('class') == 'ai_backed']
+
+    for path in paths:
+        policy = engine.resolve(Path(path).name, path, machine)
+        content = fallback.get_degraded_content(
+            Path(path).name, policy, path, machine
+        )
+        assert content.strip(), path
+        result = validator.validate(
+            content.decode(), policy, {**machine, 'artifact_path': path}
+        )
+        assert result.accepted, f'{path}: {result.reason}'
+
+
+def test_validator_rejects_empty_content_for_nonempty_category():
+    from chronos.intelligence.artifact_policy import ArtifactPolicy
+    from chronos.intelligence.validator import SemanticValidator
+
+    common = dict(
+        file_class='notes_file', max_lines=15, max_entries=None,
+        max_days=None, validation_strictness='low', regeneration='static',
+        model='llama3.2:3b'
+    )
+    validator = SemanticValidator()
+    assert not validator.validate('', ArtifactPolicy(category='valid', **common), {}).accepted
+    assert validator.validate('', ArtifactPolicy(category='empty', **common), {}).accepted
 
 
 @pytest.mark.parametrize('body', [b'{"response":"partial", "done":false}\n',
