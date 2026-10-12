@@ -2,6 +2,8 @@
 
 **Decision: G1–G7 pass for the bounded, local Mirage Research MVP.** This completes the documented college-project MVP, not Mirage Home or a public-production security product. The requirement and interpretation boundaries in [RESEARCH_MVP.md](RESEARCH_MVP.md) remain authoritative.
 
+Publication note, 2026-10-12: the implementation and evidence were committed locally as `fde3b9838f9bd4297da32d8910a50ce705a44cbd`; the subsequent push failed authentication. Later living-documentation updates do not alter the archived October 11 source or constitute a new tested release. Runtime/configuration changes require a new candidate; documentation-only updates must identify their relationship to this frozen baseline.
+
 ## Frozen deliverable
 
 - [Source archive](../evidence/release_candidate_20261011/source.tar.gz): 167 files; SHA-256 `262284b8e360df9b206b51c74654dea74d0166eb9f12a12c12e82233582bdfbe`.

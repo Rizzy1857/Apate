@@ -1,6 +1,6 @@
 # Mirage developer onboarding
 
-Reviewed 2026-09-25. Begin with the [plan index](PLAN_INDEX.md), then read the [MVP](RESEARCH_MVP.md), [architecture](RESEARCH_ARCHITECTURE.md), and [backlog](IMPLEMENTATION_BACKLOG.md).
+Reviewed 2026-10-12. The controlled-lab Research MVP is complete; begin with the [release evidence](RELEASE_EVIDENCE_INDEX_2026-10-11.md) and [current status](STATUS.md), then read the [MVP](RESEARCH_MVP.md), [architecture](RESEARCH_ARCHITECTURE.md), and [backlog](IMPLEMENTATION_BACKLOG.md).
 
 ## Repository model
 
@@ -12,7 +12,7 @@ Reviewed 2026-09-25. Begin with the [plan index](PLAN_INDEX.md), then read the [
 - `src/chronos/simulation` and `layer0`: mostly deferred/experimental paths unless a current requirement names them.
 - `tests`: default regressions plus opt-in Linux, live-model and disruptive infrastructure checks.
 
-The working tree already contains user changes in dashboard, SSH and FUSE files. Preserve them. Use `apply_patch` for edits and never clean/reset unrelated work.
+The finalized implementation is committed as `fde3b98`. Check the current working tree before each change and preserve any subsequent user edits; never clean/reset unrelated work. The October 11 frozen bundle remains the immutable test reference even when living documentation changes.
 
 ## Safe first checks
 
@@ -23,7 +23,7 @@ PYTHONPATH=src pytest -q --tb=short
 cargo check --manifest-path src/chronos/dashboard/Cargo.toml
 ```
 
-As of the documented 2026-09-28 review, Python returned 101 passed and 7 skipped with no warnings; see [status](STATUS.md). The default suite uses disposable Unix-socket Redis. Do not enable `--legacy-infrastructure` until you inspect the selected tests: they can mutate external services.
+The 2026-10-11 frozen-source suite returned 244 passed and 7 explicitly skipped; four locked Rust tests also passed. See [status](STATUS.md). The default suite uses disposable Unix-socket Redis. Do not enable `--legacy-infrastructure` until you inspect the selected tests: they can mutate external services.
 
 Before Docker work, inspect `docker-compose.yml`, any automatically loaded `docker-compose.override.yml`, and the [verification plan](VERIFICATION_PLAN.md). Set required secrets in the environment and avoid printing rendered configuration into shared logs. Linux FUSE integration is the supported container target; macOS uses a local relay/override and does not itself establish Linux release behavior.
 
@@ -38,6 +38,6 @@ Before Docker work, inspect `docker-compose.yml`, any automatically loaded `dock
 
 Use precise language: attempted, admitted, emulated, completed, failed, denied, unsupported, interrupted, or unknown. Keep raw evidence separate from interpretations. Treat shell input, paths, generated content and imported evidence as untrusted.
 
-## Current first package
+## Starting post-MVP work
 
-The shell contract and B1–B12 fixes have verification evidence. Use [STATUS.md](STATUS.md) and the latest release evidence index for remaining gates; the backlog records the work and its limits. Future protocols, frontends and model providers require a separate scope decision.
+The shell contract, B1–B12 corrections and G1–G7 gates have bounded verification evidence. There are no remaining mandatory gates for this frozen MVP. Start new work from [RESEARCH_FUTURE.md](RESEARCH_FUTURE.md); prioritize dependency reassessment and incremental evidence projection before broader deployment or concurrency. Future protocols, frontends, model providers and Home require a separate scope decision.

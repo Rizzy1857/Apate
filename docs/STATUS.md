@@ -1,8 +1,10 @@
 # Mirage current status
 
-Reviewed 2026-10-11 against commit `a098fe02771802de03b9c64c8fbce52d82defc38` plus the working-tree changes tracked in [IMPLEMENTATION_BACKLOG.md](IMPLEMENTATION_BACKLOG.md). Results cannot be attributed to the commit alone.
+Reviewed 2026-10-12. Implementation and release evidence are committed locally as `fde3b9838f9bd4297da32d8910a50ce705a44cbd`. Tests describe the 2026-10-11 frozen source, originally based on `a098fe02771802de03b9c64c8fbce52d82defc38` plus the archived changes—not that older commit alone. This is a documentation-only status refresh; the frozen archive and test results remain unchanged.
 
-**Status: Research MVP implemented; G1–G6 have passed their bounded procedures. The [release evidence index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the final G7 decision and frozen-source identity. Mirage Home is a future design.**
+**Status: Research MVP complete for controlled local lab use; G1–G7 passed their documented bounded procedures. The [release evidence index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the gate decisions and frozen-source identity. Mirage Home is a future design.**
+
+Publication is separate from verification: the last `git push origin main` failed GitHub authentication. Remote publication is not confirmed; the final implementation commit is retained locally.
 
 ## Implemented paths observed in source
 
@@ -33,12 +35,12 @@ These statements are implementation observations, not full runtime verification.
 - Earlier candidates are historical. The [current release index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the frozen source, extracted-copy checks and final G7 decision. The image scan has been completed locally; no bit-identical future rebuild is claimed.
 - Historical Linux/outage/model results remain in [VERIFICATION_HANDOFF_2026-09-10.md](VERIFICATION_HANDOFF_2026-09-10.md). Later local changes mean they are not current release evidence.
 
-## Confirmed current issues
+## Resolution summary and residual limits
 
 B1–B6 and B8–B12 are regression/config verified. B7 and the G4 UI/export gate are verified for the frozen synthetic procedure: a packaged native macOS console displayed 126 sessions/1,250 events, navigated snapshot pages and populated detail/analytics/provenance views, paused/resumed the stream, exported complete private and redacted bundles, restarted, and showed Redis/PostgreSQL disconnect plus Redis reconnect. The walkthrough exposed and fixed scroll-ID collisions, inaccessible table selection, capped-preview labeling, stale provenance, scoped blob-hash parsing, omitted model digests and premature PostgreSQL readiness. B3 now reconciles application-process crashes through a state-associated Redis journal and deterministic outbox identities; simultaneous Redis durability loss remains outside that guarantee. Consult the release index for the final release decision.
 
 The authoritative definition of completion is R1–R15 in [RESEARCH_MVP.md](RESEARCH_MVP.md) plus G1–G7 in [VERIFICATION_PLAN.md](VERIFICATION_PLAN.md). “Phase 1 complete,” “functionally complete,” HTTP integration, integrated Layer 0, cloud model providers, public readiness, reliable expertise inference, measured MTTD and all-attack coverage are not current project claims.
 
-## Next work
+## Post-MVP work
 
 The 60-minute G6 soak passed: eight concurrent client slots, 16 sessions and 7,055 commands reconciled to successful durable results and projected records; p95 latency was 139 ms and median memory growth was 41.95 MiB. See the [capacity assessment](G6_CAPACITY_ASSESSMENT_2026-10-11.md). Final frozen-source/extracted-copy evidence is recorded in the release index. The image assessment is complete with disclosed residual vulnerabilities. Re-freeze after any change. Keep AI-superiority claims, experimental protocols, world plugins, Layer 0 and Home implementation outside the MVP release.

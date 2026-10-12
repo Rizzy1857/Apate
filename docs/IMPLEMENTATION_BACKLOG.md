@@ -2,7 +2,9 @@
 
 Baseline 2026-09-25: `a098fe02771802de03b9c64c8fbce52d82defc38` plus existing local changes to dashboard app/backend, SSH and FUSE. Findings apply to that working tree; resolution rows track subsequent fixes in this working tree.
 
-## Confirmed issues
+Status reviewed 2026-10-12: B1–B12 corrections and the bounded G1–G7 release procedures are complete, recorded in commit `fde3b98` and the [release index](RELEASE_EVIDENCE_INDEX_2026-10-11.md). The original audit baseline below is historical; residual limitations and post-MVP work remain explicit.
+
+## Resolved audit findings
 
 | ID / severity | Evidence and impact | Resolution and verification |
 |---|---|---|
@@ -40,10 +42,10 @@ High means a core interaction/evidence claim can be invalidated; it is not a cla
 | W2 — G2/G3 verified for declared boundaries | B3/B5/B6/B8; isolation, lifecycle, outcomes, journaling and recovery | W0; coordinate W1 | Isolation and evidence reconciliation pass; unknown delivery/completion remains explicit |
 | W3 — G4 verified for the named native/backend procedure | B7/B10; health, history, run selection, raw/redacted exports | W2 | Running console/export agrees beyond cache limits |
 | W4 — G5 operational criterion verified | B9/B11; deterministic and prepared AI modes, provenance | W1/W2 | No-model workflow, failure behavior, fencing and per-artifact results pass; no AI-superiority claim |
-| W5 — G6 verified; release decision in dated index | Failure, load, capacity, deployment and fresh-install checks | W1–W4 | [Capacity assessment](G6_CAPACITY_ASSESSMENT_2026-10-11.md) and [frozen release evidence](RELEASE_EVIDENCE_INDEX_2026-10-11.md) |
+| W5 — verified for bounded MVP | Failure, load, capacity, deployment and fresh-install checks | W1–W4 | G1–G7 passed: [capacity assessment](G6_CAPACITY_ASSESSMENT_2026-10-11.md) and [frozen release evidence](RELEASE_EVIDENCE_INDEX_2026-10-11.md) |
 | W6 | Controlled comparisons and research report | W5 for claims | Reproducible findings with limitations |
 
-For a solo maintainer and assistant, finish coherent packages before new features. No extra protocols/frontends while evidence correctness remains open.
+For a solo maintainer and assistant, keep the verified MVP baseline stable. Additional protocols, frontends and broader research claims require a separately scoped package and new evidence; they are not unfinished MVP requirements.
 
 ## Reduce scope
 

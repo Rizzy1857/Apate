@@ -1,6 +1,6 @@
 # Mirage product and engineering plan
 
-Version 1.0. Reviewed 2026-09-25. Maintainer: project owner, assisted by Codex. No calendar deadline; completion depends on evidence-based gates. An AI assistant does not replace independent evaluation or human research participants.
+Version 1.0 planning baseline; status reviewed 2026-10-12. Maintainer: project owner, assisted by Codex. The controlled-lab Research MVP has passed G1–G7; see the [final release evidence](RELEASE_EVIDENCE_INDEX_2026-10-11.md) and [current publication status](STATUS.md). Further research and Mirage Home are separate post-MVP scopes. An AI assistant does not replace independent evaluation or human research participants.
 
 ## Reading order
 
@@ -33,7 +33,7 @@ Use Mirage Research and Mirage Home as product names, Chronos for shared impleme
 
 Each work package records requirements, changed files, test environment/results and limitations. Freeze source/configuration for evaluation. If tests use uncommitted changes, retain a patch hash alongside the commit. Do not attribute such results to the commit alone.
 
-Deferred code is not automatically deleted. Inspect imports, entry points and tests, isolate it from the default path, then remove it only with a documented reason. This documentation task does not authorize or claim implementation of the backlog.
+Deferred code is not automatically deleted. Inspect imports, entry points and tests, isolate it from the default path, then remove it only with a documented reason. The backlog now records completed MVP corrections and their limits; deferred features are not implied to be implemented.
 
 ## External grounding
 

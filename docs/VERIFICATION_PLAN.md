@@ -2,6 +2,8 @@
 
 Version 1.0 — 2026-09-25. Requirements: [MVP](RESEARCH_MVP.md). Work packages: [backlog](IMPLEMENTATION_BACKLOG.md).
 
+Status reviewed 2026-10-12: G1–G7 passed for the October 11 frozen controlled-lab MVP, now recorded in implementation commit `fde3b98`. The [release index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) contains the final decisions. Procedures and targets below remain the reference for future revalidation; unmeasured research metrics are not retroactively claimed as measured.
+
 ## Evidence levels
 
 Source inspection establishes implemented paths, not runtime correctness. Unit tests establish their tested cases. Linux integration establishes the exercised deployment. Load tests establish only their hardware/workload envelope. Human studies establish only their sampled population and protocol. Keep these distinctions in every report.

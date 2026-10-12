@@ -6,7 +6,9 @@
 >
 > Framework name: **Chronos**
 
-Mirage is a research SSH deception project built on the Chronos framework. It emulates a limited command environment with isolated filesystem state and records interactions for analysis. The bounded Research MVP is implemented; Mirage Home is a separate future product. Use the [release evidence index](docs/RELEASE_EVIDENCE_INDEX_2026-10-11.md) for the verified source bundle, gate decisions and limitations. The tested working tree includes changes beyond the base Git commit; cloning that commit alone does not reproduce this release.
+Mirage is a research SSH deception project built on the Chronos framework. It emulates a limited command environment with isolated filesystem state and records interactions for analysis. The **Research MVP is complete for controlled local lab use**, with G1–G7 passed under the documented procedures. Mirage Home remains a separate future product.
+
+Status reviewed 2026-10-12. The implementation and release evidence are committed locally as `fde3b98` (`Finalize Mirage Research MVP and verified release evidence`). The last push attempt failed authentication; remote publication is not confirmed. Use the [release evidence index](docs/RELEASE_EVIDENCE_INDEX_2026-10-11.md) for the exact frozen source, results and limitations. This documentation refresh does not replace or alter that frozen archive.
 
 Chronos combines a FUSE-backed filesystem, session-scoped Redis state, a durable SQLite audit outbox, PostgreSQL evidence storage, and optional LLM-assisted artifact generation. Selected filesystem mutations use Redis/Lua transactions. The model supplies bounded content for approved artifacts; deterministic code owns state.
 
@@ -15,7 +17,7 @@ Chronos combines a FUSE-backed filesystem, session-scoped Redis state, a durable
 - Start with the [authoritative documentation set](docs/PLAN_INDEX.md).
 - [Research MVP](docs/RESEARCH_MVP.md), [implementation backlog](docs/IMPLEMENTATION_BACKLOG.md), and [verification gates](docs/VERIFICATION_PLAN.md) define completion.
 - [Mirage Home](docs/MIRAGE_HOME.md) describes the future household sensor and optional research sharing.
-- [Current status](docs/STATUS.md) distinguishes observed results from pending validation.
+- [Current status](docs/STATUS.md) separates completed MVP verification from residual risks and future work.
 
 ## What It Does
 
@@ -25,7 +27,7 @@ Chronos combines a FUSE-backed filesystem, session-scoped Redis state, a durable
 - Applies evidence-linked command-pattern rules. These labels do not estimate attacker expertise or identity.
 - Generates content only for approved manifest artifacts and caches accepted or fallback content.
 - Exposes an SSH emulator; HTTP and Rust Layer 0 are not established in the current core startup path.
-- Provides a native Rust research console and snapshot export, with known gaps tracked in the backlog.
+- Provides a native Rust research console, paginated history, and private/raw or separately redacted snapshot exports.
 
 See the [current architecture and evidence contract](docs/RESEARCH_ARCHITECTURE.md).
 
@@ -64,6 +66,10 @@ ssh -p 2222 ubuntu@127.0.0.1
 Filesystem access is attributed through registered worker PIDs; arbitrary container-shell access is not the supported session path. Inspect the expected host key rather than disabling host-key checking by default. Current authentication is permissive and the shell uses the configured profile user; this is a documented implementation limitation.
 
 ## Verification
+
+The 2026-10-11 release passed 244 Python tests (7 explicit skips), 4 Rust tests, Linux/FUSE integration, and extracted-source fresh-build checks. A full one-hour soak at eight client slots reconciled 7,055 commands across 16 sessions; client p95 was 139 ms and median core-memory growth was 41.95 MiB. See the [capacity assessment](docs/G6_CAPACITY_ASSESSMENT_2026-10-11.md) for the exact workload and limits.
+
+This is not public-production approval: the image scan retains known Debian vulnerabilities, longer-duration reliability is unmeasured, and the workload generated substantial internal evidence traffic. No universal attack coverage, attacker identity/expertise inference or AI-superiority claim is made. See the [release risk assessment](docs/G7_RELEASE_ASSESSMENT_2026-10-11.md).
 
 Start with non-disruptive regression/build checks:
 
