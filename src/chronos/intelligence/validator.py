@@ -76,6 +76,12 @@ class SemanticValidator:
             return ValidationResult(
                 accepted=False, reason="empty_content_for_nonempty_category"
             )
+        # Bash history stores commands, not an interactive terminal transcript.
+        # Reject prompts regardless of strictness: they can contradict the
+        # owning user's persona and reveal generated rather than native data.
+        if policy.file_class == 'history_file':
+            if re.search(r'(?m)^\s*(?:[\w.-]+@[\w.-]+:[^\n]*[#$]|[#$])\s+', content):
+                return ValidationResult(False, 'history: shell prompt is not a stored command')
         if policy.file_class == 'log_file' and content.strip() and machine_state.get('created_at'):
             from datetime import datetime, timezone, timedelta
             reference = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)

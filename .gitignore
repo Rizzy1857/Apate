@@ -39,6 +39,8 @@ MANIFEST
 # Virtual environments
 .env
 .local-deploy/
+# Local operator documents/exports; source documentation belongs in docs/.
+/outputs/
 .venv
 env/
 venv/
@@ -585,3 +587,14 @@ docs/files
 !evidence/recovery_postgres_20261011/*.log
 !evidence/load_single_20261011/*.log
 !evidence/load_control_final_20261011/*.log
+!evidence/release_candidate_20261016_desktop/source.tar.gz
+!evidence/release_candidate_20261016_desktop_v2/source.tar.gz
+!evidence/release_candidate_20261016_desktop_image/source.tar.gz
+!evidence/release_candidate_20261016_desktop_fresh_image/source.tar.gz
+!evidence/persistent_load_20261016/*.log
+!evidence/persistent_core_recovery_20261016/*.log
+!evidence/persistent_postgres_recovery_20261016/*.log
+!evidence/persistent_redis_recovery_20261016/*.log
+!evidence/persistent_redis_recovery_20261016_retry/*.log
+!evidence/persistent_soak_20261016/*.log
+!evidence/release_candidate_20261016_integrated_*/source.tar.gz

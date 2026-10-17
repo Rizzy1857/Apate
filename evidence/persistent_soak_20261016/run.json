@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-10-16T04:58:52.844706+00:00",
+  "names": {
+    "net": "apate-load-f6343a8edd-net",
+    "redis": "apate-load-f6343a8edd-redis",
+    "pg": "apate-load-f6343a8edd-pg",
+    "core": "apate-load-f6343a8edd-core",
+    "clients": "apate-load-f6343a8edd-clients"
+  },
+  "image_id": "sha256:ef06e47e54a387266a11401aac9fe92caf98bd0809c9a70b01aea16205107de4",
+  "parameters": {
+    "APATE_LOAD_IMAGE": "mirage-desktop-candidate:20261016-v2-fresh",
+    "APATE_LOAD_PERSISTENT_RUNS": "1",
+    "APATE_LOAD_CLIENTS": "8",
+    "APATE_LOAD_SECONDS": "3600",
+    "APATE_LOAD_MAX_COMMANDS": "0",
+    "APATE_LOAD_INTERVAL": "4",
+    "APATE_LOAD_ROTATE_SECONDS": "3300",
+    "APATE_LOAD_OUTPUT": "evidence/persistent_soak_20261016"
+  }
+}

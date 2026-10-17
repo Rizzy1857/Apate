@@ -4,6 +4,11 @@ Version 1.0 planning baseline; status reviewed 2026-10-12. Maintainer: project o
 
 ## Reading order
 
+The October 16 integrated Research extension is tracked by the
+[requirements audit](INTEGRATED_ACCEPTANCE_AUDIT_2026-10-16.md) and
+[current release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md). The October 11
+gate verdict above remains historical; it does not certify later changes.
+
 1. [Research MVP specification](RESEARCH_MVP.md): product boundary and requirements.
 2. [Architecture and evidence contract](RESEARCH_ARCHITECTURE.md): current implementation and required behavior.
 3. [Implementation backlog](IMPLEMENTATION_BACKLOG.md): source audit, dependencies and scope reduction.

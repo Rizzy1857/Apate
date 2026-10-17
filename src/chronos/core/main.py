@@ -13,6 +13,8 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def main():
+    from chronos.core.runtime_identity import fingerprint_runtime
+    os.environ.update(fingerprint_runtime())
     if len(sys.argv) < 2:
         mount_point = "/mnt/honeypot"
     else:
@@ -40,6 +42,7 @@ def main():
     start_metrics_server()
 
     # 4. Start Watcher Pipeline (audit streamer + evidence collector)
+    streamer = None
     try:
         from chronos.watcher.log_streamer import AuditLogStreamer
         from chronos.watcher.evidence_collector import EvidenceCollector
@@ -55,6 +58,9 @@ def main():
         print("[+] Watcher pipeline started.")
     except Exception as e:
         print(f"[!] Watcher pipeline failed to start: {e}")
+
+    from chronos.core.operational_health import start_health_publisher
+    start_health_publisher(hv.redis, db_layer, streamer)
 
     # 5. Start SSH Gateway (daemon thread — must start before FUSE blocks)
     try:

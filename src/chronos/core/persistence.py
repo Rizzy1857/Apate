@@ -19,6 +19,8 @@ class PersistenceLayer:
         self.spool = AuditSpool(os.environ.get('CHRONOS_AUDIT_SPOOL', '/var/lib/chronos/audit.sqlite3'))
         self.worker_thread = None
         self.running = False
+        self.audit_last_activity = 0.0
+        self.audit_health_error = "starting"
 
     def connect(self):
         try:
@@ -100,6 +102,7 @@ class PersistenceLayer:
     def _audit_worker(self):
         """Replay durable outbox; UUIDs fence uncertain commit retries."""
         while self.running:
+            self.audit_last_activity = time.time()
             batch = self.spool.pending()
             if not batch:
                 time.sleep(0.1)
@@ -120,7 +123,9 @@ class PersistenceLayer:
                     """, [(eid, *payload[:5], Json(payload[5])) for eid, payload in batch])
                 self.conn.commit()
                 self.spool.acknowledge([eid for eid, _ in batch])
+                self.audit_health_error = ""
             except Exception:
+                self.audit_health_error = "delivery_failed"
                 logging.exception("Audit delivery failed; durable events retained")
                 if self.conn:
                     self.conn.close()

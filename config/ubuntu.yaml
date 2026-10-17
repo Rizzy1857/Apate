@@ -1,7 +1,7 @@
 # Ubuntu Machine Profile
 # ========================
 # This file defines what the simulated machine *is*.
-# Role is implied by installed packages and running services — not by a separate "persona".
+# Device purpose and user roles are explicit trusted persona facts.
 # State and behavior are kept strictly separate (see config/generation_policy.yaml for behavior).
 
 ubuntu_version: "24.04"
@@ -11,6 +11,11 @@ kernel_version: "6.8.0-51-generic"
 hostname: "web01"
 primary_user: "ubuntu"
 timezone: "UTC"
+device_purpose: "Internal Ubuntu web server serving a static company website"
+user_roles:
+  ubuntu: "Web server administrator"
+  www-data: "Unprivileged web service account"
+  root: "System administration account; not the participant identity"
 
 # Installed packages — these are the ground truth for validator and prompt builder.
 # The role of the machine (web server, DB, etc.) is inferred from this list.

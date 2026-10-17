@@ -1,0 +1,36 @@
+{"client_failed": 2, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-2-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}{"client_failed": 5, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-5-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+
+{"client_failed": 3, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-3-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+{"client_failed": 0, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-0-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+{"client_failed": 4, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-4-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+{"client_failed": 7, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-7-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+{"client_failed": 1, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-1-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+{"client_failed": 6, "completed": 187, "command": "echo 66518f7e8cbc4f548d32f23914a4341d-6-187 > /tmp/probe; cat /tmp/probe; cat /etc/hostname", "error": "OSError('Socket is closed')"}
+Traceback (most recent call last):
+  File "/app/tests/integration/verify_load.py", line 166, in <module>
+    main()
+  File "/app/tests/integration/verify_load.py", line 104, in main
+    results = [future.result() for future in futures]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/integration/verify_load.py", line 104, in <listcomp>
+    results = [future.result() for future in futures]
+               ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/integration/verify_load.py", line 81, in client
+    channel.sendall((command + '\r').encode())
+  File "/usr/local/lib/python3.11/site-packages/paramiko/channel.py", line 844, in sendall
+    sent = self.send(s)
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/paramiko/channel.py", line 799, in send
+    return self._send(s, m)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/paramiko/channel.py", line 1196, in _send
+    raise socket.error("Socket is closed")
+OSError: Socket is closed

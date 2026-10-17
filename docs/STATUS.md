@@ -1,5 +1,25 @@
 # Mirage current status
 
+## Active iteration — integrated product
+
+The integrated desktop iteration is implemented but not yet release-certified.
+Native startup/shutdown, live state, persistent-run resume/fresh, core-crash
+recovery and private/redacted GUI exports have passed local checks. Current
+regressions: 264 Python passes (7 explicit skips), 12 Rust passes plus a separately
+passed opt-in export integration test. Local model smoke trials still show
+failures; deterministic mode remains the default, with no fine-tuning claim.
+The extended persistent-run soak failed after confirmed host lid-closure sleep
+outlasted attribution leases. A fresh uninterrupted hour is required for final
+acceptance; no completed extended-soak claim is made for this iteration.
+See [integrated-product progress](INTEGRATED_PRODUCT_PROGRESS.md) for implemented
+work and remaining acceptance checks. The release status below describes the
+October 11 frozen MVP; it does not certify these subsequent runtime changes.
+
+Current acceptance and exact candidate identities are maintained in the
+[October 16 release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md).
+
+## Historical October 11 release
+
 Reviewed 2026-10-12. Implementation and release evidence are committed locally as `fde3b9838f9bd4297da32d8910a50ce705a44cbd`. Tests describe the 2026-10-11 frozen source, originally based on `a098fe02771802de03b9c64c8fbce52d82defc38` plus the archived changes—not that older commit alone. This is a documentation-only status refresh; the frozen archive and test results remain unchanged.
 
 **Status: Research MVP complete for controlled local lab use; G1–G7 passed their documented bounded procedures. The [release evidence index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the gate decisions and frozen-source identity. Mirage Home is a future design.**

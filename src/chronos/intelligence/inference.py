@@ -40,7 +40,9 @@ class ModelHealth:
     average_latency: float = 0.0
 
 class ModelUnreachableError(Exception):
-    pass
+    def __init__(self, message, *, reason='transport'):
+        super().__init__(message)
+        self.reason = reason
 
 class CircuitBreaker:
     def __init__(self, failure_threshold: int = 3, base_backoff: float = 10.0, max_backoff: float = 300.0):
@@ -131,12 +133,16 @@ class InferenceRuntime:
             if process.returncode or len(output) > 262144:
                 raise ModelUnreachableError('Inference transport failed or exceeded output limit')
             result = json.loads(output)
+            if isinstance(result, dict) and result.get('error') in ('truncated', 'incomplete', 'transport'):
+                raise ModelUnreachableError('Model generation failed', reason=result['error'])
             if not isinstance(result, str):
                 raise ModelUnreachableError('Invalid inference transport result')
             self.circuit_breaker.record_success(model, time.monotonic() - started)
             return result
         except (subprocess.TimeoutExpired, OSError, ValueError, ModelUnreachableError) as exc:
             self.circuit_breaker.record_failure(model)
+            if isinstance(exc, ModelUnreachableError):
+                raise
             raise ModelUnreachableError(f'Bounded inference failed: {type(exc).__name__}') from exc
         finally:
             if process is not None:
@@ -214,7 +220,7 @@ class InferenceRuntime:
                                 logger.info(f"[{model}] Completed. tokens={event.get('eval_count', 0)}, eval_duration={event.get('eval_duration', 0)/1e9:.3f}s, prompt_eval_duration={event.get('prompt_eval_duration', 0)/1e9:.3f}s")
                             if event.get('done_reason') == 'length':
                                 logger.error(f"[{model}] Model output truncated at token limit")
-                                raise ValueError('Model output truncated at token limit')
+                                raise ModelUnreachableError('Model output truncated at token limit', reason='truncated')
                 except (Exception, AttributeError) as e:
                     if time.monotonic() >= deadline:
                         logger.error(f"[{model}] Absolute deadline exceeded during read. time={time.monotonic() - request_start:.3f}s")
@@ -223,7 +229,7 @@ class InferenceRuntime:
                     
                 if pending.strip() or not completed:
                     logger.error(f"[{model}] Incomplete model stream")
-                    raise ValueError('Incomplete model stream')
+                    raise ModelUnreachableError('Incomplete model stream', reason='incomplete')
                 content = ''.join(parts)
             finally:
                 timer.cancel()
@@ -232,9 +238,11 @@ class InferenceRuntime:
             self.circuit_breaker.record_success(model, latency=time.time() - start_time)
             return content
             
-        except (requests.exceptions.RequestException, ValueError) as e:
+        except (requests.exceptions.RequestException, ValueError, ModelUnreachableError) as e:
             logger.error(f"[{model}] Generation failed: {e}")
             self.circuit_breaker.record_failure(model)
+            if isinstance(e, ModelUnreachableError):
+                raise
             raise ModelUnreachableError(f"Ollama unreachable ({self.host}): {e}") from e
 
     def health_check(self) -> bool:
@@ -253,5 +261,10 @@ def get_runtime() -> InferenceRuntime:
 if __name__ == '__main__':
     # Fixed trusted entry point, JSON data only, no shell or attacker-supplied code.
     data = json.loads(sys.stdin.buffer.read(131073))
-    content = InferenceRuntime(host=data['host'])._generate_inline(**data['request'])
+    try:
+        content = InferenceRuntime(host=data['host'])._generate_inline(**data['request'])
+    except ModelUnreachableError as exc:
+        # Only fixed reason codes cross the process boundary, never endpoint,
+        # prompt, response bodies or arbitrary transport exception strings.
+        content = {'error': exc.reason if exc.reason in ('truncated', 'incomplete') else 'transport'}
     sys.stdout.write(json.dumps(content))

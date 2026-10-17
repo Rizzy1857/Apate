@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "runtime_state": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 5333,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-10-16T04:45:05.940470043Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "resources": {
+    "samples": 35,
+    "memory_start_median_bytes": 447427379.20000005,
+    "memory_end_median_bytes": 448895385.6,
+    "memory_max_bytes": 450258534.4,
+    "pids_start_median": 58.0,
+    "pids_end_median": 58.0,
+    "pids_max": 66,
+    "allowed_memory_growth_bytes": 134217728
+  },
+  "started_at": "2026-10-16T04:45:03.970660+00:00",
+  "finished_at": "2026-10-16T04:48:40.092553+00:00"
+}

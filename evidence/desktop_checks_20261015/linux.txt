@@ -1,0 +1,165 @@
+sha256:2b4366e1817745b79abfddf19a0359160e4bc3f3c425206334cd6b0e08496c3d
+9288ba4d6c9f751fccee0c011e847bff109d848ddab0771b92b1e016da441e02
+65c2768ac60af6a1416d231120b29cbbf0861ed245f393a2f426d01f8091d001
+02357a665e71cfa0fa642159fec10a891668127ea7021467eb4b8d38eeb9396b
+PASS: chroot hides runtime files; privilege regain, new sockets, process creation and exec denied
+Connected to PostgreSQL persistence layer.
+Audit worker thread started.
+ERROR:root:Audit delivery failed; durable events retained
+Traceback (most recent call last):
+  File "/app/src/chronos/core/persistence.py", line 112, in _audit_worker
+    self.conn = psycopg2.connect(host=self.host, user=self.user,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "127.0.0.1", port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+ERROR:root:Audit delivery failed; durable events retained
+Traceback (most recent call last):
+  File "/app/src/chronos/core/persistence.py", line 112, in _audit_worker
+    self.conn = psycopg2.connect(host=self.host, user=self.user,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "127.0.0.1", port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+ERROR:root:Audit delivery failed; durable events retained
+Traceback (most recent call last):
+  File "/app/src/chronos/core/persistence.py", line 125, in _audit_worker
+    self.spool.acknowledge([eid for eid, _ in batch])
+  File "/app/tests/integration/verify_audit_recovery.py", line 39, in uncertain_ack
+    raise OSError('Simulated process failure after PostgreSQL commit')
+OSError: Simulated process failure after PostgreSQL commit
+PASS: database outage retains events; uncertain commits deduplicate; evidence replay cannot overwrite newer data
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (publickey) successful!
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (password) successful!
+ERROR:paramiko.transport:Secsh channel 0 open FAILED: : Administratively prohibited
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client paramiko_5.0.0)
+INFO:paramiko.transport:Authentication (password) successful!
+'cat /etc/passwd\r\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\r\nwww-data:x:33:33:Www-data:/var/www:/usr/sbin/nologin\r\nroot:x:0:0:Root:/root:/bin/bash\r\nubuntu@web01:~$ '
+'top\r\ntop - 08:28:09 up 14 days, 1 user, load average: 0.03, 0.04, 0.05\r\nTasks: 8 total, 1 running, 7 sleeping, 0 stopped, 0 zombie\r\n%Cpu(s): 2.7 us, 0.5 sy, 0.0 ni, 96.8 id, 0.0 wa, 0.0 hi, 0.0 si, 0.0 st\r\nMiB Mem : 16384.0 total, 10162.0 free, 2121.0 used, 4101.0 buff/cache\r\nMiB Swap: 0.0 total, 0.0 free, 0.0 used. 14263.0 avail Mem\r\nPID USER S COMMAND\r\n1 root S systemd\r\n100 www-data S nginx\r\n101 root S sshd\r\n102 root S cron\r\n103 root S ufw\r\n104 root S fail2ban\r\n982 ubuntu S bash\r\n994 ubuntu R top\r\nubuntu@web01:~$ '
+'free\r\n               total        used        free      shared  buff/cache   available\r\nMem:           16384Mi       2119Mi       10162Mi        12Mi       4101Mi       14263Mi\r\nSwap:             0B          0B          0B\r\nubuntu@web01:~$ '
+'cat /etc/hostname\r\nweb01\r\nubuntu@web01:~$ '
+'echo alpha-secret > /tmp/secret\r\nubuntu@web01:~$ '
+'echo beta-secret > /tmp/secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nalpha-secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nbeta-secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nalpha-secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nbeta-secret\r\nubuntu@web01:~$ '
+'rm /tmp/secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nalpha-secret\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\ncat: /tmp/secret: No such file or directory\r\nubuntu@web01:~$ '
+'ls /tmp\r\nsecret\r\nubuntu@web01:~$ '
+'ls /tmp\r\nubuntu@web01:~$ '
+'export SHARED_NAME=alpha-env\r\nubuntu@web01:~$ '
+'export SHARED_NAME=beta-env\r\nubuntu@web01:~$ '
+'echo $SHARED_NAME\r\nalpha-env\r\nubuntu@web01:~$ '
+'echo $SHARED_NAME\r\nbeta-env\r\nubuntu@web01:~$ '
+'cat /../../app/requirements.txt\r\ncat: /../../app/requirements.txt: No such file or directory\r\nubuntu@web01:~$ '
+'cat ../../../../app/requirements.txt\r\ncat: ../../../../app/requirements.txt: No such file or directory\r\nubuntu@web01:~$ '
+'cat /proc/self/status\r\ncat: /proc/self/status: No such file or directory\r\nubuntu@web01:~$ '
+'cd ../../../../\r\nubuntu@web01:/$ '
+'pwd\r\n/\r\nubuntu@web01:/$ '
+'cd /home/ubuntu\r\nubuntu@web01:~$ '
+'bash -c id\r\nbash: bash: command not found\r\nubuntu@web01:~$ '
+'cat /app/requirements.txt\r\ncat: /app/requirements.txt: No such file or directory\r\nubuntu@web01:~$ '
+'echo forbidden > /etc/hostname\r\nbash: Permission denied\r\nubuntu@web01:~$ '
+'ls /root\r\nls: Permission denied\r\nubuntu@web01:~$ '
+"touch /etc/forbidden\r\ntouch: cannot touch '/etc/forbidden': Permission denied\r\nubuntu@web01:~$ "
+"mkdir /etc/forbidden\r\nmkdir: cannot create directory '/etc/forbidden': Permission denied\r\nubuntu@web01:~$ "
+"rm /etc/hostname\r\nrm: cannot remove '/etc/hostname': Permission denied\r\nubuntu@web01:~$ "
+'cp /tmp/secret /etc/copied\r\ncp: Permission denied\r\nubuntu@web01:~$ '
+'mv /tmp/secret /etc/moved\r\nmv: Permission denied\r\nubuntu@web01:~$ '
+'cat /tmp/secret\r\nalpha-secret\r\nubuntu@web01:~$ '
+'echo owned > /home/ubuntu/note\r\nubuntu@web01:~$ '
+'cat /home/ubuntu/note\r\nowned\r\nubuntu@web01:~$ '
+'echo one; echo two\r\none\r\ntwo\r\nubuntu@web01:~$ '
+'missing | echo recovered\r\nrecovered\r\nbash: missing: command not found\r\nubuntu@web01:~$ '
+'echo hi 2>&1\r\nbash: file descriptor duplication not supported\r\nubuntu@web01:~$ '
+'pwd\r\n/home/ubuntu\r\nubuntu@web01:~$ '
+'export MATRIX_FLAG=matrix-value\r\nubuntu@web01:~$ '
+'printenv\r\nHOME=/home/ubuntu\r\nUSER=ubuntu\r\nSHELL=/bin/bash\r\nHOSTNAME=web01\r\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\r\nLANG=C.UTF-8\r\nTERM=xterm-256color\r\nPWD=/home/ubuntu\r\nOLDPWD=/home/ubuntu\r\nSHARED_NAME=beta-env\r\nMATRIX_FLAG=matrix-value\r\nubuntu@web01:~$ '
+'unset MATRIX_FLAG\r\nubuntu@web01:~$ '
+'env\r\nHOME=/home/ubuntu\r\nUSER=ubuntu\r\nSHELL=/bin/bash\r\nHOSTNAME=web01\r\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\r\nLANG=C.UTF-8\r\nTERM=xterm-256color\r\nPWD=/home/ubuntu\r\nOLDPWD=/home/ubuntu\r\nSHARED_NAME=beta-env\r\nubuntu@web01:~$ '
+'whoami\r\nubuntu\r\nubuntu@web01:~$ '
+'id -un\r\nubuntu\r\nubuntu@web01:~$ '
+'hostname\r\nweb01\r\nubuntu@web01:~$ '
+'uname -a\r\nLinux web01 6.8.0-51-generic #62-Ubuntu SMP x86_64 GNU/Linux\r\nubuntu@web01:~$ '
+'ps aux\r\nUSER PID STAT COMMAND\r\nroot 1 S systemd\r\nwww-data 100 S nginx\r\nroot 101 S sshd\r\nroot 102 S cron\r\nroot 103 S ufw\r\nroot 104 S fail2ban\r\nubuntu 982 S bash\r\nubuntu 994 R ps\r\nubuntu@web01:~$ '
+'ss\r\nNetid State Recv-Q Send-Q Local Address:Port Peer Address:Port\r\ntcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:*\r\ntcp LISTEN 0 128 0.0.0.0:80 0.0.0.0:*\r\ntcp LISTEN 0 128 0.0.0.0:443 0.0.0.0:*\r\nubuntu@web01:~$ '
+'df\r\nFilesystem 1K-blocks Used Available Use% Mounted on\r\n/dev/sda1 52428800 5242880 47185920 10% /\r\n/dev/sda2 1048576 104857 943719 10% /boot\r\ntmpfs 2097152 209715 1887437 10% /tmp\r\nubuntu@web01:~$ '
+'touch /tmp/matrix-file\r\nubuntu@web01:~$ '
+'echo alpha > /tmp/matrix-file\r\nubuntu@web01:~$ '
+'echo beta >> /tmp/matrix-file\r\nubuntu@web01:~$ '
+'head -n 1 /tmp/matrix-file\r\nalpha\r\nubuntu@web01:~$ '
+'tail -n 1 /tmp/matrix-file\r\nbeta\r\nubuntu@web01:~$ '
+'grep beta /tmp/matrix-file\r\nbeta\r\nubuntu@web01:~$ '
+'echo -x > /tmp/dash-pattern\r\nubuntu@web01:~$ '
+'grep -- -x /tmp/dash-pattern\r\n-x\r\nubuntu@web01:~$ '
+'stat /tmp/matrix-file\r\n  File: /tmp/matrix-file\r\n  Size: 11\tBlocks: 0\tIO Block: 4096\r\nDevice: 801h/2049d\tInode: 15\tLinks: 1\r\nAccess: (0644/-rw-r--r--)\tUid: (1000/ubuntu)\tGid: (1000/ubuntu)\r\nAccess: 2026-10-15 08:28:11 +0000\r\nModify: 2026-10-15 08:28:11 +0000\r\nChange: 2026-10-15 08:28:11 +0000\r\nubuntu@web01:~$ '
+'mkdir -p /tmp/matrix-tree/child\r\nubuntu@web01:~$ '
+'find /tmp/matrix-tree\r\n/tmp/matrix-tree\r\n/tmp/matrix-tree/child\r\nubuntu@web01:~$ '
+'cp /tmp/matrix-file /tmp/matrix-copy\r\nubuntu@web01:~$ '
+'mv /tmp/matrix-copy /tmp/matrix-moved\r\nubuntu@web01:~$ '
+'ls -l /tmp/matrix-moved\r\n-rw-r--r-- 1 ubuntu ubuntu 11 Oct 15 08:28 /tmp/matrix-moved\r\nubuntu@web01:~$ '
+'rm /tmp/matrix-moved\r\nubuntu@web01:~$ '
+'rmdir /tmp/matrix-tree/child\r\nubuntu@web01:~$ '
+'rmdir /tmp/matrix-tree\r\nubuntu@web01:~$ '
+'cd /tmp\r\nubuntu@web01:/tmp$ '
+'pwd\r\n/tmp\r\nubuntu@web01:/tmp$ '
+'cd /home/ubuntu\r\nubuntu@web01:~$ '
+'echo survivor\r\nsurvivor\r\nubuntu@web01:~$ '
+PASS: forcibly killed worker closes its session; other session remains functional
+PASS: real Linux SSH/FUSE, deterministic generation, session isolation, truncation, execution boundary
+PASS: real database exports reconcile command outcomes and file correlation
+PASS: session-tagged file operations and command evidence persisted in PostgreSQL
+17000108777, 'response_bytes': 0, 'generated_response_bytes': 0, 'transport_response_bytes': 0, 'response_delivery': 'no_response', 'delivery_reason': None, 'world_snapshot': {'schema_version': 1, 'seed': 'integration', 'tick': 1, 'epoch': 1792052829, 'syslog_excerpt': 'Oct 15 08:28:09 web01 systemd[1]: Completed periodic maintenance.\n', 'elapsed_seconds': 60, 'uptime': 1209660, 'cpu_usage': 2.7, 'cpu_system': 0.5, 'cpu_idle': 96.8, 'load1': 0.03, 'load5': 0.04, 'load15': 0.05, 'mem_total': 16777216, 'mem_free': 10406287, 'mem_cached': 4200064}, 'stage_results': [{'pipeline_index': 0, 'preceding_operator': None, 'executed': True, 'exit_status': 0, 'stages': [{'stage_index': 0, 'command': 'rmdir', 'executed': True, 'stdout_redirected': False, 'stderr_redirected': False, 'stdin_redirected': False, 'exit_status': 0, 'generated_stdout_bytes': 0, 'generated_stderr_bytes': 0}]}], 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command: {'command': 'cd /tmp', 'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': 'b69e75ca-89a6-4fbb-8452-0a3ea7cc41e7', 'schema_version': 1, 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[SSH] [a9502dd4] Command: cd /tmp
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command_result: {'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': 'b69e75ca-89a6-4fbb-8452-0a3ea7cc41e7', 'exit_status': 0, 'outcome': 'emulated_success', 'server_elapsed_seconds': 0.0037841250000383297, 'response_bytes': 0, 'generated_response_bytes': 0, 'transport_response_bytes': 0, 'response_delivery': 'no_response', 'delivery_reason': None, 'world_snapshot': {'schema_version': 1, 'seed': 'integration', 'tick': 1, 'epoch': 1792052829, 'syslog_excerpt': 'Oct 15 08:28:09 web01 systemd[1]: Completed periodic maintenance.\n', 'elapsed_seconds': 60, 'uptime': 1209660, 'cpu_usage': 2.7, 'cpu_system': 0.5, 'cpu_idle': 96.8, 'load1': 0.03, 'load5': 0.04, 'load15': 0.05, 'mem_total': 16777216, 'mem_free': 10406287, 'mem_cached': 4200064}, 'stage_results': [{'pipeline_index': 0, 'preceding_operator': None, 'executed': True, 'exit_status': 0, 'stages': [{'stage_index': 0, 'command': 'cd', 'executed': True, 'stdout_redirected': False, 'stderr_redirected': False, 'stdin_redirected': False, 'exit_status': 0, 'generated_stdout_bytes': 0, 'generated_stderr_bytes': 0}]}], 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command: {'command': 'pwd', 'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': '8f17a002-ece3-47fb-af48-4ad52e01e0f6', 'schema_version': 1, 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[SSH] [a9502dd4] Command: pwd
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command_result: {'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': '8f17a002-ece3-47fb-af48-4ad52e01e0f6', 'exit_status': 0, 'outcome': 'emulated_success', 'server_elapsed_seconds': 0.0013757080000686983, 'response_bytes': 5, 'generated_response_bytes': 5, 'transport_response_bytes': 6, 'response_delivery': 'accepted_by_transport', 'delivery_reason': None, 'world_snapshot': {'schema_version': 1, 'seed': 'integration', 'tick': 1, 'epoch': 1792052829, 'syslog_excerpt': 'Oct 15 08:28:09 web01 systemd[1]: Completed periodic maintenance.\n', 'elapsed_seconds': 60, 'uptime': 1209660, 'cpu_usage': 2.7, 'cpu_system': 0.5, 'cpu_idle': 96.8, 'load1': 0.03, 'load5': 0.04, 'load15': 0.05, 'mem_total': 16777216, 'mem_free': 10406287, 'mem_cached': 4200064}, 'stage_results': [{'pipeline_index': 0, 'preceding_operator': None, 'executed': True, 'exit_status': 0, 'stages': [{'stage_index': 0, 'command': 'pwd', 'executed': True, 'stdout_redirected': False, 'stderr_redirected': False, 'stdin_redirected': False, 'exit_status': 0, 'generated_stdout_bytes': 5, 'generated_stderr_bytes': 0}]}], 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command: {'command': 'cd /home/ubuntu', 'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': '6e5ba7b1-152b-4b65-8aaa-1d0cffafdfc5', 'schema_version': 1, 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[SSH] [a9502dd4] Command: cd /home/ubuntu
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command_result: {'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': '6e5ba7b1-152b-4b65-8aaa-1d0cffafdfc5', 'exit_status': 0, 'outcome': 'emulated_success', 'server_elapsed_seconds': 0.010012665999965975, 'response_bytes': 0, 'generated_response_bytes': 0, 'transport_response_bytes': 0, 'response_delivery': 'no_response', 'delivery_reason': None, 'world_snapshot': {'schema_version': 1, 'seed': 'integration', 'tick': 1, 'epoch': 1792052829, 'syslog_excerpt': 'Oct 15 08:28:09 web01 systemd[1]: Completed periodic maintenance.\n', 'elapsed_seconds': 60, 'uptime': 1209660, 'cpu_usage': 2.7, 'cpu_system': 0.5, 'cpu_idle': 96.8, 'load1': 0.03, 'load5': 0.04, 'load15': 0.05, 'mem_total': 16777216, 'mem_free': 10406287, 'mem_cached': 4200064}, 'stage_results': [{'pipeline_index': 0, 'preceding_operator': None, 'executed': True, 'exit_status': 0, 'stages': [{'stage_index': 0, 'command': 'cd', 'executed': True, 'stdout_redirected': False, 'stderr_redirected': False, 'stdin_redirected': False, 'exit_status': 0, 'generated_stdout_bytes': 0, 'generated_stderr_bytes': 0}]}], 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command: {'command': 'echo after-worker-death', 'session_id': '28485cc6-f1b9-43af-bb06-e749aa968f24', 'command_id': '869be97a-a6ce-4575-9adf-52442dbc1983', 'schema_version': 1, 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[SSH] [28485cc6] Command: echo after-worker-death
+ERROR:chronos.gateway.ssh_server:[SSH] Error: [Errno 104] Connection reset by peer
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command_result: {'session_id': '28485cc6-f1b9-43af-bb06-e749aa968f24', 'command_id': '869be97a-a6ce-4575-9adf-52442dbc1983', 'outcome': 'unknown', 'reason': 'session_interrupted', 'server_elapsed_seconds': 0.004148583999722177, 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_disconnect: {'session_id': '28485cc6-f1b9-43af-bb06-e749aa968f24', 'operation_id': '7165864a-8542-476a-a716-10d540685f1b', 'completed_at': 1792052892.7362003, 'outcome': 'interrupted', 'reason': 'session_error', 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity', 'idempotency_scope': 'lifecycle-recovery-v1', 'schema_version': 1}
+INFO:chronos.gateway.ssh_server:[SSH] Connection closed: ('127.0.0.1', 33876)
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command: {'command': 'echo survivor', 'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': 'a83b9799-8a80-4eef-86fc-5c7a03394ca2', 'schema_version': 1, 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[SSH] [a9502dd4] Command: echo survivor
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_command_result: {'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'command_id': 'a83b9799-8a80-4eef-86fc-5c7a03394ca2', 'exit_status': 0, 'outcome': 'emulated_success', 'server_elapsed_seconds': 0.0022852500001135923, 'response_bytes': 9, 'generated_response_bytes': 9, 'transport_response_bytes': 10, 'response_delivery': 'accepted_by_transport', 'delivery_reason': None, 'world_snapshot': {'schema_version': 1, 'seed': 'integration', 'tick': 1, 'epoch': 1792052829, 'syslog_excerpt': 'Oct 15 08:28:09 web01 systemd[1]: Completed periodic maintenance.\n', 'elapsed_seconds': 60, 'uptime': 1209660, 'cpu_usage': 2.7, 'cpu_system': 0.5, 'cpu_idle': 96.8, 'load1': 0.03, 'load5': 0.04, 'load15': 0.05, 'mem_total': 16777216, 'mem_free': 10406287, 'mem_cached': 4200064}, 'stage_results': [{'pipeline_index': 0, 'preceding_operator': None, 'executed': True, 'exit_status': 0, 'stages': [{'stage_index': 0, 'command': 'echo', 'executed': True, 'stdout_redirected': False, 'stderr_redirected': False, 'stdin_redirected': False, 'exit_status': 0, 'generated_stdout_bytes': 9, 'generated_stderr_bytes': 0}]}], 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity'}
+INFO:chronos.gateway.ssh_server:[AUDIT] ssh_disconnect: {'session_id': 'a9502dd4-ba34-4866-9a61-efde909e0c15', 'operation_id': '152bea82-848c-496a-ace8-4e5877e3f648', 'completed_at': 1792052893.0098302, 'outcome': 'completed', 'reason': 'connection_closed', 'origin': 'scripted_test', 'claimed_username': 'ubuntu', 'effective_username': 'ubuntu', 'identity_mismatch': False, 'identity_policy': 'accept_any_claim_profile_identity', 'idempotency_scope': 'lifecycle-recovery-v1', 'schema_version': 1}
+INFO:chronos.gateway.ssh_server:[SSH] Connection closed: ('127.0.0.1', 33892)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.user_enum', 'privilege_escalation.passwd_change'] (Risk: medium)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.process_enum'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.skill_detector:[PatternSummary] Session 28485cc6-f1b9-43af-bb06-e749aa968f24: 4 labels
+INFO:chronos.watcher.evidence_collector:[EvidenceCollector] Flushing session 28485cc6 to Postgres
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.system_info'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.process_enum'] (Risk: low)
+INFO:chronos.skills.command_analyzer:[CommandAnalyzer] Detected techniques: ['reconnaissance.network_scan'] (Risk: low)
+INFO:chronos.skills.skill_detector:[PatternSummary] Session a9502dd4-ba34-4866-9a61-efde909e0c15: 3 labels
+INFO:chronos.watcher.evidence_collector:[EvidenceCollector] Flushing session a9502dd4 to Postgres
+

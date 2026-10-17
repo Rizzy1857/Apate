@@ -53,7 +53,7 @@ if ARGV[7] and ARGV[7] ~= '' then
     redis.call('HSET', 'fs:mutation:' .. ARGV[7],
         'operation_id', ARGV[7], 'operation', ARGV[8], 'path', ARGV[9],
         'inode', inode, 'command_id', ARGV[10], 'origin', ARGV[11],
-        'completed_at', timestamp, 'schema_version', 1)
+        'completed_at', timestamp, 'schema_version', 1, 'session_id', ARGV[12] or '')
     redis.call('ZADD', 'fs:mutation_journal', timestamp, ARGV[7])
 end
 return inode

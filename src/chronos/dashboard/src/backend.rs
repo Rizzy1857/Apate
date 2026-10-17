@@ -153,6 +153,20 @@ impl ExportMode {
 
 #[derive(Debug, Clone)]
 pub enum BackendMessage {
+    RunSnapshot {
+        runs: Vec<HashMap<String, String>>,
+        armed: Option<String>,
+    },
+    RunActionResult(Result<String, String>),
+    RunSnapshotError,
+    OperationalSnapshot {
+        health: HashMap<String, String>,
+        jobs: Vec<HashMap<String, String>>,
+    },
+    OperationalUnavailable,
+    ProvenanceUnavailable,
+    StackStatus(String),
+    LiveContexts(Result<Vec<HashMap<String, String>>, String>),
     ExportResult(Result<String, String>),
     RedisConnected(bool),
     PostgresConnected(bool),
@@ -174,6 +188,7 @@ pub enum BackendMessage {
 
 #[derive(Debug, Clone)]
 pub enum BackendRequest {
+    ArmRun(Option<String>),
     ExportSession {
         session_id: String,
         destination: String,
@@ -374,11 +389,24 @@ pub async fn start_backend(
             };
 
             match req {
+                BackendRequest::ArmRun(run_id) => {
+                    let result = tokio::time::timeout(Duration::from_secs(5), arm_run(run_id))
+                        .await
+                        .unwrap_or_else(|_| Err("Run selection timed out".into()));
+                    let _ = tx_detail.send(BackendMessage::RunActionResult(result));
+                }
                 BackendRequest::ExportSession {
                     session_id,
                     destination,
                     mode,
                 } => {
+                    if std::env::var("CHRONOS_MANAGE_STACK").as_deref() != Ok("0") {
+                        let result =
+                            crate::managed_export::export(&session_id, &destination, mode.as_arg())
+                                .await;
+                        let _ = tx_detail.send(BackendMessage::ExportResult(result));
+                        continue;
+                    }
                     // Operator-side helper only; never executed by a honeypot worker.
                     // Argument arrays avoid shell interpretation of paths or identifiers.
                     let python = std::env::var("APATE_PYTHON").unwrap_or_else(|_| "python3".into());
@@ -578,15 +606,97 @@ pub async fn start_backend(
                                 }
                             }
 
+                            let contexts = tokio::time::timeout(
+                                Duration::from_secs(3),
+                                collect_live_contexts(&mut con),
+                            )
+                            .await;
+                            let contexts = match contexts {
+                                Ok(Ok(rows)) => Ok(rows),
+                                Ok(Err(_)) => Err("Session context query failed".into()),
+                                Err(_) => Err("Session context query timed out".into()),
+                            };
+                            if tx_rd
+                                .send_async(BackendMessage::LiveContexts(contexts))
+                                .await
+                                .is_err()
+                            {
+                                return;
+                            }
                             provenance_tick = provenance_tick.wrapping_add(1);
+                            let operational = tokio::time::timeout(Duration::from_secs(3), async {
+                                let health: HashMap<String, String> =
+                                    con.hgetall("chronos:operational_health").await?;
+                                let mut jobs =
+                                    collect_hashes(&mut con, "session:*:generation:*", 2000)
+                                        .await?;
+                                jobs.sort_by(|a, b| b.get("updated_at").cmp(&a.get("updated_at")));
+                                jobs.truncate(50);
+                                Ok::<_, redis::RedisError>((health, jobs))
+                            })
+                            .await;
+                            match operational {
+                                Ok(Ok((health, jobs))) => {
+                                    let _ = tx_rd
+                                        .send_async(BackendMessage::OperationalSnapshot {
+                                            health,
+                                            jobs,
+                                        })
+                                        .await;
+                                }
+                                _ => {
+                                    let _ = tx_rd
+                                        .send_async(BackendMessage::OperationalUnavailable)
+                                        .await;
+                                }
+                            }
+                            let snapshot = tokio::time::timeout(Duration::from_secs(3), async {
+                                let ids: Vec<String> =
+                                    con.zrevrange("chronos:runs:index", 0, 199).await?;
+                                let mut runs = Vec::new();
+                                for id in ids {
+                                    let fields =
+                                        ["run_id", "status", "cwd", "device_id", "updated_at"];
+                                    let values: Vec<Option<String>> = redis::cmd("HMGET")
+                                        .arg(format!("chronos:run:{id}"))
+                                        .arg(&fields)
+                                        .query_async(&mut con)
+                                        .await?;
+                                    let row: HashMap<String, String> = fields
+                                        .into_iter()
+                                        .zip(values)
+                                        .filter_map(|(key, value)| {
+                                            value.map(|value| (key.into(), value))
+                                        })
+                                        .collect();
+                                    runs.push(row);
+                                }
+                                let armed: Option<String> = con.get("chronos:runs:next").await?;
+                                Ok::<_, redis::RedisError>((runs, armed))
+                            })
+                            .await;
+                            if let Ok(Ok((runs, armed))) = snapshot {
+                                let _ = tx_rd
+                                    .send_async(BackendMessage::RunSnapshot { runs, armed })
+                                    .await;
+                            } else {
+                                let _ = tx_rd.send_async(BackendMessage::RunSnapshotError).await;
+                            }
                             if provenance_tick % 5 == 0 {
-                                match collect_provenance_snapshot(&mut con).await {
-                                    Ok(snapshot) => {
+                                match tokio::time::timeout(
+                                    Duration::from_secs(3),
+                                    collect_provenance_snapshot(&mut con),
+                                )
+                                .await
+                                {
+                                    Ok(Ok(snapshot)) => {
                                         let _ = tx_rd
                                             .send(BackendMessage::ProvenanceSnapshot(snapshot));
                                     }
-                                    Err(e) => {
-                                        log::error!("Provenance snapshot error: {}", e);
+                                    _ => {
+                                        let _ = tx_rd
+                                            .send_async(BackendMessage::ProvenanceUnavailable)
+                                            .await;
                                     }
                                 }
                             }
@@ -603,10 +713,103 @@ pub async fn start_backend(
     });
 }
 
+async fn arm_run(run_id: Option<String>) -> Result<String, String> {
+    let url = std::env::var("REDIS_URL").map_err(|_| "Redis is not configured")?;
+    let mut connection = redis::Client::open(url)
+        .map_err(|_| "Invalid Redis configuration")?
+        .get_multiplexed_tokio_connection()
+        .await
+        .map_err(|_| "Redis unavailable")?;
+    match run_id {
+        None => {
+            let _: i32 = connection
+                .del("chronos:runs:next")
+                .await
+                .map_err(|_| "Cannot select fresh run")?;
+            Ok("Next connection starts fresh; retained runs are preserved".into())
+        }
+        Some(id) => {
+            if id.len() != 36
+                || !id.chars().enumerate().all(|(i, c)| {
+                    if [8, 13, 18, 23].contains(&i) {
+                        c == '-'
+                    } else {
+                        c.is_ascii_digit() || ('a'..='f').contains(&c)
+                    }
+                })
+            {
+                return Err("Select a valid run UUID".into());
+            }
+            let script = redis::Script::new("if redis.call('HGET', KEYS[1], 'status') ~= 'paused' then return redis.error_reply('Run must be paused') end; redis.call('SET', KEYS[2], ARGV[1], 'EX', 60); return 1");
+            let _: i32 = script
+                .key(format!("chronos:run:{id}"))
+                .key("chronos:runs:next")
+                .arg(&id)
+                .invoke_async(&mut connection)
+                .await
+                .map_err(|_| "Run must be paused and Redis available")?;
+            Ok(format!(
+                "Run {id} selected for the next shell; selection expires in 60 seconds"
+            ))
+        }
+    }
+}
+
+async fn collect_live_contexts(
+    con: &mut redis::aio::MultiplexedConnection,
+) -> redis::RedisResult<Vec<HashMap<String, String>>> {
+    collect_hashes(con, "session:*:context", 1000).await
+}
+
+async fn scan_keys(
+    con: &mut redis::aio::MultiplexedConnection,
+    pattern: &str,
+    capacity: usize,
+) -> redis::RedisResult<std::collections::BTreeSet<String>> {
+    let mut cursor = 0u64;
+    let mut keys = std::collections::BTreeSet::new();
+    loop {
+        let (next, batch): (u64, Vec<String>) = redis::cmd("SCAN")
+            .arg(cursor)
+            .arg("MATCH")
+            .arg(pattern)
+            .arg("COUNT")
+            .arg(100)
+            .query_async(con)
+            .await?;
+        keys.extend(batch);
+        if keys.len() > capacity {
+            return Err((redis::ErrorKind::ResponseError, "Context capacity exceeded").into());
+        }
+        cursor = next;
+        if cursor == 0 {
+            break;
+        }
+    }
+    Ok(keys)
+}
+
+async fn collect_hashes(
+    con: &mut redis::aio::MultiplexedConnection,
+    pattern: &str,
+    capacity: usize,
+) -> redis::RedisResult<Vec<HashMap<String, String>>> {
+    let keys = scan_keys(con, pattern, capacity).await?;
+    let mut rows = Vec::new();
+    for key in keys {
+        let row: HashMap<String, String> = con.hgetall(&key).await?;
+        if !row.is_empty() {
+            rows.push(row);
+        }
+    }
+    Ok(rows)
+}
+
 async fn collect_provenance_snapshot(
     con: &mut redis::aio::MultiplexedConnection,
 ) -> redis::RedisResult<ProvenanceSummary> {
-    let keys: Vec<String> = con.keys("session:*:fs:blob_meta:*").await?;
+    let mut keys = scan_keys(con, "session:*:fs:blob_meta:*", 10000).await?;
+    keys.extend(scan_keys(con, "run:*:fs:blob_meta:*", 10000).await?);
 
     let mut by_file_class: BTreeMap<String, i32> = BTreeMap::new();
     let mut entries: Vec<(f64, ProvenanceEntry)> = Vec::new();
@@ -617,7 +820,7 @@ async fn collect_provenance_snapshot(
     let mut template_blobs = 0i32;
 
     for key in keys {
-        let meta: HashMap<String, String> = con.hgetall(&key).await.unwrap_or_default();
+        let meta: HashMap<String, String> = con.hgetall(&key).await?;
         if meta.is_empty() {
             continue;
         }

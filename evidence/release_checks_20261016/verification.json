@@ -1,0 +1,41 @@
+{
+  "artifact_type": "integrated_candidate_packaging_image_checkpoint",
+  "date": "2026-10-16",
+  "source_archive_sha256": "91a61a54eb5a4c2e79c9ed907f63bea83a8e4ec9d52489063cb88a7fbe8030c6",
+  "macos_bundle": {
+    "architecture": "arm64",
+    "build": "cargo build --locked from extracted candidate with a new target directory",
+    "signature": "ad-hoc; codesign --verify --deep --strict passed",
+    "plist_lint": "passed",
+    "executable_sha256": "b3f086d5d74a21770615dc7a0f3ec452116f0e5658e3478a5348bb6c375f4797",
+    "native_launch_this_checkpoint": false,
+    "reason": "Preserve the already running operator GUI and managed deployment",
+    "notarized": false
+  },
+  "extracted_rust_tests": {"passed": 12, "ignored": 1},
+  "extracted_linux_integration": "passed; disposable harness image, before uncached build completed",
+  "fresh_image_containment": "passed",
+  "fresh_image": {
+    "tag": "mirage-desktop-candidate:20261016-v2-fresh",
+    "manifest_list_id": "sha256:ef06e47e54a387266a11401aac9fe92caf98bd0809c9a70b01aea16205107de4",
+    "configuration_id": "sha256:db2fe43c6da29c77e458a5430b63c8bf6bbf8d9eb734dfdb0f12df2f272dcb74",
+    "no_cache_build": true,
+    "application_files_match_source": true,
+    "inventory_sha256": "5ba84be51bef5b93b8eee278148c16c62d324a9aa06a73b976616d81e2e7b4a8"
+  },
+  "scan": {
+    "scanner": "aquasec/trivy:0.69.3",
+    "scanner_digest": "sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c",
+    "database_updated_at": "2026-10-16T01:13:54.947090392Z",
+    "database_downloaded_at": "2026-10-16T04:42:15.150614214Z",
+    "network": "none during image scan; database downloaded separately without project input",
+    "report_sha256": "0dee06ac5ffd03cd2a79d8ac777380b8659e5f46cbdb34cf620ea995c54ffad4",
+    "python_findings": 0,
+    "debian_package_advisory_pairs": 164,
+    "debian_unique_identifiers": 71,
+    "severity": {"CRITICAL": 0, "HIGH": 44, "MEDIUM": 58, "LOW": 61, "UNKNOWN": 1},
+    "findings_with_fixed_version_listed": 0,
+    "clean_or_nonexploitable_claim": false
+  },
+  "final_release_accepted": false
+}

@@ -90,6 +90,8 @@ class PromptBuilder:
         detail = ''
         if policy.file_class in ('log_file', 'history_file'):
             detail = '- Produce a short excerpt of 3 to 8 entries, not a full archive. Stop generating after the excerpt.\n'
+        if policy.file_class == 'history_file':
+            detail += '- Write only stored shell commands, one per line. Do not include usernames, shell prompts, command output or terminal transcript formatting.\n'
         if policy.file_class == 'log_file':
             from datetime import datetime, timezone
             now = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)
@@ -139,7 +141,10 @@ class PromptBuilder:
         Returns a compact, human-readable representation of only the MachineState
         fields relevant to the file class. Reduces context waste and contradiction risk.
         """
-        fields = _RELEVANT_FIELDS.get(file_class, _DEFAULT_FIELDS)
+        fields = list(dict.fromkeys(
+            ["hostname", "primary_user", "device_purpose", "user_roles"]
+            + _RELEVANT_FIELDS.get(file_class, _DEFAULT_FIELDS)
+        ))
         lines = []
         for field in fields:
             value = machine_state.get(field)

@@ -4,9 +4,9 @@ ubuntu_profile.py
 Loads the Ubuntu machine profile from config/ubuntu.yaml and provides
 access to the canonical MachineState for a session.
 
-This replaces PersonaEngine. There is exactly one machine type: Ubuntu.
-The machine's "role" (web server, DB, etc.) is inferred from the installed
-packages and running services — it is never declared as a separate persona.
+There is one supported machine type: Ubuntu. Explicit purpose and user roles
+are trusted profile facts. A versioned Redis device record survives session
+cleanup; isolated sessions retain immutable snapshots of that record.
 
 State (ubuntu.yaml) is kept strictly separate from behavior (generation_policy.yaml).
 """
@@ -15,6 +15,7 @@ import os
 import yaml
 import json
 import time
+import hashlib
 from typing import Any, Dict, Optional
 
 # Path resolution: config/ is at the project root, two levels above src/chronos/intelligence/
@@ -133,6 +134,8 @@ class UbuntuProfile:
         Values are serialized to strings for Redis HSET compatibility.
         """
         return {
+            "device_purpose": self._raw.get("device_purpose", "Ubuntu research decoy"),
+            "user_roles": json.dumps(self._raw.get("user_roles", {})),
             "ubuntu_version":      self.ubuntu_version,
             "kernel_version":      self.kernel_version,
             "hostname":            self.hostname,
@@ -162,6 +165,30 @@ class UbuntuProfile:
         if existing:
             return existing
 
-        state = self.build_machine_state()
-        redis_client.hset(key, mapping=state)
-        return state
+        # Profile revisions are explicit device identities, not silent updates
+        # to an existing persona. This record is outside disposable fs keys.
+        revision = hashlib.sha256(json.dumps(
+            self._raw, sort_keys=True, separators=(",", ":")
+        ).encode()).hexdigest()
+        device_key = f"chronos:device:v1:{revision}"
+        proposed = self.build_machine_state()
+        proposed.update(persona_schema="1", device_id=revision,
+                        profile_revision=revision)
+        initialize = """
+        if redis.call('EXISTS', KEYS[1]) == 0 then
+            for i = 1, #ARGV, 2 do
+                redis.call('HSET', KEYS[1], ARGV[i], ARGV[i+1])
+            end
+        end
+        return redis.call('HGETALL', KEYS[1])
+        """
+        def create_once(target, values):
+            pairs = [item for pair in values.items() for item in pair]
+            result = redis_client.eval(initialize, 1, target, *pairs)
+            result = [v.decode() if isinstance(v, bytes) else v for v in result]
+            return dict(zip(result[::2], result[1::2]))
+
+        device = create_once(device_key, proposed)
+        # Atomic first-writer-wins also prevents concurrent file reads from
+        # assigning different simulation reference times to one session.
+        return create_once(key, device)

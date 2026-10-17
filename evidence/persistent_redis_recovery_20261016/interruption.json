@@ -1,0 +1,13 @@
+{
+  "result": "INCOMPLETE",
+  "reason": "Turn interrupted before client log and final result were retained; Docker daemon subsequently unavailable",
+  "pass_claim": false,
+  "observed_after_docker_restart": {
+    "apate-load-996cb10aaa-core": "exited 137",
+    "apate-load-996cb10aaa-pg": "exited 0",
+    "apate-load-996cb10aaa-redis": "exited 0",
+    "apate-load-996cb10aaa-clients": "not present"
+  },
+  "retained_evidence": ["run.json", "samples.jsonl", "source_hashes.json"],
+  "disposition": "Preserve partial record; rerun in a new output directory with new disposable resources"
+}

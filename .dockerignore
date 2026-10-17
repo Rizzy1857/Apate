@@ -6,6 +6,8 @@
 venv
 .env
 .env.*
+.local-deploy
+outputs
 data
 logs
 report_workspace

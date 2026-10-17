@@ -46,6 +46,9 @@ def main():
     fault_started = None
     fault_recovered = False
     fault = os.environ.get('APATE_LOAD_FAULT', '')
+    persistent = os.environ.get('APATE_LOAD_PERSISTENT_RUNS', '0')
+    if persistent not in ('0', '1'):
+        raise ValueError('APATE_LOAD_PERSISTENT_RUNS must be 0 or 1')
     output_dir = Path(os.environ.get('APATE_LOAD_OUTPUT', str(root / '.pytest_cache' / prefix)))
     output_dir.mkdir(parents=True, exist_ok=False)
     def save(name, value):
@@ -91,6 +94,7 @@ def main():
                '--security-opt', 'no-new-privileges:true', '--pids-limit', '192',
                '--memory', '2g', '--cpus', '2', '-e', 'REDIS_HOST=' + names['redis'],
                '-e', 'APATE_SESSION_ORIGIN=scripted_test',
+               '-e', 'CHRONOS_PERSISTENT_RUNS=' + persistent,
                '-e', 'POSTGRES_HOST=' + names['pg'], image, *diagnostic_command)
         for _ in range(60):
             mounted = docker('exec', names['core'], 'python3', '-c',
@@ -109,6 +113,7 @@ def main():
             '-e', 'APATE_LOAD_INTERVAL=' + os.environ.get('APATE_LOAD_INTERVAL', '0.2'),
             '-e', 'APATE_LOAD_ROTATE_SECONDS=' + os.environ.get('APATE_LOAD_ROTATE_SECONDS', '3300'),
             '-e', 'APATE_LOAD_FAULT=' + fault,
+            '-e', 'APATE_LOAD_PERSISTENT_RUNS=' + persistent,
             '-v', str(root / 'tests') + ':/app/tests:ro', image,
             'python3', 'tests/integration/' + ('verify_restart.py' if fault in ('redis', 'core') else 'verify_load.py')], stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True)

@@ -1,0 +1,6 @@
+{
+  "result": "FAIL",
+  "error": "AssertionError('Load client failed')",
+  "started_at": "2026-10-16T04:58:52.844706+00:00",
+  "finished_at": "2026-10-16T05:14:08.080061+00:00"
+}

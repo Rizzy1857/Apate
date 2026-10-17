@@ -210,4 +210,5 @@ class StateHypervisor:
         return [
             journal["operation_id"], journal["operation"], journal["path"],
             journal.get("command_id") or "", journal.get("origin") or "unattributed",
+            journal.get("session_id") or "",
         ]

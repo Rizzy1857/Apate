@@ -26,3 +26,17 @@ def test_completed_transport_records_success(monkeypatch):
     assert runtime.generate('trusted') == 'ready'
     process.kill.assert_not_called()
     assert runtime.circuit_breaker.models['llama3:8b'].successes == 1
+
+
+@pytest.mark.parametrize('reason', ['truncated', 'incomplete', 'transport'])
+def test_safe_failure_reason_survives_transport(monkeypatch, reason):
+    import json
+    process = Mock(returncode=0)
+    process.communicate.return_value = (json.dumps({'error': reason}).encode(), b'')
+    process.poll.return_value = 0
+    monkeypatch.setattr(subprocess, 'Popen', Mock(return_value=process))
+    runtime = InferenceRuntime()
+    with pytest.raises(ModelUnreachableError) as error:
+        runtime.generate('synthetic')
+    assert error.value.reason == reason
+    assert runtime.circuit_breaker.models['llama3:8b'].failures == 1

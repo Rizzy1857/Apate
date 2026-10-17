@@ -43,6 +43,10 @@ class AuditSpool:
             return [(row[0], json.loads(row[1])) for row in self.db.execute(
                 'SELECT event_id, payload FROM outbox ORDER BY sequence LIMIT ?', (limit,))]
 
+    def count(self):
+        with self.lock:
+            return self.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0]
+
     def acknowledge(self, ids):
         with self.lock, self.db:
             self.db.executemany('DELETE FROM outbox WHERE event_id=?', [(i,) for i in ids])

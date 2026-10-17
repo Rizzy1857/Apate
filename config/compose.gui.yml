@@ -1,0 +1,36 @@
+# Managed GUI resources must not collide with the manual Compose deployment.
+# All other isolation, loopback publication and persistence settings are inherited.
+services:
+  redis-store:
+    container_name: mirage-gui-redis
+    ports: !reset []
+  db-store:
+    container_name: mirage-gui-db
+    ports: !reset []
+  core-engine:
+    container_name: mirage-gui-core
+    environment:
+      CHRONOS_PERSISTENT_RUNS: "1"
+    ports: !reset []
+  desktop-relay:
+    image: python:3.11-slim-trixie@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534
+    container_name: mirage-gui-relay
+    command: ["python3", "-B", "/relay.py"]
+    read_only: true
+    cap_drop: [ALL]
+    user: "1000:1000"
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 128m
+    cpus: 1
+    volumes:
+      - ./src/chronos/gateway/local_relay.py:/relay.py:ro
+    ports:
+      - "127.0.0.1:2222:2222"
+      - "127.0.0.1:16379:6379"
+      - "127.0.0.1:15433:5432"
+    networks: [chronos-net, desktop-edge]
+    depends_on: [core-engine, redis-store, db-store]
+networks:
+  desktop-edge:
+    driver: bridge

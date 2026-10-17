@@ -1,0 +1,1601 @@
+diff --git a/.dockerignore b/.dockerignore
+index cb120f2..868b69c 100644
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -6,6 +6,8 @@
+ venv
+ .env
+ .env.*
++.local-deploy
++outputs
+ data
+ logs
+ report_workspace
+diff --git a/.gitignore b/.gitignore
+index ba9c2ce..c63bc76 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -585,3 +585,14 @@ docs/files
+ !evidence/recovery_postgres_20261011/*.log
+ !evidence/load_single_20261011/*.log
+ !evidence/load_control_final_20261011/*.log
++!evidence/release_candidate_20261016_desktop/source.tar.gz
++!evidence/release_candidate_20261016_desktop_v2/source.tar.gz
++!evidence/release_candidate_20261016_desktop_image/source.tar.gz
++!evidence/release_candidate_20261016_desktop_fresh_image/source.tar.gz
++!evidence/persistent_load_20261016/*.log
++!evidence/persistent_core_recovery_20261016/*.log
++!evidence/persistent_postgres_recovery_20261016/*.log
++!evidence/persistent_redis_recovery_20261016/*.log
++!evidence/persistent_redis_recovery_20261016_retry/*.log
++!evidence/persistent_soak_20261016/*.log
++!evidence/release_candidate_20261016_integrated_*/source.tar.gz
+diff --git a/README.md b/README.md
+index 73f0856..75d2390 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,11 @@
+ # Mirage (Chronos Framework)
+ 
++> The integrated Research implementation includes persistent persona,
++> live operations and GUI-managed services. See the [current acceptance verdict](docs/RELEASE_EVIDENCE_INDEX_2026-10-16.md)
++> and [implementation progress](docs/INTEGRATED_PRODUCT_PROGRESS.md).
++> The completed Research MVP verdict below applies to the October 11 frozen
++> archive, not to the newer working-tree changes.
++
+ > Repository codename: **Apate**
+ >
+ > Product name: **Mirage**
+@@ -33,6 +39,37 @@ See the [current architecture and evidence contract](docs/RESEARCH_ARCHITECTURE.
+ 
+ ## Quick Start
+ 
++### Managed desktop application (macOS development build)
++
++With Docker Desktop running and Rust installed:
++
++```bash
++bash tests/integration/package_dashboard_macos.sh
++open .local-deploy/Mirage.app
++```
++
++The GUI starts its local core, database, Redis and loopback relay, checks readiness,
++and connects Live Ops. First launch saves private local credentials under
++`.local-deploy/`; later launches reuse them. Quit the GUI before rebuilding it.
++Normal shutdown removes managed service containers and keeps their data volumes.
++
++Connect with `ssh -p 2222 ubuntu@127.0.0.1`. Under Live Ops, **Persistent runs**
++lets the operator select a paused run for the next SSH shell, or start fresh.
++Resume retains that run's files, device facts and directory. Fresh creates an
++independent filesystem while retaining previous runs. The one-use resume
++selection expires after 60 seconds; wait until a run is paused before resuming.
++Only arm resume when you control the next connection: the selection is not bound
++to a verified person or source, and this lab's permissive authentication does not
++establish participant identity. Another concurrent connection can consume it.
++Persona identity persists across application restarts. Shell environment variables
++remain connection-local. Default generation is deterministic; no model fine-tuning
++is implied by persistent persona grounding.
++
++These integrated changes are still undergoing release validation. See the
++[desktop verification](docs/DESKTOP_VERIFICATION_2026-10-15.md) and
++[implementation progress](docs/INTEGRATED_PRODUCT_PROGRESS.md). Manual Compose
++startup below remains available; managed services use dedicated names and ports.
++
+ ### Prerequisites
+ 
+ - Docker and Docker Compose with a supported Linux FUSE runtime
+diff --git a/config/ubuntu.yaml b/config/ubuntu.yaml
+index 52b1bd6..37fcd83 100644
+--- a/config/ubuntu.yaml
++++ b/config/ubuntu.yaml
+@@ -1,7 +1,7 @@
+ # Ubuntu Machine Profile
+ # ========================
+ # This file defines what the simulated machine *is*.
+-# Role is implied by installed packages and running services — not by a separate "persona".
++# Device purpose and user roles are explicit trusted persona facts.
+ # State and behavior are kept strictly separate (see config/generation_policy.yaml for behavior).
+ 
+ ubuntu_version: "24.04"
+@@ -11,6 +11,11 @@ kernel_version: "6.8.0-51-generic"
+ hostname: "web01"
+ primary_user: "ubuntu"
+ timezone: "UTC"
++device_purpose: "Internal Ubuntu web server serving a static company website"
++user_roles:
++  ubuntu: "Web server administrator"
++  www-data: "Unprivileged web service account"
++  root: "System administration account; not the participant identity"
+ 
+ # Installed packages — these are the ground truth for validator and prompt builder.
+ # The role of the machine (web server, DB, etc.) is inferred from this list.
+diff --git a/docs/PLAN_INDEX.md b/docs/PLAN_INDEX.md
+index 8e2a126..ed102cd 100644
+--- a/docs/PLAN_INDEX.md
++++ b/docs/PLAN_INDEX.md
+@@ -4,6 +4,11 @@ Version 1.0 planning baseline; status reviewed 2026-10-12. Maintainer: project o
+ 
+ ## Reading order
+ 
++The October 16 integrated Research extension is tracked by the
++[requirements audit](INTEGRATED_ACCEPTANCE_AUDIT_2026-10-16.md) and
++[current release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md). The October 11
++gate verdict above remains historical; it does not certify later changes.
++
+ 1. [Research MVP specification](RESEARCH_MVP.md): product boundary and requirements.
+ 2. [Architecture and evidence contract](RESEARCH_ARCHITECTURE.md): current implementation and required behavior.
+ 3. [Implementation backlog](IMPLEMENTATION_BACKLOG.md): source audit, dependencies and scope reduction.
+diff --git a/docs/STATUS.md b/docs/STATUS.md
+index fc3dbbd..092d803 100644
+--- a/docs/STATUS.md
++++ b/docs/STATUS.md
+@@ -1,5 +1,25 @@
+ # Mirage current status
+ 
++## Active iteration — integrated product
++
++The integrated desktop iteration is implemented but not yet release-certified.
++Native startup/shutdown, live state, persistent-run resume/fresh, core-crash
++recovery and private/redacted GUI exports have passed local checks. Current
++regressions: 264 Python passes (7 explicit skips), 12 Rust passes plus a separately
++passed opt-in export integration test. Local model smoke trials still show
++failures; deterministic mode remains the default, with no fine-tuning claim.
++The extended persistent-run soak failed after confirmed host lid-closure sleep
++outlasted attribution leases. A fresh uninterrupted hour is required for final
++acceptance; no completed extended-soak claim is made for this iteration.
++See [integrated-product progress](INTEGRATED_PRODUCT_PROGRESS.md) for implemented
++work and remaining acceptance checks. The release status below describes the
++October 11 frozen MVP; it does not certify these subsequent runtime changes.
++
++Current acceptance and exact candidate identities are maintained in the
++[October 16 release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md).
++
++## Historical October 11 release
++
+ Reviewed 2026-10-12. Implementation and release evidence are committed locally as `fde3b9838f9bd4297da32d8910a50ce705a44cbd`. Tests describe the 2026-10-11 frozen source, originally based on `a098fe02771802de03b9c64c8fbce52d82defc38` plus the archived changes—not that older commit alone. This is a documentation-only status refresh; the frozen archive and test results remain unchanged.
+ 
+ **Status: Research MVP complete for controlled local lab use; G1–G7 passed their documented bounded procedures. The [release evidence index](RELEASE_EVIDENCE_INDEX_2026-10-11.md) records the gate decisions and frozen-source identity. Mirage Home is a future design.**
+diff --git a/src/chronos/core/audit_spool.py b/src/chronos/core/audit_spool.py
+index 41caa42..e5aca68 100644
+--- a/src/chronos/core/audit_spool.py
++++ b/src/chronos/core/audit_spool.py
+@@ -43,6 +43,10 @@ class AuditSpool:
+             return [(row[0], json.loads(row[1])) for row in self.db.execute(
+                 'SELECT event_id, payload FROM outbox ORDER BY sequence LIMIT ?', (limit,))]
+ 
++    def count(self):
++        with self.lock:
++            return self.db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0]
++
+     def acknowledge(self, ids):
+         with self.lock, self.db:
+             self.db.executemany('DELETE FROM outbox WHERE event_id=?', [(i,) for i in ids])
+diff --git a/src/chronos/core/lua/atomic_create.lua b/src/chronos/core/lua/atomic_create.lua
+index 8ec56c3..477edbd 100644
+--- a/src/chronos/core/lua/atomic_create.lua
++++ b/src/chronos/core/lua/atomic_create.lua
+@@ -63,7 +63,7 @@ if ARGV[7] and ARGV[7] ~= '' then
+     redis.call('HSET', 'fs:mutation:' .. ARGV[7],
+         'operation_id', ARGV[7], 'operation', ARGV[8], 'path', ARGV[9],
+         'inode', inode_counter, 'command_id', ARGV[10], 'origin', ARGV[11],
+-        'completed_at', timestamp, 'schema_version', 1)
++        'completed_at', timestamp, 'schema_version', 1, 'session_id', ARGV[12] or '')
+     redis.call('ZADD', 'fs:mutation_journal', timestamp, ARGV[7])
+ end
+ return inode_counter
+diff --git a/src/chronos/core/lua/atomic_mkdir.lua b/src/chronos/core/lua/atomic_mkdir.lua
+index f3d431c..7d3f412 100644
+--- a/src/chronos/core/lua/atomic_mkdir.lua
++++ b/src/chronos/core/lua/atomic_mkdir.lua
+@@ -53,7 +53,7 @@ if ARGV[7] and ARGV[7] ~= '' then
+     redis.call('HSET', 'fs:mutation:' .. ARGV[7],
+         'operation_id', ARGV[7], 'operation', ARGV[8], 'path', ARGV[9],
+         'inode', inode, 'command_id', ARGV[10], 'origin', ARGV[11],
+-        'completed_at', timestamp, 'schema_version', 1)
++        'completed_at', timestamp, 'schema_version', 1, 'session_id', ARGV[12] or '')
+     redis.call('ZADD', 'fs:mutation_journal', timestamp, ARGV[7])
+ end
+ return inode
+diff --git a/src/chronos/core/lua/atomic_rmdir.lua b/src/chronos/core/lua/atomic_rmdir.lua
+index a240e41..e6a7674 100644
+--- a/src/chronos/core/lua/atomic_rmdir.lua
++++ b/src/chronos/core/lua/atomic_rmdir.lua
+@@ -43,7 +43,7 @@ if ARGV[3] and ARGV[3] ~= '' then
+     redis.call('HSET', 'fs:mutation:' .. ARGV[3],
+         'operation_id', ARGV[3], 'operation', ARGV[4], 'path', ARGV[5],
+         'inode', inode, 'command_id', ARGV[6], 'origin', ARGV[7],
+-        'completed_at', now, 'schema_version', 1)
++        'completed_at', now, 'schema_version', 1, 'session_id', ARGV[8] or '')
+     redis.call('ZADD', 'fs:mutation_journal', now, ARGV[3])
+ end
+ return inode
+diff --git a/src/chronos/core/lua/atomic_unlink.lua b/src/chronos/core/lua/atomic_unlink.lua
+index f8a3bb5..3a77024 100644
+--- a/src/chronos/core/lua/atomic_unlink.lua
++++ b/src/chronos/core/lua/atomic_unlink.lua
+@@ -43,7 +43,7 @@ if ARGV[3] and ARGV[3] ~= '' then
+     redis.call('HSET', 'fs:mutation:' .. ARGV[3],
+         'operation_id', ARGV[3], 'operation', ARGV[4], 'path', ARGV[5],
+         'inode', inode, 'command_id', ARGV[6], 'origin', ARGV[7],
+-        'completed_at', now, 'schema_version', 1)
++        'completed_at', now, 'schema_version', 1, 'session_id', ARGV[8] or '')
+     redis.call('ZADD', 'fs:mutation_journal', now, ARGV[3])
+ end
+ return inode
+diff --git a/src/chronos/core/main.py b/src/chronos/core/main.py
+index f76d926..9ce4a95 100644
+--- a/src/chronos/core/main.py
++++ b/src/chronos/core/main.py
+@@ -13,6 +13,8 @@ def signal_handler(sig, frame):
+     sys.exit(0)
+ 
+ def main():
++    from chronos.core.runtime_identity import fingerprint_runtime
++    os.environ.update(fingerprint_runtime())
+     if len(sys.argv) < 2:
+         mount_point = "/mnt/honeypot"
+     else:
+@@ -40,6 +42,7 @@ def main():
+     start_metrics_server()
+ 
+     # 4. Start Watcher Pipeline (audit streamer + evidence collector)
++    streamer = None
+     try:
+         from chronos.watcher.log_streamer import AuditLogStreamer
+         from chronos.watcher.evidence_collector import EvidenceCollector
+@@ -56,6 +59,9 @@ def main():
+     except Exception as e:
+         print(f"[!] Watcher pipeline failed to start: {e}")
+ 
++    from chronos.core.operational_health import start_health_publisher
++    start_health_publisher(hv.redis, db_layer, streamer)
++
+     # 5. Start SSH Gateway (daemon thread — must start before FUSE blocks)
+     try:
+         from chronos.gateway.ssh_server import SSHHoneypot
+diff --git a/src/chronos/core/persistence.py b/src/chronos/core/persistence.py
+index ddf5391..c2b5515 100644
+--- a/src/chronos/core/persistence.py
++++ b/src/chronos/core/persistence.py
+@@ -19,6 +19,8 @@ class PersistenceLayer:
+         self.spool = AuditSpool(os.environ.get('CHRONOS_AUDIT_SPOOL', '/var/lib/chronos/audit.sqlite3'))
+         self.worker_thread = None
+         self.running = False
++        self.audit_last_activity = 0.0
++        self.audit_health_error = "starting"
+ 
+     def connect(self):
+         try:
+@@ -100,6 +102,7 @@ class PersistenceLayer:
+     def _audit_worker(self):
+         """Replay durable outbox; UUIDs fence uncertain commit retries."""
+         while self.running:
++            self.audit_last_activity = time.time()
+             batch = self.spool.pending()
+             if not batch:
+                 time.sleep(0.1)
+@@ -120,7 +123,9 @@ class PersistenceLayer:
+                     """, [(eid, *payload[:5], Json(payload[5])) for eid, payload in batch])
+                 self.conn.commit()
+                 self.spool.acknowledge([eid for eid, _ in batch])
++                self.audit_health_error = ""
+             except Exception:
++                self.audit_health_error = "delivery_failed"
+                 logging.exception("Audit delivery failed; durable events retained")
+                 if self.conn:
+                     self.conn.close()
+diff --git a/src/chronos/core/session_cleanup.py b/src/chronos/core/session_cleanup.py
+index 85be184..286a17a 100644
+--- a/src/chronos/core/session_cleanup.py
++++ b/src/chronos/core/session_cleanup.py
+@@ -78,6 +78,15 @@ def orphan_sessions(client):
+                 candidates.add(sid)
+         except ValueError:
+             continue
++    for pattern in ('session:*:run_id', 'session:*:context'):
++        for key in client.scan_iter(match=pattern, count=100):
++            key = key.decode() if isinstance(key, bytes) else key
++            sid = key.split(':')[1]
++            try:
++                if str(uuid.UUID(sid)) == sid:
++                    candidates.add(sid)
++            except ValueError:
++                continue
+     return candidates - active
+ 
+ 
+@@ -85,6 +94,8 @@ def delete_namespace(client, session_id):
+     # Session UUIDs are never reused. No new worker may adopt an expired session.
+     if str(uuid.UUID(session_id)) != session_id:
+         raise ValueError('Invalid session UUID')
++    from chronos.core.research_runs import pause_session
++    pause_session(client, session_id)
+     for key in client.scan_iter(match=f'session:{session_id}:*', count=100):
+         client.unlink(key)
+     client.delete(f'chronos:machine_state:{session_id}')
+diff --git a/src/chronos/core/state.py b/src/chronos/core/state.py
+index ef51ff3..695479e 100644
+--- a/src/chronos/core/state.py
++++ b/src/chronos/core/state.py
+@@ -210,4 +210,5 @@ class StateHypervisor:
+         return [
+             journal["operation_id"], journal["operation"], journal["path"],
+             journal.get("command_id") or "", journal.get("origin") or "unattributed",
++            journal.get("session_id") or "",
+         ]
+diff --git a/src/chronos/dashboard/Cargo.lock b/src/chronos/dashboard/Cargo.lock
+index dd6476c..87e2456 100644
+--- a/src/chronos/dashboard/Cargo.lock
++++ b/src/chronos/dashboard/Cargo.lock
+@@ -879,6 +879,7 @@ dependencies = [
+  "redis",
+  "serde",
+  "serde_json",
++ "sha2",
+  "tokio",
+  "tokio-postgres",
+ ]
+diff --git a/src/chronos/dashboard/Cargo.toml b/src/chronos/dashboard/Cargo.toml
+index e0dfd25..d489cff 100644
+--- a/src/chronos/dashboard/Cargo.toml
++++ b/src/chronos/dashboard/Cargo.toml
+@@ -16,3 +16,4 @@ env_logger = "0.11.3"
+ chrono = "0.4.38"
+ serde = { version = "1.0.200", features = ["derive"] }
+ serde_json = "1.0.116"
++sha2 = "0.11.0"
+diff --git a/src/chronos/dashboard/src/app.rs b/src/chronos/dashboard/src/app.rs
+index 399c8d7..48e361b 100644
+--- a/src/chronos/dashboard/src/app.rs
++++ b/src/chronos/dashboard/src/app.rs
+@@ -22,6 +22,7 @@ enum Tab {
+ // ── Dashboard State ─────────────────────────────────────────────────────────
+ 
+ pub struct ChronosDashboard {
++    shutdown: Option<Box<dyn FnOnce() + Send>>,
+     rx: Receiver<BackendMessage>,
+     tx_req: Sender<BackendRequest>,
+ 
+@@ -29,9 +30,21 @@ pub struct ChronosDashboard {
+ 
+     // Health
+     redis_connected: bool,
++    stack_status: String,
++    runs: Vec<std::collections::HashMap<String, String>>,
++    armed_run: Option<String>,
++    run_action_status: String,
++    runs_received: Option<std::time::Instant>,
++    resume_run_id: String,
++    operational_health: std::collections::HashMap<String, String>,
++    generation_jobs: Vec<std::collections::HashMap<String, String>>,
++    operational_received: Option<std::time::Instant>,
+     postgres_connected: bool,
+     total_files: i32,
+     open_session_count: i32,
++    live_contexts: Vec<std::collections::HashMap<String, String>>,
++    live_context_received: Option<std::time::Instant>,
++    live_context_error: Option<String>,
+ 
+     // View 1: Live Ops
+     audit_logs: Vec<AuditEvent>,
+@@ -84,13 +97,26 @@ impl ChronosDashboard {
+             .is_ok();
+ 
+         Self {
++            shutdown: None,
+             rx,
+             tx_req,
+             active_tab: Tab::LiveOps,
+             redis_connected: false,
++            stack_status: "Preparing services…".into(),
++            runs: Vec::new(),
++            armed_run: None,
++            run_action_status: String::new(),
++            runs_received: None,
++            resume_run_id: String::new(),
++            operational_health: std::collections::HashMap::new(),
++            generation_jobs: Vec::new(),
++            operational_received: None,
+             postgres_connected: false,
+             total_files: 0,
+             open_session_count: 0,
++            live_contexts: Vec::new(),
++            live_context_received: None,
++            live_context_error: None,
+             audit_logs: Vec::new(),
+             stream_paused: false,
+             paused_logs: Vec::new(),
+@@ -114,12 +140,49 @@ impl ChronosDashboard {
+         }
+     }
+ 
++    pub fn with_shutdown(mut self, shutdown: impl FnOnce() + Send + 'static) -> Self {
++        self.shutdown = Some(Box::new(shutdown));
++        self
++    }
++
+     fn update_state(&mut self) {
+         while let Ok(msg) = self.rx.try_recv() {
+             match msg {
++                BackendMessage::OperationalSnapshot { health, jobs } => {
++                    self.operational_health = health;
++                    self.generation_jobs = jobs;
++                    self.operational_received = Some(std::time::Instant::now());
++                }
++                BackendMessage::OperationalUnavailable => self.operational_received = None,
++                BackendMessage::ProvenanceUnavailable => self.provenance_snapshot = None,
++                BackendMessage::RunSnapshot { runs, armed } => {
++                    self.runs = runs;
++                    self.armed_run = armed;
++                    self.runs_received = Some(std::time::Instant::now());
++                }
++                BackendMessage::RunSnapshotError => self.runs_received = None,
++                BackendMessage::RunActionResult(result) => {
++                    self.run_action_status = match result {
++                        Ok(message) => message,
++                        Err(error) => error,
++                    };
++                }
++                BackendMessage::StackStatus(status) => self.stack_status = status,
++                BackendMessage::LiveContexts(result) => match result {
++                    Ok(rows) => {
++                        self.live_contexts = rows;
++                        self.live_context_received = Some(std::time::Instant::now());
++                        self.live_context_error = None;
++                    }
++                    Err(error) => {
++                        self.live_context_error = Some(error);
++                        self.live_context_received = None;
++                    }
++                },
+                 BackendMessage::RedisConnected(s) => {
+                     self.redis_connected = s;
+                     if !s {
++                        self.live_context_received = None;
+                         self.total_files = 0;
+                         self.provenance_snapshot = None;
+                         self.selected_provenance_entry = None;
+@@ -266,6 +329,137 @@ impl ChronosDashboard {
+     // ── View 1: Live Ops ────────────────────────────────────────────────
+ 
+     fn render_live_ops(&mut self, ui: &mut egui::Ui) {
++        ui.label(&self.stack_status);
++        let observed = self.redis_connected
++            && self
++                .operational_received
++                .is_some_and(|t| t.elapsed().as_secs() < 8)
++            && !self.operational_health.is_empty();
++        if observed {
++            let value = |key: &str| {
++                self.operational_health
++                    .get(key)
++                    .map(String::as_str)
++                    .unwrap_or("unknown")
++            };
++            let color = if value("status") == "healthy" {
++                egui::Color32::GREEN
++            } else {
++                egui::Color32::YELLOW
++            };
++            ui.colored_label(
++                color,
++                format!(
++                    "Collection: {} | Pending audit events: {} | Watcher event: {}",
++                    value("status"),
++                    value("outbox_pending"),
++                    value("watcher_last_event_id")
++                ),
++            );
++            if value("status") != "healthy" {
++                ui.label(format!(
++                    "Audit: {} | Watcher: {}",
++                    value("audit_error"),
++                    value("watcher_error")
++                ));
++            }
++        } else {
++            ui.colored_label(
++                egui::Color32::YELLOW,
++                "Collection status unavailable or stale",
++            );
++        }
++        egui::CollapsingHeader::new("Recent artifact jobs").show(ui, |ui| {
++            if !observed {
++                ui.label("Generation observations may be stale.");
++            }
++            if self.generation_jobs.is_empty() {
++                ui.label("No recent artifact jobs.");
++            }
++            for row in &self.generation_jobs {
++                let value = |key: &str| row.get(key).map(String::as_str).unwrap_or("unknown");
++                ui.label(format!(
++                    "{} | {} | {} | {}",
++                    value("session_id"),
++                    value("path"),
++                    value("mode"),
++                    value("phase")
++                ));
++            }
++        });
++        ui.heading("Fake-system session state");
++        let fresh = self.redis_connected
++            && self
++                .live_context_received
++                .is_some_and(|t| t.elapsed().as_secs() < 8);
++        if !fresh {
++            ui.colored_label(
++                egui::Color32::YELLOW,
++                self.live_context_error
++                    .as_deref()
++                    .unwrap_or("State unavailable or stale — reconnecting"),
++            );
++        }
++        ui.label("Operational snapshots, not proof of a live socket. Updated after commands; separate from audit-stream pause.");
++        egui::ScrollArea::vertical()
++            .id_salt("live_session_contexts")
++            .max_height(180.0)
++            .show(ui, |ui| {
++                if fresh && self.live_contexts.is_empty() {
++                    ui.label("No recorded session contexts.");
++                }
++                for row in &self.live_contexts {
++                    let value = |key: &str| row.get(key).map(String::as_str).unwrap_or("unknown");
++                    ui.monospace(format!(
++                        "{} | {} | {}",
++                        value("session_id"),
++                        value("effective_username"),
++                        value("cwd")
++                    ));
++                    ui.small(format!(
++                        "Last command: {} | Snapshot epoch: {}{}",
++                        value("last_command_id"),
++                        value("updated_at"),
++                        if fresh { "" } else { " | STALE" }
++                    ));
++                }
++            });
++        ui.separator();
++        egui::CollapsingHeader::new("Persistent runs — resume or start fresh").show(ui, |ui| {
++            let fresh = self.redis_connected && self.runs_received.is_some_and(|t| t.elapsed().as_secs() < 8);
++            if !fresh { ui.colored_label(egui::Color32::YELLOW, "Run list unavailable or stale"); }
++            ui.label("Latest 200 runs. Closing a session pauses its run after cleanup (up to 30 seconds). A resume selection applies once to the next authenticated SSH shell.");
++            ui.label(format!("Next shell: {}", self.armed_run.as_deref().unwrap_or("fresh run")));
++            if ui.add_enabled(fresh, egui::Button::new("Start fresh on next connection")).clicked() {
++                if self.tx_req.try_send(BackendRequest::ArmRun(None)).is_err() {
++                    self.run_action_status = "Backend busy; selection was not sent".into();
++                }
++            }
++            ui.label(&self.run_action_status);
++            ui.horizontal(|ui| {
++                ui.label("Run UUID (including older runs):");
++                ui.text_edit_singleline(&mut self.resume_run_id);
++                if ui.add_enabled(fresh, egui::Button::new("Select resume")).clicked() {
++                    if self.tx_req.try_send(BackendRequest::ArmRun(Some(self.resume_run_id.trim().into()))).is_err() {
++                        self.run_action_status = "Backend busy; selection was not sent".into();
++                    }
++                }
++            });
++            egui::ScrollArea::vertical().id_salt("persistent_runs").max_height(140.0).show(ui, |ui| {
++                for row in &self.runs {
++                    let id = row.get("run_id").map(String::as_str).unwrap_or("unknown");
++                    let status = row.get("status").map(String::as_str).unwrap_or("unknown");
++                    ui.horizontal(|ui| {
++                        ui.monospace(format!("{id} | {status} | {}", row.get("cwd").map(String::as_str).unwrap_or("unknown")));
++                        if ui.add_enabled(fresh && status == "paused", egui::Button::new("Resume next shell")).clicked() {
++                            if self.tx_req.try_send(BackendRequest::ArmRun(Some(id.into()))).is_err() {
++                                self.run_action_status = "Backend busy; selection was not sent".into();
++                            }
++                        }
++                    });
++                }
++            });
++        });
+         ui.horizontal(|ui| {
+             ui.heading("Live Audit Stream");
+             ui.separator();
+@@ -1103,7 +1297,7 @@ impl ChronosDashboard {
+                     egui::Color32::from_rgb(46, 204, 113),
+                 ),
+                 (
+-                    "Fallbacks",
++                    "Templates + fallbacks",
+                     fallback_total.to_string(),
+                     egui::Color32::from_rgb(241, 196, 15),
+                 ),
+@@ -1414,6 +1608,15 @@ impl ChronosDashboard {
+ // ── Main render loop ────────────────────────────────────────────────────────
+ 
+ impl eframe::App for ChronosDashboard {
++    fn on_exit(&mut self) {
++        // Disconnect backend senders before waiting for their worker; bounded
++        // channels must not block shutdown while the UI has stopped draining.
++        self.rx = flume::unbounded().1;
++        if let Some(shutdown) = self.shutdown.take() {
++            shutdown();
++        }
++    }
++
+     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+         self.update_state();
+         self.render_top_bar(ui);
+diff --git a/src/chronos/dashboard/src/backend.rs b/src/chronos/dashboard/src/backend.rs
+index ec3741c..d95596f 100644
+--- a/src/chronos/dashboard/src/backend.rs
++++ b/src/chronos/dashboard/src/backend.rs
+@@ -153,6 +153,20 @@ impl ExportMode {
+ 
+ #[derive(Debug, Clone)]
+ pub enum BackendMessage {
++    RunSnapshot {
++        runs: Vec<HashMap<String, String>>,
++        armed: Option<String>,
++    },
++    RunActionResult(Result<String, String>),
++    RunSnapshotError,
++    OperationalSnapshot {
++        health: HashMap<String, String>,
++        jobs: Vec<HashMap<String, String>>,
++    },
++    OperationalUnavailable,
++    ProvenanceUnavailable,
++    StackStatus(String),
++    LiveContexts(Result<Vec<HashMap<String, String>>, String>),
+     ExportResult(Result<String, String>),
+     RedisConnected(bool),
+     PostgresConnected(bool),
+@@ -174,6 +188,7 @@ pub enum BackendMessage {
+ 
+ #[derive(Debug, Clone)]
+ pub enum BackendRequest {
++    ArmRun(Option<String>),
+     ExportSession {
+         session_id: String,
+         destination: String,
+@@ -374,11 +389,24 @@ pub async fn start_backend(
+             };
+ 
+             match req {
++                BackendRequest::ArmRun(run_id) => {
++                    let result = tokio::time::timeout(Duration::from_secs(5), arm_run(run_id))
++                        .await
++                        .unwrap_or_else(|_| Err("Run selection timed out".into()));
++                    let _ = tx_detail.send(BackendMessage::RunActionResult(result));
++                }
+                 BackendRequest::ExportSession {
+                     session_id,
+                     destination,
+                     mode,
+                 } => {
++                    if std::env::var("CHRONOS_MANAGE_STACK").as_deref() != Ok("0") {
++                        let result =
++                            crate::managed_export::export(&session_id, &destination, mode.as_arg())
++                                .await;
++                        let _ = tx_detail.send(BackendMessage::ExportResult(result));
++                        continue;
++                    }
+                     // Operator-side helper only; never executed by a honeypot worker.
+                     // Argument arrays avoid shell interpretation of paths or identifiers.
+                     let python = std::env::var("APATE_PYTHON").unwrap_or_else(|_| "python3".into());
+@@ -578,15 +606,97 @@ pub async fn start_backend(
+                                 }
+                             }
+ 
++                            let contexts = tokio::time::timeout(
++                                Duration::from_secs(3),
++                                collect_live_contexts(&mut con),
++                            )
++                            .await;
++                            let contexts = match contexts {
++                                Ok(Ok(rows)) => Ok(rows),
++                                Ok(Err(_)) => Err("Session context query failed".into()),
++                                Err(_) => Err("Session context query timed out".into()),
++                            };
++                            if tx_rd
++                                .send_async(BackendMessage::LiveContexts(contexts))
++                                .await
++                                .is_err()
++                            {
++                                return;
++                            }
+                             provenance_tick = provenance_tick.wrapping_add(1);
++                            let operational = tokio::time::timeout(Duration::from_secs(3), async {
++                                let health: HashMap<String, String> =
++                                    con.hgetall("chronos:operational_health").await?;
++                                let mut jobs =
++                                    collect_hashes(&mut con, "session:*:generation:*", 2000)
++                                        .await?;
++                                jobs.sort_by(|a, b| b.get("updated_at").cmp(&a.get("updated_at")));
++                                jobs.truncate(50);
++                                Ok::<_, redis::RedisError>((health, jobs))
++                            })
++                            .await;
++                            match operational {
++                                Ok(Ok((health, jobs))) => {
++                                    let _ = tx_rd
++                                        .send_async(BackendMessage::OperationalSnapshot {
++                                            health,
++                                            jobs,
++                                        })
++                                        .await;
++                                }
++                                _ => {
++                                    let _ = tx_rd
++                                        .send_async(BackendMessage::OperationalUnavailable)
++                                        .await;
++                                }
++                            }
++                            let snapshot = tokio::time::timeout(Duration::from_secs(3), async {
++                                let ids: Vec<String> =
++                                    con.zrevrange("chronos:runs:index", 0, 199).await?;
++                                let mut runs = Vec::new();
++                                for id in ids {
++                                    let fields =
++                                        ["run_id", "status", "cwd", "device_id", "updated_at"];
++                                    let values: Vec<Option<String>> = redis::cmd("HMGET")
++                                        .arg(format!("chronos:run:{id}"))
++                                        .arg(&fields)
++                                        .query_async(&mut con)
++                                        .await?;
++                                    let row: HashMap<String, String> = fields
++                                        .into_iter()
++                                        .zip(values)
++                                        .filter_map(|(key, value)| {
++                                            value.map(|value| (key.into(), value))
++                                        })
++                                        .collect();
++                                    runs.push(row);
++                                }
++                                let armed: Option<String> = con.get("chronos:runs:next").await?;
++                                Ok::<_, redis::RedisError>((runs, armed))
++                            })
++                            .await;
++                            if let Ok(Ok((runs, armed))) = snapshot {
++                                let _ = tx_rd
++                                    .send_async(BackendMessage::RunSnapshot { runs, armed })
++                                    .await;
++                            } else {
++                                let _ = tx_rd.send_async(BackendMessage::RunSnapshotError).await;
++                            }
+                             if provenance_tick % 5 == 0 {
+-                                match collect_provenance_snapshot(&mut con).await {
+-                                    Ok(snapshot) => {
++                                match tokio::time::timeout(
++                                    Duration::from_secs(3),
++                                    collect_provenance_snapshot(&mut con),
++                                )
++                                .await
++                                {
++                                    Ok(Ok(snapshot)) => {
+                                         let _ = tx_rd
+                                             .send(BackendMessage::ProvenanceSnapshot(snapshot));
+                                     }
+-                                    Err(e) => {
+-                                        log::error!("Provenance snapshot error: {}", e);
++                                    _ => {
++                                        let _ = tx_rd
++                                            .send_async(BackendMessage::ProvenanceUnavailable)
++                                            .await;
+                                     }
+                                 }
+                             }
+@@ -603,10 +713,103 @@ pub async fn start_backend(
+     });
+ }
+ 
++async fn arm_run(run_id: Option<String>) -> Result<String, String> {
++    let url = std::env::var("REDIS_URL").map_err(|_| "Redis is not configured")?;
++    let mut connection = redis::Client::open(url)
++        .map_err(|_| "Invalid Redis configuration")?
++        .get_multiplexed_tokio_connection()
++        .await
++        .map_err(|_| "Redis unavailable")?;
++    match run_id {
++        None => {
++            let _: i32 = connection
++                .del("chronos:runs:next")
++                .await
++                .map_err(|_| "Cannot select fresh run")?;
++            Ok("Next connection starts fresh; retained runs are preserved".into())
++        }
++        Some(id) => {
++            if id.len() != 36
++                || !id.chars().enumerate().all(|(i, c)| {
++                    if [8, 13, 18, 23].contains(&i) {
++                        c == '-'
++                    } else {
++                        c.is_ascii_digit() || ('a'..='f').contains(&c)
++                    }
++                })
++            {
++                return Err("Select a valid run UUID".into());
++            }
++            let script = redis::Script::new("if redis.call('HGET', KEYS[1], 'status') ~= 'paused' then return redis.error_reply('Run must be paused') end; redis.call('SET', KEYS[2], ARGV[1], 'EX', 60); return 1");
++            let _: i32 = script
++                .key(format!("chronos:run:{id}"))
++                .key("chronos:runs:next")
++                .arg(&id)
++                .invoke_async(&mut connection)
++                .await
++                .map_err(|_| "Run must be paused and Redis available")?;
++            Ok(format!(
++                "Run {id} selected for the next shell; selection expires in 60 seconds"
++            ))
++        }
++    }
++}
++
++async fn collect_live_contexts(
++    con: &mut redis::aio::MultiplexedConnection,
++) -> redis::RedisResult<Vec<HashMap<String, String>>> {
++    collect_hashes(con, "session:*:context", 1000).await
++}
++
++async fn scan_keys(
++    con: &mut redis::aio::MultiplexedConnection,
++    pattern: &str,
++    capacity: usize,
++) -> redis::RedisResult<std::collections::BTreeSet<String>> {
++    let mut cursor = 0u64;
++    let mut keys = std::collections::BTreeSet::new();
++    loop {
++        let (next, batch): (u64, Vec<String>) = redis::cmd("SCAN")
++            .arg(cursor)
++            .arg("MATCH")
++            .arg(pattern)
++            .arg("COUNT")
++            .arg(100)
++            .query_async(con)
++            .await?;
++        keys.extend(batch);
++        if keys.len() > capacity {
++            return Err((redis::ErrorKind::ResponseError, "Context capacity exceeded").into());
++        }
++        cursor = next;
++        if cursor == 0 {
++            break;
++        }
++    }
++    Ok(keys)
++}
++
++async fn collect_hashes(
++    con: &mut redis::aio::MultiplexedConnection,
++    pattern: &str,
++    capacity: usize,
++) -> redis::RedisResult<Vec<HashMap<String, String>>> {
++    let keys = scan_keys(con, pattern, capacity).await?;
++    let mut rows = Vec::new();
++    for key in keys {
++        let row: HashMap<String, String> = con.hgetall(&key).await?;
++        if !row.is_empty() {
++            rows.push(row);
++        }
++    }
++    Ok(rows)
++}
++
+ async fn collect_provenance_snapshot(
+     con: &mut redis::aio::MultiplexedConnection,
+ ) -> redis::RedisResult<ProvenanceSummary> {
+-    let keys: Vec<String> = con.keys("session:*:fs:blob_meta:*").await?;
++    let mut keys = scan_keys(con, "session:*:fs:blob_meta:*", 10000).await?;
++    keys.extend(scan_keys(con, "run:*:fs:blob_meta:*", 10000).await?);
+ 
+     let mut by_file_class: BTreeMap<String, i32> = BTreeMap::new();
+     let mut entries: Vec<(f64, ProvenanceEntry)> = Vec::new();
+@@ -617,7 +820,7 @@ async fn collect_provenance_snapshot(
+     let mut template_blobs = 0i32;
+ 
+     for key in keys {
+-        let meta: HashMap<String, String> = con.hgetall(&key).await.unwrap_or_default();
++        let meta: HashMap<String, String> = con.hgetall(&key).await?;
+         if meta.is_empty() {
+             continue;
+         }
+diff --git a/src/chronos/dashboard/src/main.rs b/src/chronos/dashboard/src/main.rs
+index 5938073..90ea085 100644
+--- a/src/chronos/dashboard/src/main.rs
++++ b/src/chronos/dashboard/src/main.rs
+@@ -1,11 +1,15 @@
+ mod app;
+ mod backend;
++mod lifecycle;
++mod local_config;
++mod managed_export;
+ 
+ use app::ChronosDashboard;
+ use eframe::egui;
+ 
+ fn main() -> eframe::Result<()> {
+     env_logger::init();
++    let configuration = local_config::prepare();
+ 
+     // Backend → UI message channel
+     let (tx, rx) = flume::bounded(32);
+@@ -13,14 +17,35 @@ fn main() -> eframe::Result<()> {
+     // UI → Backend request channel
+     let (tx_req, rx_req) = flume::bounded(32);
+ 
+-    // Spawn the tokio runtime in a background thread so it doesn't block the UI thread
+-    std::thread::spawn(move || {
++    let (shutdown_tx, shutdown_rx) = std::sync::mpsc::channel::<()>();
++    let cancelled = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
++    let worker_cancelled = cancelled.clone();
++    // Lifecycle runs outside the UI and only owns the stack it created.
++    let worker = std::thread::spawn(move || {
++        if let Err(error) = configuration {
++            let _ = tx.send(backend::BackendMessage::StackStatus(error));
++            return;
++        }
++        let managed = match lifecycle::ManagedStack::start(&tx, &worker_cancelled) {
++            Ok(stack) => stack,
++            Err(error) => {
++                let _ = tx.send(backend::BackendMessage::StackStatus(error));
++                return;
++            }
++        };
+         let rt = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+         rt.block_on(async {
+             backend::start_backend(tx, rx_req).await;
+-            std::future::pending::<()>().await;
+         });
++        let _ = shutdown_rx.recv();
++        if let Some(stack) = managed {
++            stack.stop();
++        }
+     });
++    let worker = std::sync::Arc::new(std::sync::Mutex::new(Some(worker)));
++    let exit_worker = worker.clone();
++    let exit_cancelled = cancelled.clone();
++    let exit_tx = shutdown_tx.clone();
+ 
+     let options = eframe::NativeOptions {
+         viewport: egui::ViewportBuilder::default()
+@@ -29,9 +54,25 @@ fn main() -> eframe::Result<()> {
+         ..Default::default()
+     };
+ 
+-    eframe::run_native(
++    let result = eframe::run_native(
+         "Chronos Overseer",
+         options,
+-        Box::new(|cc| Ok(Box::new(ChronosDashboard::new(cc, rx, tx_req)))),
+-    )
++        Box::new(move |cc| {
++            Ok(Box::new(
++                ChronosDashboard::new(cc, rx, tx_req).with_shutdown(move || {
++                    exit_cancelled.store(true, std::sync::atomic::Ordering::Relaxed);
++                    let _ = exit_tx.send(());
++                    if let Some(worker) = exit_worker.lock().unwrap().take() {
++                        let _ = worker.join();
++                    }
++                }),
++            ))
++        }),
++    );
++    cancelled.store(true, std::sync::atomic::Ordering::Relaxed);
++    let _ = shutdown_tx.send(());
++    if let Some(worker) = worker.lock().unwrap().take() {
++        let _ = worker.join();
++    }
++    result
+ }
+diff --git a/src/chronos/gateway/ssh_server.py b/src/chronos/gateway/ssh_server.py
+index b98f719..95a38e9 100644
+--- a/src/chronos/gateway/ssh_server.py
++++ b/src/chronos/gateway/ssh_server.py
+@@ -134,11 +134,27 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
+         import traceback
+ 
+         env = SessionEnvironment(username=primary_user)
++        # Device identity exists for every admitted session, including sessions
++        # that never read an AI-backed file. Creation is atomic and persistent.
++        env.machine_state = env.profile.get_or_create_machine_state(r, session_id)
++        run_id = r.get(f"session:{session_id}:run_id")
++        restored_cwd = None
++        if run_id:
++            import json as _json
++            run = r.hgetall(f"chronos:run:{run_id}")
++            env.machine_state = _json.loads(run["persona"])
++            r.hset(f"chronos:machine_state:{session_id}", mapping=env.machine_state)
++            restored_cwd = run.get("cwd")
++        from chronos.core.session_context import publish_context
+         parser = ShellParser()
+         dispatcher = ASTDispatcher(env)
+         # Load trusted Python dependencies before restricting the worker root.
+         contain_worker('/mnt/honeypot')
+         env.honeypot_root = '/'
++        if restored_cwd and os.path.isdir(env.resolve_path(restored_cwd)):
++            env.cwd = restored_cwd
++            env.env["PWD"] = restored_cwd
++        publish_context(r, session_id, env)
+ 
+         # Send initial cwd
+         cwd = env.env["PWD"]
+@@ -235,6 +251,7 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
+                         except Exception:
+                             pass
+ 
++                    publish_context(r, session_id, env, command_id)
+                     cwd = env.env["PWD"]
+                     home = env.env["HOME"]
+                     prompt_cwd = "~" if cwd == home else cwd
+@@ -452,6 +469,18 @@ class SSHHoneypot:
+                 lifecycle_client, session_id, origin=session_origin,
+                 identity=server.identity_metadata(),
+             )
++            if os.environ.get("CHRONOS_PERSISTENT_RUNS") == "1":
++                from chronos.core.research_runs import attach_session
++                persona = _profile.get_or_create_machine_state(lifecycle_client, session_id)
++                run = attach_session(lifecycle_client, session_id, persona)
++                self.audit_log("research_run_attached", {
++                    "session_id": session_id, "run_id": run["run_id"],
++                    "device_id": run["device_id"], "origin": session_origin,
++                    "source_revision": os.environ.get("APATE_SOURCE_REVISION"),
++                    "configuration_digest": os.environ.get("APATE_CONFIGURATION_DIGEST"),
++                    "profile_digest": os.environ.get("APATE_PROFILE_DIGEST"),
++                    **server.identity_metadata(),
++                })
+ 
+             ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
+             kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"
+diff --git a/src/chronos/intelligence/inference.py b/src/chronos/intelligence/inference.py
+index cd583e5..10e154a 100644
+--- a/src/chronos/intelligence/inference.py
++++ b/src/chronos/intelligence/inference.py
+@@ -40,7 +40,9 @@ class ModelHealth:
+     average_latency: float = 0.0
+ 
+ class ModelUnreachableError(Exception):
+-    pass
++    def __init__(self, message, *, reason='transport'):
++        super().__init__(message)
++        self.reason = reason
+ 
+ class CircuitBreaker:
+     def __init__(self, failure_threshold: int = 3, base_backoff: float = 10.0, max_backoff: float = 300.0):
+@@ -131,12 +133,16 @@ class InferenceRuntime:
+             if process.returncode or len(output) > 262144:
+                 raise ModelUnreachableError('Inference transport failed or exceeded output limit')
+             result = json.loads(output)
++            if isinstance(result, dict) and result.get('error') in ('truncated', 'incomplete', 'transport'):
++                raise ModelUnreachableError('Model generation failed', reason=result['error'])
+             if not isinstance(result, str):
+                 raise ModelUnreachableError('Invalid inference transport result')
+             self.circuit_breaker.record_success(model, time.monotonic() - started)
+             return result
+         except (subprocess.TimeoutExpired, OSError, ValueError, ModelUnreachableError) as exc:
+             self.circuit_breaker.record_failure(model)
++            if isinstance(exc, ModelUnreachableError):
++                raise
+             raise ModelUnreachableError(f'Bounded inference failed: {type(exc).__name__}') from exc
+         finally:
+             if process is not None:
+@@ -214,7 +220,7 @@ class InferenceRuntime:
+                                 logger.info(f"[{model}] Completed. tokens={event.get('eval_count', 0)}, eval_duration={event.get('eval_duration', 0)/1e9:.3f}s, prompt_eval_duration={event.get('prompt_eval_duration', 0)/1e9:.3f}s")
+                             if event.get('done_reason') == 'length':
+                                 logger.error(f"[{model}] Model output truncated at token limit")
+-                                raise ValueError('Model output truncated at token limit')
++                                raise ModelUnreachableError('Model output truncated at token limit', reason='truncated')
+                 except (Exception, AttributeError) as e:
+                     if time.monotonic() >= deadline:
+                         logger.error(f"[{model}] Absolute deadline exceeded during read. time={time.monotonic() - request_start:.3f}s")
+@@ -223,7 +229,7 @@ class InferenceRuntime:
+                     
+                 if pending.strip() or not completed:
+                     logger.error(f"[{model}] Incomplete model stream")
+-                    raise ValueError('Incomplete model stream')
++                    raise ModelUnreachableError('Incomplete model stream', reason='incomplete')
+                 content = ''.join(parts)
+             finally:
+                 timer.cancel()
+@@ -232,9 +238,11 @@ class InferenceRuntime:
+             self.circuit_breaker.record_success(model, latency=time.time() - start_time)
+             return content
+             
+-        except (requests.exceptions.RequestException, ValueError) as e:
++        except (requests.exceptions.RequestException, ValueError, ModelUnreachableError) as e:
+             logger.error(f"[{model}] Generation failed: {e}")
+             self.circuit_breaker.record_failure(model)
++            if isinstance(e, ModelUnreachableError):
++                raise
+             raise ModelUnreachableError(f"Ollama unreachable ({self.host}): {e}") from e
+ 
+     def health_check(self) -> bool:
+@@ -253,5 +261,10 @@ def get_runtime() -> InferenceRuntime:
+ if __name__ == '__main__':
+     # Fixed trusted entry point, JSON data only, no shell or attacker-supplied code.
+     data = json.loads(sys.stdin.buffer.read(131073))
+-    content = InferenceRuntime(host=data['host'])._generate_inline(**data['request'])
++    try:
++        content = InferenceRuntime(host=data['host'])._generate_inline(**data['request'])
++    except ModelUnreachableError as exc:
++        # Only fixed reason codes cross the process boundary, never endpoint,
++        # prompt, response bodies or arbitrary transport exception strings.
++        content = {'error': exc.reason if exc.reason in ('truncated', 'incomplete') else 'transport'}
+     sys.stdout.write(json.dumps(content))
+diff --git a/src/chronos/intelligence/orchestrator.py b/src/chronos/intelligence/orchestrator.py
+index 3925f78..b7b03b2 100644
+--- a/src/chronos/intelligence/orchestrator.py
++++ b/src/chronos/intelligence/orchestrator.py
+@@ -8,6 +8,7 @@ import stat
+ import threading
+ import time
+ import uuid
++import sys
+ from concurrent.futures import ThreadPoolExecutor, TimeoutError
+ import redis
+ from chronos.core.content import read_blob
+@@ -127,6 +128,7 @@ class GenerationOrchestrator:
+             if time.monotonic() >= deadline:
+                 return None
+             time.sleep(0.02)
++        self._publish_job(session_id, token, path, "resolving")
+         try:
+             meta = self.redis.hgetall(key)
+             if not meta:
+@@ -213,7 +215,7 @@ class GenerationOrchestrator:
+                 model=model_identifier,
+                 generation_source=source,
+                 file_class=policy.file_class,
+-                prompt_version="1.0",
++                prompt_version="2.0-persona",
+                 generated_at=str(time.time()),
+                 validated=validated,
+             )
+@@ -221,6 +223,8 @@ class GenerationOrchestrator:
+                 inode, token, meta.get("revision", "0"), content, provenance
+             )
+         finally:
++            self._publish_job(session_id, token, path,
++                              "failed" if sys.exc_info()[0] else "finished")
+             self.redis.eval(
+                 "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0",
+                 1,
+@@ -228,6 +232,19 @@ class GenerationOrchestrator:
+                 token,
+             )
+ 
++    def _publish_job(self, session_id, token, path, phase):
++        try:
++            with self.redis.pipeline() as pipe:
++                pipe.multi()
++                key = f"session:{session_id}:generation:{token}"
++                pipe.hset(key, mapping={"session_id": session_id, "path": path,
++                                       "phase": phase, "mode": self.inference_mode,
++                                       "updated_at": str(time.time())})
++                pipe.expire(key, 120)
++                pipe.execute()
++        except Exception:
++            logger.warning("Generation job status unavailable")
++
+     def _quota(self, session_id):
+         window = int(time.time() // 60)
+         limit = self.policy_engine.quota_config().get("max_generations_per_minute", 20)
+diff --git a/src/chronos/intelligence/prompt_builder.py b/src/chronos/intelligence/prompt_builder.py
+index 4354a82..c51e7ee 100644
+--- a/src/chronos/intelligence/prompt_builder.py
++++ b/src/chronos/intelligence/prompt_builder.py
+@@ -90,6 +90,8 @@ class PromptBuilder:
+         detail = ''
+         if policy.file_class in ('log_file', 'history_file'):
+             detail = '- Produce a short excerpt of 3 to 8 entries, not a full archive. Stop generating after the excerpt.\n'
++        if policy.file_class == 'history_file':
++            detail += '- Write only stored shell commands, one per line. Do not include usernames, shell prompts, command output or terminal transcript formatting.\n'
+         if policy.file_class == 'log_file':
+             from datetime import datetime, timezone
+             now = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)
+@@ -139,7 +141,10 @@ class PromptBuilder:
+         Returns a compact, human-readable representation of only the MachineState
+         fields relevant to the file class. Reduces context waste and contradiction risk.
+         """
+-        fields = _RELEVANT_FIELDS.get(file_class, _DEFAULT_FIELDS)
++        fields = list(dict.fromkeys(
++            ["hostname", "primary_user", "device_purpose", "user_roles"]
++            + _RELEVANT_FIELDS.get(file_class, _DEFAULT_FIELDS)
++        ))
+         lines = []
+         for field in fields:
+             value = machine_state.get(field)
+diff --git a/src/chronos/intelligence/ubuntu_profile.py b/src/chronos/intelligence/ubuntu_profile.py
+index 1b78a42..22fa20e 100644
+--- a/src/chronos/intelligence/ubuntu_profile.py
++++ b/src/chronos/intelligence/ubuntu_profile.py
+@@ -4,9 +4,9 @@ ubuntu_profile.py
+ Loads the Ubuntu machine profile from config/ubuntu.yaml and provides
+ access to the canonical MachineState for a session.
+ 
+-This replaces PersonaEngine. There is exactly one machine type: Ubuntu.
+-The machine's "role" (web server, DB, etc.) is inferred from the installed
+-packages and running services — it is never declared as a separate persona.
++There is one supported machine type: Ubuntu. Explicit purpose and user roles
++are trusted profile facts. A versioned Redis device record survives session
++cleanup; isolated sessions retain immutable snapshots of that record.
+ 
+ State (ubuntu.yaml) is kept strictly separate from behavior (generation_policy.yaml).
+ """
+@@ -15,6 +15,7 @@ import os
+ import yaml
+ import json
+ import time
++import hashlib
+ from typing import Any, Dict, Optional
+ 
+ # Path resolution: config/ is at the project root, two levels above src/chronos/intelligence/
+@@ -133,6 +134,8 @@ class UbuntuProfile:
+         Values are serialized to strings for Redis HSET compatibility.
+         """
+         return {
++            "device_purpose": self._raw.get("device_purpose", "Ubuntu research decoy"),
++            "user_roles": json.dumps(self._raw.get("user_roles", {})),
+             "ubuntu_version":      self.ubuntu_version,
+             "kernel_version":      self.kernel_version,
+             "hostname":            self.hostname,
+@@ -162,6 +165,30 @@ class UbuntuProfile:
+         if existing:
+             return existing
+ 
+-        state = self.build_machine_state()
+-        redis_client.hset(key, mapping=state)
+-        return state
++        # Profile revisions are explicit device identities, not silent updates
++        # to an existing persona. This record is outside disposable fs keys.
++        revision = hashlib.sha256(json.dumps(
++            self._raw, sort_keys=True, separators=(",", ":")
++        ).encode()).hexdigest()
++        device_key = f"chronos:device:v1:{revision}"
++        proposed = self.build_machine_state()
++        proposed.update(persona_schema="1", device_id=revision,
++                        profile_revision=revision)
++        initialize = """
++        if redis.call('EXISTS', KEYS[1]) == 0 then
++            for i = 1, #ARGV, 2 do
++                redis.call('HSET', KEYS[1], ARGV[i], ARGV[i+1])
++            end
++        end
++        return redis.call('HGETALL', KEYS[1])
++        """
++        def create_once(target, values):
++            pairs = [item for pair in values.items() for item in pair]
++            result = redis_client.eval(initialize, 1, target, *pairs)
++            result = [v.decode() if isinstance(v, bytes) else v for v in result]
++            return dict(zip(result[::2], result[1::2]))
++
++        device = create_once(device_key, proposed)
++        # Atomic first-writer-wins also prevents concurrent file reads from
++        # assigning different simulation reference times to one session.
++        return create_once(key, device)
+diff --git a/src/chronos/intelligence/validator.py b/src/chronos/intelligence/validator.py
+index 20bbb92..27f4151 100644
+--- a/src/chronos/intelligence/validator.py
++++ b/src/chronos/intelligence/validator.py
+@@ -76,6 +76,12 @@ class SemanticValidator:
+             return ValidationResult(
+                 accepted=False, reason="empty_content_for_nonempty_category"
+             )
++        # Bash history stores commands, not an interactive terminal transcript.
++        # Reject prompts regardless of strictness: they can contradict the
++        # owning user's persona and reveal generated rather than native data.
++        if policy.file_class == 'history_file':
++            if re.search(r'(?m)^\s*(?:[\w.-]+@[\w.-]+:[^\n]*[#$]|[#$])\s+', content):
++                return ValidationResult(False, 'history: shell prompt is not a stored command')
+         if policy.file_class == 'log_file' and content.strip() and machine_state.get('created_at'):
+             from datetime import datetime, timezone, timedelta
+             reference = datetime.fromtimestamp(float(machine_state['created_at']), timezone.utc)
+diff --git a/src/chronos/interface/fuse.py b/src/chronos/interface/fuse.py
+index d704e9e..6d102a1 100644
+--- a/src/chronos/interface/fuse.py
++++ b/src/chronos/interface/fuse.py
+@@ -12,6 +12,7 @@ from fuse import FUSE, FuseOSError, Operations
+ 
+ from chronos.core.state import StateHypervisor
+ from chronos.core.content import mutate_content, read_blob
++from chronos.core.research_runs import namespace_prefix
+ from chronos.core.session_cleanup import (
+     acknowledge_disconnect,
+     delete_namespace,
+@@ -71,7 +72,7 @@ class ChronosFUSE(Operations):
+         session_id = str(uuid.UUID(session_id))
+         with self._session_lock:
+             if session_id not in self._sessions:
+-                hv = StateHypervisor(prefix=f"session:{session_id}:")
++                hv = StateHypervisor(prefix=namespace_prefix(self._control, session_id))
+                 hv.initialize_filesystem()
+                 self._reconcile_mutations(session_id, hv)
+                 generator = GenerationOrchestrator(hv.redis, self.profile, max_workers=1)
+@@ -102,7 +103,7 @@ class ChronosFUSE(Operations):
+                         entry[1].close()
+                         self._reconcile_mutations(session_id, entry[0])
+                     elif self.db_layer is not None:
+-                        recovered = StateHypervisor(prefix=f"session:{session_id}:")
++                        recovered = StateHypervisor(prefix=namespace_prefix(self._control, session_id))
+                         self._reconcile_mutations(session_id, recovered)
+                     if self.db_layer is not None:
+                         lifecycle = prepare_disconnect(
+@@ -190,9 +191,11 @@ class ChronosFUSE(Operations):
+             origin = origin.decode("utf-8")
+         if origin not in ("participant", "scripted_test"):
+             origin = "unattributed"
+-        return journal_mapping(
++        record = journal_mapping(
+             str(uuid.uuid4()), operation, path, command_id, origin
+         )
++        record["session_id"] = session_id
++        return record
+ 
+     def _audit_completed_mutation(self, session_id, journal, inode, metadata=None):
+         stored = self.redis.hgetall(f"fs:mutation:{journal['operation_id']}")
+@@ -220,7 +223,7 @@ class ChronosFUSE(Operations):
+                 "origin": record.get("origin", "unattributed"),
+             }
+             self._audit(
+-                session_id, record["operation"], record["path"],
++                record.get("session_id") or session_id, record["operation"], record["path"],
+                 int(float(record.get("inode", 0))), metadata,
+             )
+             acknowledge_mutation(hv.redis, record["operation_id"])
+diff --git a/src/chronos/watcher/export_report.py b/src/chronos/watcher/export_report.py
+index 26f60da..59d72b8 100644
+--- a/src/chronos/watcher/export_report.py
++++ b/src/chronos/watcher/export_report.py
+@@ -270,8 +270,8 @@ def write_bundle(destination, events, metadata, *, mode="raw"):
+     return report
+ 
+ 
+-def _metadata_from_environment(args, snapshot_at):
+-    return {
++def _metadata_from_environment(args, snapshot_at, events=()):
++    metadata = {
+         "run_id": args.run_id or os.environ.get("APATE_RUN_ID"),
+         "source_revision": os.environ.get("APATE_SOURCE_REVISION"),
+         "configuration_digest": os.environ.get("APATE_CONFIGURATION_DIGEST"),
+@@ -289,6 +289,18 @@ def _metadata_from_environment(args, snapshot_at):
+         "selection": "all committed audit rows for selected session at snapshot",
+         "pending_spool_events_included": False,
+     }
++    attached = [event["metadata"] for event in events
++                if event.get("operation") == "research_run_attached"
++                and isinstance(event.get("metadata"), dict)]
++    if len(attached) == 1:
++        # Export records the admitted session's inputs, including after restart.
++        for field in ("run_id", "source_revision", "configuration_digest", "profile_digest"):
++            if attached[0].get(field):
++                metadata[field] = attached[0][field]
++    elif len(attached) > 1:
++        for field in ("run_id", "source_revision", "configuration_digest", "profile_digest"):
++            metadata[field] = None
++    return metadata
+ 
+ 
+ def main():
+@@ -311,7 +323,7 @@ def main():
+     finally:
+         connection.close()
+     write_bundle(
+-        args.output, events, _metadata_from_environment(args, snapshot_at), mode=args.mode
++        args.output, events, _metadata_from_environment(args, snapshot_at, events), mode=args.mode
+     )
+     warning = "raw records may contain secrets" if args.mode == "raw" else (
+         "redaction is allowlist-based but cannot guarantee removal of every secret"
+diff --git a/src/chronos/watcher/log_streamer.py b/src/chronos/watcher/log_streamer.py
+index 2199343..f9071ab 100644
+--- a/src/chronos/watcher/log_streamer.py
++++ b/src/chronos/watcher/log_streamer.py
+@@ -32,6 +32,8 @@ class AuditLogStreamer:
+         self.running = False
+         self.thread = None
+         self.last_id = 0
++        self.last_success_at = 0.0
++        self.health_error = "starting"
+         
+     def subscribe(self, callback: Callable[[Dict[str, Any]], None]):
+         """Subscribe to audit log events"""
+@@ -84,6 +86,7 @@ class AuditLogStreamer:
+                 conn = self._get_connection()
+                 events = self._fetch_new_events(conn)
+                 conn.close()
++                processed = True
+                 
+                 for event in events:
+                     # Convert datetime to string for JSON serialization
+@@ -98,13 +101,20 @@ class AuditLogStreamer:
+                             pass
+                     
+                     if not self._notify_subscribers(dict(event)):
++                        processed = False
+                         break  # Retry this event on the next poll.
+                     self.last_id = event['id']
+                     
+                 if events:
+                     logger.debug(f"[Watcher] Processed {len(events)} new events")
++                if processed:
++                    self.last_success_at = time.time()
++                    self.health_error = ""
++                else:
++                    self.health_error = "subscriber_retry"
+                     
+             except Exception as e:
++                self.health_error = "poll_failed"
+                 logger.error(f"[Watcher] Poll error: {e}")
+                 
+             time.sleep(self.poll_interval)
+diff --git a/tests/integration/evaluate_prepared_ai.py b/tests/integration/evaluate_prepared_ai.py
+index fadbfd3..fd3b331 100644
+--- a/tests/integration/evaluate_prepared_ai.py
++++ b/tests/integration/evaluate_prepared_ai.py
+@@ -204,7 +204,7 @@ def run(args):
+                             generation_seconds=time.monotonic() - started,
+                             validation_seconds=0.0,
+                             accepted=False,
+-                            reason=f"transport:{type(exc).__name__}",
++                            reason=f"inference:{exc.reason}",
+                             response_bytes=0,
+                             response_sha256=None,
+                             response_file=None,
+diff --git a/tests/integration/run_load.py b/tests/integration/run_load.py
+index b66e843..4c90d22 100644
+--- a/tests/integration/run_load.py
++++ b/tests/integration/run_load.py
+@@ -46,6 +46,9 @@ def main():
+     fault_started = None
+     fault_recovered = False
+     fault = os.environ.get('APATE_LOAD_FAULT', '')
++    persistent = os.environ.get('APATE_LOAD_PERSISTENT_RUNS', '0')
++    if persistent not in ('0', '1'):
++        raise ValueError('APATE_LOAD_PERSISTENT_RUNS must be 0 or 1')
+     output_dir = Path(os.environ.get('APATE_LOAD_OUTPUT', str(root / '.pytest_cache' / prefix)))
+     output_dir.mkdir(parents=True, exist_ok=False)
+     def save(name, value):
+@@ -91,6 +94,7 @@ def main():
+                '--security-opt', 'no-new-privileges:true', '--pids-limit', '192',
+                '--memory', '2g', '--cpus', '2', '-e', 'REDIS_HOST=' + names['redis'],
+                '-e', 'APATE_SESSION_ORIGIN=scripted_test',
++               '-e', 'CHRONOS_PERSISTENT_RUNS=' + persistent,
+                '-e', 'POSTGRES_HOST=' + names['pg'], image, *diagnostic_command)
+         for _ in range(60):
+             mounted = docker('exec', names['core'], 'python3', '-c',
+@@ -109,6 +113,7 @@ def main():
+             '-e', 'APATE_LOAD_INTERVAL=' + os.environ.get('APATE_LOAD_INTERVAL', '0.2'),
+             '-e', 'APATE_LOAD_ROTATE_SECONDS=' + os.environ.get('APATE_LOAD_ROTATE_SECONDS', '3300'),
+             '-e', 'APATE_LOAD_FAULT=' + fault,
++            '-e', 'APATE_LOAD_PERSISTENT_RUNS=' + persistent,
+             '-v', str(root / 'tests') + ':/app/tests:ro', image,
+             'python3', 'tests/integration/' + ('verify_restart.py' if fault in ('redis', 'core') else 'verify_load.py')], stdout=subprocess.PIPE,
+             stderr=subprocess.STDOUT, text=True)
+diff --git a/tests/integration/verify_inference_deadline.py b/tests/integration/verify_inference_deadline.py
+index 27706fc..2c84ec6 100644
+--- a/tests/integration/verify_inference_deadline.py
++++ b/tests/integration/verify_inference_deadline.py
+@@ -51,3 +51,36 @@ def test_real_stalled_http_is_killed(stage, monkeypatch):
+         server.shutdown()
+         server.server_close()
+         thread.join(timeout=2)
++
++
++@pytest.mark.parametrize('reason,body', [
++    ('truncated', b'{"response":"synthetic partial","done":true,"done_reason":"length"}\n'),
++    ('incomplete', b'{"response":"synthetic partial","done":false}\n'),
++])
++def test_real_http_failure_classification_survives_child(reason, body, monkeypatch):
++    """Exercise the actual child protocol, not a mocked process response."""
++    class Handler(BaseHTTPRequestHandler):
++        def log_message(self, *_):
++            pass
++
++        def do_POST(self):
++            self.rfile.read(int(self.headers['Content-Length']))
++            self.send_response(200)
++            self.send_header('Content-Length', str(len(body)))
++            self.end_headers()
++            self.wfile.write(body)
++
++    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv('OLLAMA_PORT', str(server.server_port))
++    runtime = InferenceRuntime(host='127.0.0.1')
++    try:
++        with pytest.raises(ModelUnreachableError) as error:
++            runtime.generate('synthetic test', timeout=5)
++        assert error.value.reason == reason
++        assert runtime.circuit_breaker.models['llama3:8b'].failures == 1
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join(timeout=2)
+diff --git a/tests/integration/verify_load.py b/tests/integration/verify_load.py
+index 0720681..2e2bc55 100644
+--- a/tests/integration/verify_load.py
++++ b/tests/integration/verify_load.py
+@@ -10,6 +10,7 @@ import uuid
+ import paramiko
+ import psycopg2
+ import redis
++from load_state import cleanup_pending, retained_runs
+ 
+ logging.getLogger('paramiko').setLevel(logging.CRITICAL)
+ COUNT = int(os.environ.get('APATE_LOAD_CLIENTS', '32'))
+@@ -115,7 +116,7 @@ def main():
+                 audited = cursor.fetchone()[0]
+                 cursor.execute('SELECT COUNT(*) FROM session_evidence WHERE start_time >= to_timestamp(%s)', (started,))
+                 evidence = cursor.fetchone()[0]
+-            if audited == sum(counts) and evidence == session_count and not list(rd.scan_iter(match='session:*:fs:next_inode')):
++            if audited == sum(counts) and evidence == session_count and not cleanup_pending(rd):
+                 break
+             time.sleep(1)
+         assert audited == sum(counts), (audited, sum(counts))
+@@ -142,6 +143,7 @@ def main():
+             assert all(command.get('outcome') == 'emulated_success' for command in projected)
+         assert not list(rd.scan_iter(match='session_pid:*')), 'Stale PID registrations'
+         assert not list(rd.scan_iter(match='session:*:fs:next_inode')), 'Namespace cleanup incomplete'
++        retention = retained_runs(rd, session_count) if os.environ.get('APATE_LOAD_PERSISTENT_RUNS') == '1' else None
+         ordered = sorted(latencies)
+         print(json.dumps({'result': 'PASS', 'sessions': session_count, 'concurrent_clients': COUNT,
+                           'duration_seconds': DURATION, 'clients': results,
+@@ -153,7 +155,8 @@ def main():
+                           'projected_commands': len(projected),
+                           'session_evidence': evidence, 'latency_p50': ordered[len(ordered)//2],
+                           'latency_p95': ordered[int(len(ordered)*.95)],
+-                          'latency_max': max(ordered), 'run_id': run_id}), flush=True)
++                          'latency_max': max(ordered), 'run_id': run_id,
++                          'persistent_run_verification': retention}), flush=True)
+     finally:
+         conn.close()
+         rd.close()
+diff --git a/tests/integration/verify_restart.py b/tests/integration/verify_restart.py
+index 4b5365b..845fce7 100644
+--- a/tests/integration/verify_restart.py
++++ b/tests/integration/verify_restart.py
+@@ -10,6 +10,7 @@ import psycopg2
+ import redis
+ 
+ from verify_load import prompt, barrier
++from load_state import cleanup_pending, retained_runs
+ 
+ COUNT = int(os.environ.get('APATE_LOAD_CLIENTS', '32'))
+ if COUNT < 1 or COUNT > 32:
+@@ -84,10 +85,11 @@ def main():
+         raise AssertionError('Service did not recover')
+     # Wait for old namespaces to be reclaimed, not just for SSH to accept again.
+     deadline = time.monotonic() + 180
+-    while list(rd.scan_iter(match='session:*:fs:next_inode')) and time.monotonic() < deadline:
++    while cleanup_pending(rd) and time.monotonic() < deadline:
+         time.sleep(1)
+     assert not list(rd.scan_iter(match='session:*:fs:next_inode')), 'Orphan namespace leak'
+     assert not list(rd.scan_iter(match='session_pid:*')), 'Orphan PID mapping leak'
++    retention = retained_runs(rd, COUNT) if os.environ.get('APATE_LOAD_PERSISTENT_RUNS') == '1' else None
+     ssh, channel = connect()
+     try:
+         channel.sendall(b'cat /tmp/probe; cat /etc/hostname\r')
+@@ -129,7 +131,8 @@ def main():
+         print(json.dumps({'result': 'PASS', 'fault': os.environ['APATE_LOAD_FAULT'],
+                           'sessions': COUNT, 'confirmed_commands': len(confirmed),
+                           'audited_commands': len(rows),
+-                          'reconciled_disconnects': len(closes), 'run_id': run_id}), flush=True)
++                          'reconciled_disconnects': len(closes), 'run_id': run_id,
++                          'persistent_run_verification': retention}), flush=True)
+     finally:
+         conn.close()
+         rd.close()
+diff --git a/tests/validation/test_inference_deadline.py b/tests/validation/test_inference_deadline.py
+index 455b849..c564403 100644
+--- a/tests/validation/test_inference_deadline.py
++++ b/tests/validation/test_inference_deadline.py
+@@ -26,3 +26,17 @@ def test_completed_transport_records_success(monkeypatch):
+     assert runtime.generate('trusted') == 'ready'
+     process.kill.assert_not_called()
+     assert runtime.circuit_breaker.models['llama3:8b'].successes == 1
++
++
++@pytest.mark.parametrize('reason', ['truncated', 'incomplete', 'transport'])
++def test_safe_failure_reason_survives_transport(monkeypatch, reason):
++    import json
++    process = Mock(returncode=0)
++    process.communicate.return_value = (json.dumps({'error': reason}).encode(), b'')
++    process.poll.return_value = 0
++    monkeypatch.setattr(subprocess, 'Popen', Mock(return_value=process))
++    runtime = InferenceRuntime()
++    with pytest.raises(ModelUnreachableError) as error:
++        runtime.generate('synthetic')
++    assert error.value.reason == reason
++    assert runtime.circuit_breaker.models['llama3:8b'].failures == 1

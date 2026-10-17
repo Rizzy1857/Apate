@@ -1,0 +1,7 @@
+{
+  "artifact_type": "mirage_release_candidate_completion",
+  "candidate_sha256": "63f5f7d4c67b822e4b99b110f5b2b5adee090f190884c04b3b798f7ad899e9a3",
+  "schema_version": 1,
+  "source_archive_sha256": "692dfbd9e2152b213fa6de85e71bb6c1135c6346967334531e424f6a7e952434",
+  "source_manifest_sha256": "68c594a58b16544b6dd3a04c3dee6669f40b4ebf0770c7a1ef5849aa04b1ec83"
+}

@@ -204,7 +204,7 @@ def run(args):
                             generation_seconds=time.monotonic() - started,
                             validation_seconds=0.0,
                             accepted=False,
-                            reason=f"transport:{type(exc).__name__}",
+                            reason=f"inference:{exc.reason}",
                             response_bytes=0,
                             response_sha256=None,
                             response_file=None,

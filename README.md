@@ -1,5 +1,11 @@
 # Mirage (Chronos Framework)
 
+> The integrated Research implementation includes persistent persona,
+> live operations and GUI-managed services. See the [current acceptance verdict](docs/RELEASE_EVIDENCE_INDEX_2026-10-16.md)
+> and [implementation progress](docs/INTEGRATED_PRODUCT_PROGRESS.md).
+> The completed Research MVP verdict below applies to the October 11 frozen
+> archive, not to the newer working-tree changes.
+
 > Repository codename: **Apate**
 >
 > Product name: **Mirage**
@@ -32,6 +38,37 @@ Chronos combines a FUSE-backed filesystem, session-scoped Redis state, a durable
 See the [current architecture and evidence contract](docs/RESEARCH_ARCHITECTURE.md).
 
 ## Quick Start
+
+### Managed desktop application (macOS development build)
+
+With Docker Desktop running and Rust installed:
+
+```bash
+bash tests/integration/package_dashboard_macos.sh
+open .local-deploy/Mirage.app
+```
+
+The GUI starts its local core, database, Redis and loopback relay, checks readiness,
+and connects Live Ops. First launch saves private local credentials under
+`.local-deploy/`; later launches reuse them. Quit the GUI before rebuilding it.
+Normal shutdown removes managed service containers and keeps their data volumes.
+
+Connect with `ssh -p 2222 ubuntu@127.0.0.1`. Under Live Ops, **Persistent runs**
+lets the operator select a paused run for the next SSH shell, or start fresh.
+Resume retains that run's files, device facts and directory. Fresh creates an
+independent filesystem while retaining previous runs. The one-use resume
+selection expires after 60 seconds; wait until a run is paused before resuming.
+Only arm resume when you control the next connection: the selection is not bound
+to a verified person or source, and this lab's permissive authentication does not
+establish participant identity. Another concurrent connection can consume it.
+Persona identity persists across application restarts. Shell environment variables
+remain connection-local. Default generation is deterministic; no model fine-tuning
+is implied by persistent persona grounding.
+
+These integrated changes are still undergoing release validation. See the
+[desktop verification](docs/DESKTOP_VERIFICATION_2026-10-15.md) and
+[implementation progress](docs/INTEGRATED_PRODUCT_PROGRESS.md). Manual Compose
+startup below remains available; managed services use dedicated names and ports.
 
 ### Prerequisites
 

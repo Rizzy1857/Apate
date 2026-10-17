@@ -1,0 +1,1 @@
+{"result": "PASS", "fault": "redis", "sessions": 8, "confirmed_commands": 129, "audited_commands": 137, "reconciled_disconnects": 8, "run_id": "e5535a7067f348c09a78c7630904de2f", "persistent_run_verification": {"paused_runs": 8, "persistent_devices": 1, "transient_ownership_removed": true, "filesystems_retained": true}}

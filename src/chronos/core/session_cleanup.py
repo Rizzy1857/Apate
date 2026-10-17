@@ -78,6 +78,15 @@ def orphan_sessions(client):
                 candidates.add(sid)
         except ValueError:
             continue
+    for pattern in ('session:*:run_id', 'session:*:context'):
+        for key in client.scan_iter(match=pattern, count=100):
+            key = key.decode() if isinstance(key, bytes) else key
+            sid = key.split(':')[1]
+            try:
+                if str(uuid.UUID(sid)) == sid:
+                    candidates.add(sid)
+            except ValueError:
+                continue
     return candidates - active
 
 
@@ -85,6 +94,8 @@ def delete_namespace(client, session_id):
     # Session UUIDs are never reused. No new worker may adopt an expired session.
     if str(uuid.UUID(session_id)) != session_id:
         raise ValueError('Invalid session UUID')
+    from chronos.core.research_runs import pause_session
+    pause_session(client, session_id)
     for key in client.scan_iter(match=f'session:{session_id}:*', count=100):
         client.unlink(key)
     client.delete(f'chronos:machine_state:{session_id}')

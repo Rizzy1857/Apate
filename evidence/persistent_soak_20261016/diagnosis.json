@@ -1,0 +1,19 @@
+{
+  "result": "FAIL",
+  "release_acceptance": false,
+  "failure": "All eight clients reported Socket is closed after 187 completed commands each; core logs report Session attribution expired",
+  "sample_count": 127,
+  "largest_sample_gap_seconds": 149.091226,
+  "gap_start_utc": "2026-10-16T05:11:33.981947+00:00",
+  "gap_end_utc": "2026-10-16T05:14:03.073173+00:00",
+  "host_power_evidence": {
+    "source": "pmset -g log, exact failure window",
+    "sleep_at_ist": "2026-10-16 10:41:32 +0530",
+    "sleep_reason": "Clamshell Sleep",
+    "sleep_duration_seconds": 145,
+    "darkwake_at_ist": "2026-10-16 10:43:57 +0530"
+  },
+  "attribution_lease_seconds": 120,
+  "interpretation": "Host lid-closure suspension outlasted the lease; sessions failed closed. This is not a passing uninterrupted capacity test and does not justify weakening expiry or resurrecting stale ownership.",
+  "next_required_check": "Fresh one-hour run with lid open, host awake and Docker continuously running; keep this failed attempt unchanged"
+}

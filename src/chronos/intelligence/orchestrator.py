@@ -8,6 +8,7 @@ import stat
 import threading
 import time
 import uuid
+import sys
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import redis
 from chronos.core.content import read_blob
@@ -127,6 +128,7 @@ class GenerationOrchestrator:
             if time.monotonic() >= deadline:
                 return None
             time.sleep(0.02)
+        self._publish_job(session_id, token, path, "resolving")
         try:
             meta = self.redis.hgetall(key)
             if not meta:
@@ -213,7 +215,7 @@ class GenerationOrchestrator:
                 model=model_identifier,
                 generation_source=source,
                 file_class=policy.file_class,
-                prompt_version="1.0",
+                prompt_version="2.0-persona",
                 generated_at=str(time.time()),
                 validated=validated,
             )
@@ -221,12 +223,27 @@ class GenerationOrchestrator:
                 inode, token, meta.get("revision", "0"), content, provenance
             )
         finally:
+            self._publish_job(session_id, token, path,
+                              "failed" if sys.exc_info()[0] else "finished")
             self.redis.eval(
                 "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0",
                 1,
                 lease,
                 token,
             )
+
+    def _publish_job(self, session_id, token, path, phase):
+        try:
+            with self.redis.pipeline() as pipe:
+                pipe.multi()
+                key = f"session:{session_id}:generation:{token}"
+                pipe.hset(key, mapping={"session_id": session_id, "path": path,
+                                       "phase": phase, "mode": self.inference_mode,
+                                       "updated_at": str(time.time())})
+                pipe.expire(key, 120)
+                pipe.execute()
+        except Exception:
+            logger.warning("Generation job status unavailable")
 
     def _quota(self, session_id):
         window = int(time.time() // 60)

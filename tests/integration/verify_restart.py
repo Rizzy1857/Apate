@@ -10,6 +10,7 @@ import psycopg2
 import redis
 
 from verify_load import prompt, barrier
+from load_state import cleanup_pending, retained_runs
 
 COUNT = int(os.environ.get('APATE_LOAD_CLIENTS', '32'))
 if COUNT < 1 or COUNT > 32:
@@ -84,10 +85,11 @@ def main():
         raise AssertionError('Service did not recover')
     # Wait for old namespaces to be reclaimed, not just for SSH to accept again.
     deadline = time.monotonic() + 180
-    while list(rd.scan_iter(match='session:*:fs:next_inode')) and time.monotonic() < deadline:
+    while cleanup_pending(rd) and time.monotonic() < deadline:
         time.sleep(1)
     assert not list(rd.scan_iter(match='session:*:fs:next_inode')), 'Orphan namespace leak'
     assert not list(rd.scan_iter(match='session_pid:*')), 'Orphan PID mapping leak'
+    retention = retained_runs(rd, COUNT) if os.environ.get('APATE_LOAD_PERSISTENT_RUNS') == '1' else None
     ssh, channel = connect()
     try:
         channel.sendall(b'cat /tmp/probe; cat /etc/hostname\r')
@@ -129,7 +131,8 @@ def main():
         print(json.dumps({'result': 'PASS', 'fault': os.environ['APATE_LOAD_FAULT'],
                           'sessions': COUNT, 'confirmed_commands': len(confirmed),
                           'audited_commands': len(rows),
-                          'reconciled_disconnects': len(closes), 'run_id': run_id}), flush=True)
+                          'reconciled_disconnects': len(closes), 'run_id': run_id,
+                          'persistent_run_verification': retention}), flush=True)
     finally:
         conn.close()
         rd.close()

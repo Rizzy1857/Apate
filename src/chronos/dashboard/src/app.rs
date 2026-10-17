@@ -22,6 +22,7 @@ enum Tab {
 // ── Dashboard State ─────────────────────────────────────────────────────────
 
 pub struct ChronosDashboard {
+    shutdown: Option<Box<dyn FnOnce() + Send>>,
     rx: Receiver<BackendMessage>,
     tx_req: Sender<BackendRequest>,
 
@@ -29,9 +30,21 @@ pub struct ChronosDashboard {
 
     // Health
     redis_connected: bool,
+    stack_status: String,
+    runs: Vec<std::collections::HashMap<String, String>>,
+    armed_run: Option<String>,
+    run_action_status: String,
+    runs_received: Option<std::time::Instant>,
+    resume_run_id: String,
+    operational_health: std::collections::HashMap<String, String>,
+    generation_jobs: Vec<std::collections::HashMap<String, String>>,
+    operational_received: Option<std::time::Instant>,
     postgres_connected: bool,
     total_files: i32,
     open_session_count: i32,
+    live_contexts: Vec<std::collections::HashMap<String, String>>,
+    live_context_received: Option<std::time::Instant>,
+    live_context_error: Option<String>,
 
     // View 1: Live Ops
     audit_logs: Vec<AuditEvent>,
@@ -84,13 +97,26 @@ impl ChronosDashboard {
             .is_ok();
 
         Self {
+            shutdown: None,
             rx,
             tx_req,
             active_tab: Tab::LiveOps,
             redis_connected: false,
+            stack_status: "Preparing services…".into(),
+            runs: Vec::new(),
+            armed_run: None,
+            run_action_status: String::new(),
+            runs_received: None,
+            resume_run_id: String::new(),
+            operational_health: std::collections::HashMap::new(),
+            generation_jobs: Vec::new(),
+            operational_received: None,
             postgres_connected: false,
             total_files: 0,
             open_session_count: 0,
+            live_contexts: Vec::new(),
+            live_context_received: None,
+            live_context_error: None,
             audit_logs: Vec::new(),
             stream_paused: false,
             paused_logs: Vec::new(),
@@ -114,12 +140,49 @@ impl ChronosDashboard {
         }
     }
 
+    pub fn with_shutdown(mut self, shutdown: impl FnOnce() + Send + 'static) -> Self {
+        self.shutdown = Some(Box::new(shutdown));
+        self
+    }
+
     fn update_state(&mut self) {
         while let Ok(msg) = self.rx.try_recv() {
             match msg {
+                BackendMessage::OperationalSnapshot { health, jobs } => {
+                    self.operational_health = health;
+                    self.generation_jobs = jobs;
+                    self.operational_received = Some(std::time::Instant::now());
+                }
+                BackendMessage::OperationalUnavailable => self.operational_received = None,
+                BackendMessage::ProvenanceUnavailable => self.provenance_snapshot = None,
+                BackendMessage::RunSnapshot { runs, armed } => {
+                    self.runs = runs;
+                    self.armed_run = armed;
+                    self.runs_received = Some(std::time::Instant::now());
+                }
+                BackendMessage::RunSnapshotError => self.runs_received = None,
+                BackendMessage::RunActionResult(result) => {
+                    self.run_action_status = match result {
+                        Ok(message) => message,
+                        Err(error) => error,
+                    };
+                }
+                BackendMessage::StackStatus(status) => self.stack_status = status,
+                BackendMessage::LiveContexts(result) => match result {
+                    Ok(rows) => {
+                        self.live_contexts = rows;
+                        self.live_context_received = Some(std::time::Instant::now());
+                        self.live_context_error = None;
+                    }
+                    Err(error) => {
+                        self.live_context_error = Some(error);
+                        self.live_context_received = None;
+                    }
+                },
                 BackendMessage::RedisConnected(s) => {
                     self.redis_connected = s;
                     if !s {
+                        self.live_context_received = None;
                         self.total_files = 0;
                         self.provenance_snapshot = None;
                         self.selected_provenance_entry = None;
@@ -266,6 +329,137 @@ impl ChronosDashboard {
     // ── View 1: Live Ops ────────────────────────────────────────────────
 
     fn render_live_ops(&mut self, ui: &mut egui::Ui) {
+        ui.label(&self.stack_status);
+        let observed = self.redis_connected
+            && self
+                .operational_received
+                .is_some_and(|t| t.elapsed().as_secs() < 8)
+            && !self.operational_health.is_empty();
+        if observed {
+            let value = |key: &str| {
+                self.operational_health
+                    .get(key)
+                    .map(String::as_str)
+                    .unwrap_or("unknown")
+            };
+            let color = if value("status") == "healthy" {
+                egui::Color32::GREEN
+            } else {
+                egui::Color32::YELLOW
+            };
+            ui.colored_label(
+                color,
+                format!(
+                    "Collection: {} | Pending audit events: {} | Watcher event: {}",
+                    value("status"),
+                    value("outbox_pending"),
+                    value("watcher_last_event_id")
+                ),
+            );
+            if value("status") != "healthy" {
+                ui.label(format!(
+                    "Audit: {} | Watcher: {}",
+                    value("audit_error"),
+                    value("watcher_error")
+                ));
+            }
+        } else {
+            ui.colored_label(
+                egui::Color32::YELLOW,
+                "Collection status unavailable or stale",
+            );
+        }
+        egui::CollapsingHeader::new("Recent artifact jobs").show(ui, |ui| {
+            if !observed {
+                ui.label("Generation observations may be stale.");
+            }
+            if self.generation_jobs.is_empty() {
+                ui.label("No recent artifact jobs.");
+            }
+            for row in &self.generation_jobs {
+                let value = |key: &str| row.get(key).map(String::as_str).unwrap_or("unknown");
+                ui.label(format!(
+                    "{} | {} | {} | {}",
+                    value("session_id"),
+                    value("path"),
+                    value("mode"),
+                    value("phase")
+                ));
+            }
+        });
+        ui.heading("Fake-system session state");
+        let fresh = self.redis_connected
+            && self
+                .live_context_received
+                .is_some_and(|t| t.elapsed().as_secs() < 8);
+        if !fresh {
+            ui.colored_label(
+                egui::Color32::YELLOW,
+                self.live_context_error
+                    .as_deref()
+                    .unwrap_or("State unavailable or stale — reconnecting"),
+            );
+        }
+        ui.label("Operational snapshots, not proof of a live socket. Updated after commands; separate from audit-stream pause.");
+        egui::ScrollArea::vertical()
+            .id_salt("live_session_contexts")
+            .max_height(180.0)
+            .show(ui, |ui| {
+                if fresh && self.live_contexts.is_empty() {
+                    ui.label("No recorded session contexts.");
+                }
+                for row in &self.live_contexts {
+                    let value = |key: &str| row.get(key).map(String::as_str).unwrap_or("unknown");
+                    ui.monospace(format!(
+                        "{} | {} | {}",
+                        value("session_id"),
+                        value("effective_username"),
+                        value("cwd")
+                    ));
+                    ui.small(format!(
+                        "Last command: {} | Snapshot epoch: {}{}",
+                        value("last_command_id"),
+                        value("updated_at"),
+                        if fresh { "" } else { " | STALE" }
+                    ));
+                }
+            });
+        ui.separator();
+        egui::CollapsingHeader::new("Persistent runs — resume or start fresh").show(ui, |ui| {
+            let fresh = self.redis_connected && self.runs_received.is_some_and(|t| t.elapsed().as_secs() < 8);
+            if !fresh { ui.colored_label(egui::Color32::YELLOW, "Run list unavailable or stale"); }
+            ui.label("Latest 200 runs. Closing a session pauses its run after cleanup (up to 30 seconds). A resume selection applies once to the next authenticated SSH shell.");
+            ui.label(format!("Next shell: {}", self.armed_run.as_deref().unwrap_or("fresh run")));
+            if ui.add_enabled(fresh, egui::Button::new("Start fresh on next connection")).clicked() {
+                if self.tx_req.try_send(BackendRequest::ArmRun(None)).is_err() {
+                    self.run_action_status = "Backend busy; selection was not sent".into();
+                }
+            }
+            ui.label(&self.run_action_status);
+            ui.horizontal(|ui| {
+                ui.label("Run UUID (including older runs):");
+                ui.text_edit_singleline(&mut self.resume_run_id);
+                if ui.add_enabled(fresh, egui::Button::new("Select resume")).clicked() {
+                    if self.tx_req.try_send(BackendRequest::ArmRun(Some(self.resume_run_id.trim().into()))).is_err() {
+                        self.run_action_status = "Backend busy; selection was not sent".into();
+                    }
+                }
+            });
+            egui::ScrollArea::vertical().id_salt("persistent_runs").max_height(140.0).show(ui, |ui| {
+                for row in &self.runs {
+                    let id = row.get("run_id").map(String::as_str).unwrap_or("unknown");
+                    let status = row.get("status").map(String::as_str).unwrap_or("unknown");
+                    ui.horizontal(|ui| {
+                        ui.monospace(format!("{id} | {status} | {}", row.get("cwd").map(String::as_str).unwrap_or("unknown")));
+                        if ui.add_enabled(fresh && status == "paused", egui::Button::new("Resume next shell")).clicked() {
+                            if self.tx_req.try_send(BackendRequest::ArmRun(Some(id.into()))).is_err() {
+                                self.run_action_status = "Backend busy; selection was not sent".into();
+                            }
+                        }
+                    });
+                }
+            });
+        });
         ui.horizontal(|ui| {
             ui.heading("Live Audit Stream");
             ui.separator();
@@ -1103,7 +1297,7 @@ impl ChronosDashboard {
                     egui::Color32::from_rgb(46, 204, 113),
                 ),
                 (
-                    "Fallbacks",
+                    "Templates + fallbacks",
                     fallback_total.to_string(),
                     egui::Color32::from_rgb(241, 196, 15),
                 ),
@@ -1414,6 +1608,15 @@ impl ChronosDashboard {
 // ── Main render loop ────────────────────────────────────────────────────────
 
 impl eframe::App for ChronosDashboard {
+    fn on_exit(&mut self) {
+        // Disconnect backend senders before waiting for their worker; bounded
+        // channels must not block shutdown while the UI has stopped draining.
+        self.rx = flume::unbounded().1;
+        if let Some(shutdown) = self.shutdown.take() {
+            shutdown();
+        }
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.update_state();
         self.render_top_bar(ui);

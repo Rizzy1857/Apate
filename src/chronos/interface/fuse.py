@@ -12,6 +12,7 @@ from fuse import FUSE, FuseOSError, Operations
 
 from chronos.core.state import StateHypervisor
 from chronos.core.content import mutate_content, read_blob
+from chronos.core.research_runs import namespace_prefix
 from chronos.core.session_cleanup import (
     acknowledge_disconnect,
     delete_namespace,
@@ -71,7 +72,7 @@ class ChronosFUSE(Operations):
         session_id = str(uuid.UUID(session_id))
         with self._session_lock:
             if session_id not in self._sessions:
-                hv = StateHypervisor(prefix=f"session:{session_id}:")
+                hv = StateHypervisor(prefix=namespace_prefix(self._control, session_id))
                 hv.initialize_filesystem()
                 self._reconcile_mutations(session_id, hv)
                 generator = GenerationOrchestrator(hv.redis, self.profile, max_workers=1)
@@ -102,7 +103,7 @@ class ChronosFUSE(Operations):
                         entry[1].close()
                         self._reconcile_mutations(session_id, entry[0])
                     elif self.db_layer is not None:
-                        recovered = StateHypervisor(prefix=f"session:{session_id}:")
+                        recovered = StateHypervisor(prefix=namespace_prefix(self._control, session_id))
                         self._reconcile_mutations(session_id, recovered)
                     if self.db_layer is not None:
                         lifecycle = prepare_disconnect(
@@ -190,9 +191,11 @@ class ChronosFUSE(Operations):
             origin = origin.decode("utf-8")
         if origin not in ("participant", "scripted_test"):
             origin = "unattributed"
-        return journal_mapping(
+        record = journal_mapping(
             str(uuid.uuid4()), operation, path, command_id, origin
         )
+        record["session_id"] = session_id
+        return record
 
     def _audit_completed_mutation(self, session_id, journal, inode, metadata=None):
         stored = self.redis.hgetall(f"fs:mutation:{journal['operation_id']}")
@@ -220,7 +223,7 @@ class ChronosFUSE(Operations):
                 "origin": record.get("origin", "unattributed"),
             }
             self._audit(
-                session_id, record["operation"], record["path"],
+                record.get("session_id") or session_id, record["operation"], record["path"],
                 int(float(record.get("inode", 0))), metadata,
             )
             acknowledge_mutation(hv.redis, record["operation_id"])

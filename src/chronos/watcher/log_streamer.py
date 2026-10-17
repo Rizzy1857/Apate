@@ -32,6 +32,8 @@ class AuditLogStreamer:
         self.running = False
         self.thread = None
         self.last_id = 0
+        self.last_success_at = 0.0
+        self.health_error = "starting"
         
     def subscribe(self, callback: Callable[[Dict[str, Any]], None]):
         """Subscribe to audit log events"""
@@ -84,6 +86,7 @@ class AuditLogStreamer:
                 conn = self._get_connection()
                 events = self._fetch_new_events(conn)
                 conn.close()
+                processed = True
                 
                 for event in events:
                     # Convert datetime to string for JSON serialization
@@ -98,13 +101,20 @@ class AuditLogStreamer:
                             pass
                     
                     if not self._notify_subscribers(dict(event)):
+                        processed = False
                         break  # Retry this event on the next poll.
                     self.last_id = event['id']
                     
                 if events:
                     logger.debug(f"[Watcher] Processed {len(events)} new events")
+                if processed:
+                    self.last_success_at = time.time()
+                    self.health_error = ""
+                else:
+                    self.health_error = "subscriber_retry"
                     
             except Exception as e:
+                self.health_error = "poll_failed"
                 logger.error(f"[Watcher] Poll error: {e}")
                 
             time.sleep(self.poll_interval)

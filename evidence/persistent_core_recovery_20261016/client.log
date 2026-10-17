@@ -1,0 +1,1 @@
+{"result": "PASS", "fault": "core", "sessions": 8, "confirmed_commands": 118, "audited_commands": 122, "reconciled_disconnects": 8, "run_id": "82a2ec531ffc4f49a5c84c8e4b07f489", "persistent_run_verification": {"paused_runs": 8, "persistent_devices": 1, "transient_ownership_removed": true, "filesystems_retained": true}}

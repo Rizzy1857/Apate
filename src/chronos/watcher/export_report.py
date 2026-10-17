@@ -270,8 +270,8 @@ def write_bundle(destination, events, metadata, *, mode="raw"):
     return report
 
 
-def _metadata_from_environment(args, snapshot_at):
-    return {
+def _metadata_from_environment(args, snapshot_at, events=()):
+    metadata = {
         "run_id": args.run_id or os.environ.get("APATE_RUN_ID"),
         "source_revision": os.environ.get("APATE_SOURCE_REVISION"),
         "configuration_digest": os.environ.get("APATE_CONFIGURATION_DIGEST"),
@@ -289,6 +289,18 @@ def _metadata_from_environment(args, snapshot_at):
         "selection": "all committed audit rows for selected session at snapshot",
         "pending_spool_events_included": False,
     }
+    attached = [event["metadata"] for event in events
+                if event.get("operation") == "research_run_attached"
+                and isinstance(event.get("metadata"), dict)]
+    if len(attached) == 1:
+        # Export records the admitted session's inputs, including after restart.
+        for field in ("run_id", "source_revision", "configuration_digest", "profile_digest"):
+            if attached[0].get(field):
+                metadata[field] = attached[0][field]
+    elif len(attached) > 1:
+        for field in ("run_id", "source_revision", "configuration_digest", "profile_digest"):
+            metadata[field] = None
+    return metadata
 
 
 def main():
@@ -311,7 +323,7 @@ def main():
     finally:
         connection.close()
     write_bundle(
-        args.output, events, _metadata_from_environment(args, snapshot_at), mode=args.mode
+        args.output, events, _metadata_from_environment(args, snapshot_at, events), mode=args.mode
     )
     warning = "raw records may contain secrets" if args.mode == "raw" else (
         "redaction is allowlist-based but cannot guarantee removal of every secret"

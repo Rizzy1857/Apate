@@ -134,11 +134,27 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
         import traceback
 
         env = SessionEnvironment(username=primary_user)
+        # Device identity exists for every admitted session, including sessions
+        # that never read an AI-backed file. Creation is atomic and persistent.
+        env.machine_state = env.profile.get_or_create_machine_state(r, session_id)
+        run_id = r.get(f"session:{session_id}:run_id")
+        restored_cwd = None
+        if run_id:
+            import json as _json
+            run = r.hgetall(f"chronos:run:{run_id}")
+            env.machine_state = _json.loads(run["persona"])
+            r.hset(f"chronos:machine_state:{session_id}", mapping=env.machine_state)
+            restored_cwd = run.get("cwd")
+        from chronos.core.session_context import publish_context
         parser = ShellParser()
         dispatcher = ASTDispatcher(env)
         # Load trusted Python dependencies before restricting the worker root.
         contain_worker('/mnt/honeypot')
         env.honeypot_root = '/'
+        if restored_cwd and os.path.isdir(env.resolve_path(restored_cwd)):
+            env.cwd = restored_cwd
+            env.env["PWD"] = restored_cwd
+        publish_context(r, session_id, env)
 
         # Send initial cwd
         cwd = env.env["PWD"]
@@ -235,6 +251,7 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
                         except Exception:
                             pass
 
+                    publish_context(r, session_id, env, command_id)
                     cwd = env.env["PWD"]
                     home = env.env["HOME"]
                     prompt_cwd = "~" if cwd == home else cwd
@@ -452,6 +469,18 @@ class SSHHoneypot:
                 lifecycle_client, session_id, origin=session_origin,
                 identity=server.identity_metadata(),
             )
+            if os.environ.get("CHRONOS_PERSISTENT_RUNS") == "1":
+                from chronos.core.research_runs import attach_session
+                persona = _profile.get_or_create_machine_state(lifecycle_client, session_id)
+                run = attach_session(lifecycle_client, session_id, persona)
+                self.audit_log("research_run_attached", {
+                    "session_id": session_id, "run_id": run["run_id"],
+                    "device_id": run["device_id"], "origin": session_origin,
+                    "source_revision": os.environ.get("APATE_SOURCE_REVISION"),
+                    "configuration_digest": os.environ.get("APATE_CONFIGURATION_DIGEST"),
+                    "profile_digest": os.environ.get("APATE_PROFILE_DIGEST"),
+                    **server.identity_metadata(),
+                })
 
             ubuntu_version = _profile.ubuntu_version if _profile else "24.04"
             kernel_version = _profile.kernel_version if _profile else "6.8.0-51-generic"

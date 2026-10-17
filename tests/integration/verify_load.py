@@ -10,6 +10,7 @@ import uuid
 import paramiko
 import psycopg2
 import redis
+from load_state import cleanup_pending, retained_runs
 
 logging.getLogger('paramiko').setLevel(logging.CRITICAL)
 COUNT = int(os.environ.get('APATE_LOAD_CLIENTS', '32'))
@@ -115,7 +116,7 @@ def main():
                 audited = cursor.fetchone()[0]
                 cursor.execute('SELECT COUNT(*) FROM session_evidence WHERE start_time >= to_timestamp(%s)', (started,))
                 evidence = cursor.fetchone()[0]
-            if audited == sum(counts) and evidence == session_count and not list(rd.scan_iter(match='session:*:fs:next_inode')):
+            if audited == sum(counts) and evidence == session_count and not cleanup_pending(rd):
                 break
             time.sleep(1)
         assert audited == sum(counts), (audited, sum(counts))
@@ -142,6 +143,7 @@ def main():
             assert all(command.get('outcome') == 'emulated_success' for command in projected)
         assert not list(rd.scan_iter(match='session_pid:*')), 'Stale PID registrations'
         assert not list(rd.scan_iter(match='session:*:fs:next_inode')), 'Namespace cleanup incomplete'
+        retention = retained_runs(rd, session_count) if os.environ.get('APATE_LOAD_PERSISTENT_RUNS') == '1' else None
         ordered = sorted(latencies)
         print(json.dumps({'result': 'PASS', 'sessions': session_count, 'concurrent_clients': COUNT,
                           'duration_seconds': DURATION, 'clients': results,
@@ -153,7 +155,8 @@ def main():
                           'projected_commands': len(projected),
                           'session_evidence': evidence, 'latency_p50': ordered[len(ordered)//2],
                           'latency_p95': ordered[int(len(ordered)*.95)],
-                          'latency_max': max(ordered), 'run_id': run_id}), flush=True)
+                          'latency_max': max(ordered), 'run_id': run_id,
+                          'persistent_run_verification': retention}), flush=True)
     finally:
         conn.close()
         rd.close()

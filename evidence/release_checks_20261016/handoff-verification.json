@@ -1,0 +1,15 @@
+{
+  "artifact_type": "integrated_research_handoff_verification",
+  "candidate": "release_candidate_20261016_integrated_handoff",
+  "source_files_verified": 195,
+  "source_archive_sha256": "f514a2bad18a8d8968db4bf1dff8e5499c7896f2c7a70a68880543610c290da1",
+  "source_manifest_sha256": "b5c0e71df0388c2439ad5cacc341d913d01187ecd9f93c6bc09d26c600e440bc",
+  "deployed_application_matches_image": true,
+  "extracted_python_tests": {"passed": 264, "skipped": 7},
+  "extracted_rust_tests": {"passed": 12, "ignored": 1, "dependency_target_cache_reused": true},
+  "working_tree_diff_check": "passed",
+  "soak": {"result": "FAIL", "diagnosis_file": "../persistent_soak_20261016/diagnosis.json", "disposable_containers_removed": true},
+  "final_release_accepted": false,
+  "remaining": "Fresh uninterrupted one-hour soak with lid open, host awake and Docker continuously running, then final acceptance verdict",
+  "publication": "No commit or push performed in this closeout"
+}
