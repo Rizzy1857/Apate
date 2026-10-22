@@ -34,7 +34,7 @@ class EvidenceCollector:
     def __init__(self, streamer: AuditLogStreamer, persistence: PersistenceLayer):
         self.streamer = streamer
         self.persistence = persistence
-        self.redis = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'),
+        self.redis = redis.Redis(password=os.environ.get("REDIS_PASSWORD") or None, host=os.environ.get('REDIS_HOST', 'localhost'),
                                  port=int(os.environ.get('REDIS_PORT', '6379')),
                                  db=0, decode_responses=True)
         self.streamer.subscribe(self._process_event)

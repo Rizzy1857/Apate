@@ -9,12 +9,16 @@ import time
 import uuid
 import hashlib
 from datetime import datetime, timezone
+from freeze_release_candidate import image_inventory
+from load_state import verify_image_sources
 
 root = Path(__file__).resolve().parents[2]
 prefix = 'apate-load-' + uuid.uuid4().hex[:10]
 image = os.environ.get('APATE_LOAD_IMAGE', prefix + ':test')
 owns_image = 'APATE_LOAD_IMAGE' not in os.environ
 names = {key: prefix + '-' + key for key in ('net', 'redis', 'pg', 'core', 'clients')}
+REDIS_IMAGE = 'redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf'
+POSTGRES_IMAGE = 'postgres:15-alpine@sha256:1d1095b0503145be79c79239372aefadfacf6b7c33c9245bbf99ce4b6b89c737'
 
 
 def bytes_value(value):
@@ -49,6 +53,10 @@ def main():
     persistent = os.environ.get('APATE_LOAD_PERSISTENT_RUNS', '0')
     if persistent not in ('0', '1'):
         raise ValueError('APATE_LOAD_PERSISTENT_RUNS must be 0 or 1')
+    authenticated = os.environ.get('APATE_LOAD_REDIS_AUTH', '0')
+    if authenticated not in ('0', '1'):
+        raise ValueError('APATE_LOAD_REDIS_AUTH must be 0 or 1')
+    redis_password = uuid.uuid4().hex if authenticated == '1' else ''
     output_dir = Path(os.environ.get('APATE_LOAD_OUTPUT', str(root / '.pytest_cache' / prefix)))
     output_dir.mkdir(parents=True, exist_ok=False)
     def save(name, value):
@@ -65,16 +73,26 @@ def main():
     try:
         if owns_image:
             docker('build', '-q', '-t', image, str(root))
+        inventory = image_inventory(image)
+        match = verify_image_sources(source_hashes, inventory['application_files'])
+        save('image_inventory.json', inventory)
+        save('image_source_match.json', match)
         save('run.json', {'started_at': started_at, 'names': names,
                          'image_id': docker('image', 'inspect', '--format', '{{.Id}}', image),
                          'parameters': {key: value for key, value in os.environ.items()
                                         if key.startswith('APATE_LOAD_')}})
         docker('network', 'create', '--internal', names['net'])
+        redis_command = ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb',
+                         '--maxmemory-policy', 'noeviction']
+        if redis_password:
+            redis_command += ['--requirepass', redis_password]
         docker('run', '-d', '--name', names['redis'], '--network', names['net'],
-               'redis:7-alpine', 'redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'noeviction')
+               '-e', 'REDISCLI_AUTH=' + redis_password,
+               os.environ.get('APATE_LOAD_REDIS_IMAGE', REDIS_IMAGE), *redis_command)
         docker('run', '-d', '--name', names['pg'], '--network', names['net'],
                '-e', 'POSTGRES_USER=chronos', '-e', 'POSTGRES_PASSWORD=chronos_dev_password',
-               '-e', 'POSTGRES_DB=chronos', 'postgres:15-alpine')
+               '-e', 'POSTGRES_DB=chronos',
+               os.environ.get('APATE_LOAD_POSTGRES_IMAGE', POSTGRES_IMAGE))
         for _ in range(60):
             ready = docker('exec', names['pg'], 'pg_isready', '-U', 'chronos', check=False)
             if 'accepting connections' in ready:
@@ -82,6 +100,13 @@ def main():
             time.sleep(1)
         else:
             raise AssertionError('Disposable PostgreSQL did not become ready')
+        if redis_password:
+            rejected = docker('exec', '-e', 'REDISCLI_AUTH=', names['redis'],
+                              'redis-cli', 'ping', check=False)
+            assert 'NOAUTH' in rejected, 'Test Redis unexpectedly permits unauthenticated commands'
+            assert docker('exec', names['redis'], 'redis-cli', 'ping') == 'PONG'
+            save('redis_auth_verification.json', {'unauthenticated_ping': 'rejected',
+                                                 'authenticated_ping': 'accepted'})
         diagnostic_command = (['python3', '-c',
             'import faulthandler; faulthandler.dump_traceback_later(100, repeat=False); from chronos.core.main import main; main()']
             if os.environ.get('APATE_LOAD_STACKS') == '1' else [])
@@ -95,6 +120,7 @@ def main():
                '--memory', '2g', '--cpus', '2', '-e', 'REDIS_HOST=' + names['redis'],
                '-e', 'APATE_SESSION_ORIGIN=scripted_test',
                '-e', 'CHRONOS_PERSISTENT_RUNS=' + persistent,
+               '-e', 'REDIS_PASSWORD=' + redis_password,
                '-e', 'POSTGRES_HOST=' + names['pg'], image, *diagnostic_command)
         for _ in range(60):
             mounted = docker('exec', names['core'], 'python3', '-c',
@@ -114,6 +140,7 @@ def main():
             '-e', 'APATE_LOAD_ROTATE_SECONDS=' + os.environ.get('APATE_LOAD_ROTATE_SECONDS', '3300'),
             '-e', 'APATE_LOAD_FAULT=' + fault,
             '-e', 'APATE_LOAD_PERSISTENT_RUNS=' + persistent,
+            '-e', 'REDIS_PASSWORD=' + redis_password,
             '-v', str(root / 'tests') + ':/app/tests:ro', image,
             'python3', 'tests/integration/' + ('verify_restart.py' if fault in ('redis', 'core') else 'verify_load.py')], stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True)

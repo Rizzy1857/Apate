@@ -4,9 +4,9 @@ This is the complete participant command surface for the Research MVP. Mirage em
 
 ## Grammar and limits
 
-- UTF-8 input is limited to 65,536 bytes, 512 parser tokens and 64 pipelines per submission. A NUL byte is invalid.
+- The interactive SSH line limit is 8,192 UTF-8 bytes. An oversized line is rejected and drained through its newline; the session remains available. The parser separately caps input at 65,536 bytes, 512 tokens and 64 pipelines per submission. A NUL byte is invalid.
 - Supported composition is `;`, `&&`, `||` and `|`. Pipelines are sequential byte-buffer transformations, not concurrent processes. The status is the last stage status; stderr is not piped.
-- Single quotes are literal. Double quotes permit `$NAME` expansion. Backslash quotes the following character. Expansion supports `$NAME` only; unset names become empty.
+- Single quotes are literal. Double quotes permit `$NAME` expansion. Backslash quotes the following character. Expansion supports `$NAME`, `$0` (the emulated shell name) and `$?` (the previous pipeline status); unset names become empty.
 - Supported redirects are `<`, `>`, `>>`, `2>` and `2>>`. They are opened left to right before the command effect. Descriptor duplication, here documents/strings and process substitution are unsupported.
 - Command substitution, globbing, tilde expansion, background jobs, subshells, functions, aliases and host process execution are unsupported.
 - Output and file-fed input are each bounded at 1 MiB. Exceeding a bound returns nonzero without returning partial generated output.

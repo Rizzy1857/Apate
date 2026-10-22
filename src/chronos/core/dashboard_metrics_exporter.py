@@ -32,7 +32,7 @@ def get_pg_conn():
 def get_redis_conn():
     host = os.environ.get('CHRONOS_REDIS_HOST', '127.0.0.1')
     port = int(os.environ.get('CHRONOS_REDIS_PORT', '6379'))
-    return redis.Redis(host=host, port=port, db=0, decode_responses=True,
+    return redis.Redis(password=os.environ.get("REDIS_PASSWORD") or None, host=host, port=port, db=0, decode_responses=True,
                        socket_timeout=3, socket_connect_timeout=3)
 
 

@@ -234,7 +234,7 @@ impl ManagedStack {
             ));
             return Ok(None);
         }
-        for name in ["POSTGRES_PASSWORD", "GRAFANA_PASSWORD"] {
+        for name in ["POSTGRES_PASSWORD", "GRAFANA_PASSWORD", "REDIS_PASSWORD"] {
             if std::env::var(name).unwrap_or_default().is_empty() {
                 return Err(format!("Set {name} before starting the managed stack"));
             }

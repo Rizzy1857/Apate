@@ -110,3 +110,74 @@ in INTEGRATED_ACCEPTANCE_AUDIT_2026-10-16.md.
 This three-minute workload does not establish multi-hour or public operation,
 32-client capacity, AI-generation throughput, long-term storage growth or
 resilience to simultaneous loss of all stores.
+
+## October 17 retry — passed for the frozen October 16 image
+
+A fresh run started at 05:11:30 UTC (10:41:30 IST), using the same verified
+image and workload: eight slots, 3,600 seconds, four-second interval, no early
+command cap, persistent runs enabled and planned rotation. Resources are newly
+named and disposable; the previous failure is unchanged. Idle sleep is prevented
+while the harness runs, but the lid must remain open and Docker must stay running.
+Evidence: [run identity](../evidence/persistent_soak_20261017_retry/run.json)
+and [ongoing samples](../evidence/persistent_soak_20261017_retry/samples.jsonl).
+The retry passed: every slot completed at least 3,600 measured seconds.
+7,061 submissions, distinct successful results and projected commands matched
+exactly. All 16 summaries finalized; 16 paused runs retained their namespaces
+on one device and transient ownership disappeared. Client p95 was 141.0 ms,
+maximum 246.1 ms. Memory median growth was 42.3 MiB (128 MiB allowance), peak
+477.1 MiB; 601 samples had a maximum 6.191-second gap. Core was not OOM-killed.
+See [client result](../evidence/persistent_soak_20261017_retry/client.log) and
+[resource verdict](../evidence/persistent_soak_20261017_retry/result.json).
+
+This result belongs to image `ef06e47e...`, not the current hardened checkout.
+Eight source files already differed at run start: authenticated Redis clients,
+managed credential migration and SSH/shell hardening. Tests were unchanged
+during that run. No long-duration result is silently transferred to a new image.
+
+## Reconciled authenticated candidate — short load passed
+
+The current application was rebuilt as `mirage-reconciled:20261017`, identity
+`sha256:cd3a4527e26caed741016cc86b5f2fc356b275e678280a050bb5f889839740b0`.
+The harness now verifies all 71 deployed application/configuration hashes before
+starting clients, refusing stale images, and has an explicit Redis-auth mode.
+It independently checks unauthenticated PING rejection and authenticated PING.
+The synthetic test password is not retained in result metadata.
+
+Eight clients ran 90 measured seconds with 30-second rotations. All 638
+commands reconciled exactly, 24 summaries finalized and 24 paused runs retained
+their namespaces on one device without transient ownership. Client p95 was
+209.5 ms, maximum 419.3 ms. These short overlapping memory windows are not a
+replacement for the one-hour memory criterion.
+Evidence: [source match](../evidence/reconciled_auth_load_20261017/image_source_match.json),
+[Redis auth check](../evidence/reconciled_auth_load_20261017/redis_auth_verification.json),
+[client result](../evidence/reconciled_auth_load_20261017/client.log),
+[verdict](../evidence/reconciled_auth_load_20261017/result.json).
+Current regressions: 270 Python passes, seven skips; 13 Rust passes, one opt-in
+test ignored. CI Compose validation now supplies the required synthetic Redis
+credential, and both base/managed Compose configurations validate quietly.
+The reconciled authenticated candidate still needs its own completed long run.
+
+October 19 review: `evidence/reconciled_auth_soak_20261017/result.json` is FAIL,
+not still running. The host recorded clamshell sleep at 12:28:44 IST for 152
+seconds and maintenance sleep at 12:31:27 for 142 seconds on October 17.
+Attribution expired and sessions lost access; the hour must be repeated without
+host suspension. The existing failure remains unchanged.
+
+## October 19 authenticated ARM64 staging hour passed
+
+The fresh candidate passed all eight client slots for at least 3,600 measured
+seconds: 7,042 commands reconciled exactly with successful results and evidence
+projections, 16 session summaries finalized, and 16 paused run namespaces remained
+on one device with transient ownership removed. This retention check confirms
+namespace presence and ownership cleanup, not byte-by-byte verification of every
+historical file. Client p95 was 150.0 ms and maximum 665.5 ms. Across 595 samples,
+the largest gap was 6.123 seconds; median core-memory growth was 52.45 MiB under
+the predeclared 128 MiB bound, peak memory was 474.1 MiB, and there was no OOM.
+
+Evidence is in `evidence/authenticated_soak_20261019_final`; the exact immutable
+source and three image identities are linked from
+[the October 19 verdict](RELEASE_EVIDENCE_INDEX_2026-10-19.md). The earlier two
+October 19 attempts were deliberately interrupted while replacing vulnerable
+infrastructure and making Redis explicitly non-root. Their failures and reasons
+remain retained separately. This pass is for bounded private ARM64 testing, not
+arbitrary attacks, indefinite retention or production capacity.

@@ -72,6 +72,7 @@ def main():
         futures = [pool.submit(exercise, index) for index in range(COUNT)]
         confirmed = [command for future in futures for command in future.result()]
     rd = redis.Redis(host=os.environ['REDIS_HOST'], decode_responses=True,
+                     password=os.environ.get('REDIS_PASSWORD') or None,
                      socket_timeout=3, socket_connect_timeout=3)
     deadline = time.monotonic() + 180
     while time.monotonic() < deadline:

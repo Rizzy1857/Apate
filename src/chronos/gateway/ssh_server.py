@@ -98,6 +98,7 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
     # A worker never survives a Redis connection loss; resolve before containment.
     redis_host = socket.gethostbyname(redis_host)
     r = redis.Redis(
+        password=os.environ.get("REDIS_PASSWORD") or None,
         host=redis_host,
         port=6379,
         db=0,
@@ -251,6 +252,7 @@ def session_worker(session_id, primary_user, session_origin, pipe_conn):
                         except Exception:
                             pass
 
+                    env.last_status = returncode
                     publish_context(r, session_id, env, command_id)
                     cwd = env.env["PWD"]
                     home = env.env["HOME"]
@@ -431,6 +433,9 @@ class SSHHoneypot:
 
         try:
             transport = paramiko.Transport(client_socket)
+            transport.local_version = "SSH-2.0-OpenSSH_" + (
+                _profile.package_version("openssh-server") if _profile else None
+            or "9.6p1")
             transport.add_server_key(paramiko.RSAKey(filename=self.hostkey_path))
 
             server = SSHServer(
@@ -460,6 +465,7 @@ class SSHHoneypot:
                 **server.identity_metadata(),
             })
             lifecycle_client = redis.Redis(
+                password=os.environ.get("REDIS_PASSWORD") or None,
                 host=os.environ.get("REDIS_HOST", "localhost"),
                 decode_responses=True,
                 socket_timeout=3,
@@ -496,6 +502,7 @@ class SSHHoneypot:
 
             def refresh_worker_mapping():
                 heartbeat_client = redis.Redis(
+                    password=os.environ.get("REDIS_PASSWORD") or None,
                     host=os.environ.get("REDIS_HOST", "localhost"),
                     decode_responses=True,
                     socket_timeout=3,
@@ -546,6 +553,8 @@ class SSHHoneypot:
             _send_all(channel, f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
 
             command_buffer = ""
+            discard_line = False
+            command_bytes = 0
             decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
             last_input = time.monotonic()
 
@@ -567,6 +576,16 @@ class SSHHoneypot:
                 last_input = time.monotonic()
 
                 for char in decoder.decode(data):
+
+                    if discard_line:
+                        # Drain the entire rejected line: no suffix may become a command.
+                        if char in ("\r", "\n"):
+                            discard_line = False
+                            _send_all(channel, f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
+                        elif char == "\x03":
+                            discard_line = False
+                            _send_all(channel, f"^C\r\n{primary_user}@{hostname}:{prompt_cwd}$ ".encode())
+                        continue
 
                     if char == "\r" or char == "\n":
                         _send_all(channel, b"\r\n")
@@ -641,23 +660,39 @@ class SSHHoneypot:
                                 pending_command = None
 
                         command_buffer = ""
+                        command_bytes = 0
                         _send_all(channel,
                             f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode()
                         )
                     elif char == "\x03":  # Ctrl+C
                         _send_all(channel, b"^C\r\n")
                         command_buffer = ""
+                        command_bytes = 0
                         _send_all(channel,
                             f"{primary_user}@{hostname}:{prompt_cwd}$ ".encode()
                         )
                     elif char == "\x7f" or char == "\b":  # Backspace
                         if command_buffer:
+                            command_bytes -= len(command_buffer[-1].encode("utf-8"))
                             command_buffer = command_buffer[:-1]
                             _send_all(channel, b"\b \b")
                     else:
-                        if len((command_buffer + char).encode('utf-8')) > 8192:
-                            raise ValueError("SSH command exceeds input limit")
+                        char_bytes = len(char.encode("utf-8"))
+                        if command_bytes + char_bytes > 8192:
+                            self.audit_log("ssh_request", {
+                                "session_id": session_id, "request_id": str(uuid.uuid4()),
+                                "request_type": "shell_input", "outcome": "denied",
+                                "accepted": False, "reason": "input_limit",
+                                "limit_bytes": 8192, "schema_version": 1,
+                                "origin": session_origin, **server.identity_metadata(),
+                            })
+                            command_buffer = ""
+                            command_bytes = 0
+                            discard_line = True
+                            _send_all(channel, b"\r\nbash: command length limit exceeded\r\n")
+                            continue
                         command_buffer += char
+                        command_bytes += char_bytes
                         _send_all(channel, char.encode("utf-8"))
 
         except Exception as e:
@@ -698,6 +733,7 @@ class SSHHoneypot:
                     worker_proc.join(timeout=2)
                 try:
                     r = redis.Redis(
+                        password=os.environ.get("REDIS_PASSWORD") or None,
                         host=os.environ.get("REDIS_HOST", "localhost"),
                         decode_responses=True,
                         socket_timeout=3,

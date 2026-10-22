@@ -106,7 +106,9 @@ def main():
                 channels.append(channel)
 
             import redis
-            control = redis.Redis(host=os.environ['REDIS_HOST'], decode_responses=True)
+            control = redis.Redis(host=os.environ['REDIS_HOST'],
+                                  password=os.environ.get('REDIS_PASSWORD') or None,
+                                  decode_responses=True)
             from chronos.simulation.world_state import publish_tick
             world = publish_tick(control, seed='integration')
             for key in control.scan_iter(match='session_pid:*'):

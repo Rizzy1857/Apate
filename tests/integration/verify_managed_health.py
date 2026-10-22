@@ -8,6 +8,7 @@ import subprocess
 import time
 
 import redis
+from verify_managed_desktop import managed_redis_password
 
 
 def await_status(client, expected, timeout):
@@ -21,7 +22,7 @@ def await_status(client, expected, timeout):
 
 
 def main():
-    client = redis.Redis(port=16379, decode_responses=True, socket_timeout=3)
+    client = redis.Redis(password=managed_redis_password(), port=16379, decode_responses=True, socket_timeout=3)
     await_status(client, "healthy", 15)
     subprocess.run(["docker", "pause", "mirage-gui-db"], check=True,
                    stdout=subprocess.DEVNULL, timeout=10)

@@ -6,11 +6,17 @@ two test sessions. The server key is pinned through the local Docker API.
 import argparse
 import base64
 import json
+from pathlib import Path
 import subprocess
 import uuid
 
 import paramiko
 import redis
+
+
+def managed_redis_password():
+    credentials = Path(__file__).resolve().parents[2] / ".local-deploy/gui-credentials.json"
+    return json.loads(credentials.read_text())["redis"]
 
 
 def prompt(channel):
@@ -57,7 +63,7 @@ def main():
     ], text=True).strip()
     key = paramiko.RSAKey(data=base64.b64decode(public))
     clients = []
-    control = redis.Redis(host="127.0.0.1", port=16379, decode_responses=True,
+    control = redis.Redis(password=managed_redis_password(), host="127.0.0.1", port=16379, decode_responses=True,
                           socket_timeout=3)
     token = "DESKTOP_" + uuid.uuid4().hex
     try:

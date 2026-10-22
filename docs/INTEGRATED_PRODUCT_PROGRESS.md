@@ -49,24 +49,26 @@ and passed native healthy/degraded/recovered collection verification.
    device run. Files and cwd survive; environment variables remain per connection.
 4. Generation provenance and bounded local-model evaluation are recorded; live
    Linux containment, restart/persistence and named GUI procedures passed.
-5. Remaining: completed extended soak and final source/evidence reconciliation.
-   Candidate archives and image inventories already exist. No fine-tuning
+5. October 19: the authenticated extended soak passed; source/image identity,
+   Linux integration and private standalone staging startup were reconciled.
+   See RELEASE_EVIDENCE_INDEX_2026-10-19.md for the bounded private-staging verdict.
+   No fine-tuning
    has been performed; this iteration grounds the existing model in state.
 
 Native acceptance evidence is in DESKTOP_VERIFICATION_2026-10-15.md; current
 capacity/recovery results are in PERSISTENT_CAPACITY_2026-10-16.md and the
 requirement mapping is in INTEGRATED_ACCEPTANCE_AUDIT_2026-10-16.md. Native
 raw/redacted exports and active-core crash followed by operator-selected resume
-have passed. The Python suite now has 264 passing tests and seven explicit skips;
-the Rust suite has twelve passing tests plus a separately passed opt-in real-core
-export test. An initial six-artifact local model smoke trial exposed malformed
+have passed. The Python suite now has 272 passing tests and seven explicit skips;
+the Rust suite has thirteen passing tests and one ignored opt-in real-core test.
+Earlier native export checks are separate evidence. An initial six-artifact local model smoke trial exposed malformed
 history that passed validation; prompt and validator checks were tightened.
 Startup failure/cancellation passed native checks. Model re-evaluation still
 shows bounded generation failures; truncation is now distinguishable from
 connectivity failure. A later notes diagnostic succeeded, but model reliability
-is not certified. Deterministic mode remains the baseline. Extended soak and
-final release reconciliation remain outstanding. This checklist distinguishes implemented features from final
-release acceptance; it is not a claim that all work is complete.
+is not certified. Deterministic mode remains the baseline. The October 19
+predeployment verdict is restricted to private ARM64 testing with documented
+residual core risks; it is not a public-release or model-reliability certification.
 
 ## GUI lifecycle implementation and verification
 

@@ -29,8 +29,16 @@ jobs:
           PYTHONPATH: src
       - run: docker compose config --quiet
         env:
+          REDIS_PASSWORD: ci-config-validation-only
           POSTGRES_PASSWORD: ci-config-validation-only
           GRAFANA_PASSWORD: ci-config-validation-only
+      - run: docker compose -p mirage-staging -f compose.azure-staging.yml config --quiet
+        env:
+          REDIS_PASSWORD: ci-config-validation-only
+          POSTGRES_PASSWORD: ci-config-validation-only
+          MIRAGE_IMAGE: example.invalid/mirage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          MIRAGE_REDIS_IMAGE: example.invalid/redis@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          MIRAGE_POSTGRES_IMAGE: example.invalid/postgres@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   dependencies:
     runs-on: ubuntu-latest
     steps:

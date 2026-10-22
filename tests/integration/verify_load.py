@@ -106,7 +106,8 @@ def main():
     session_count = sum(result['sessions'] for result in results)
     if MAX_COMMANDS == 0:
         assert all(result['elapsed_seconds'] >= DURATION for result in results)
-    rd = redis.Redis(host=os.environ['REDIS_HOST'], decode_responses=True)
+    rd = redis.Redis(host=os.environ['REDIS_HOST'], password=os.environ.get('REDIS_PASSWORD') or None,
+                     decode_responses=True)
     conn = psycopg2.connect(host=os.environ['POSTGRES_HOST'], user='chronos',
                             password='chronos_dev_password', dbname='chronos')
     try:

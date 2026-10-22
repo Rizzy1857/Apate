@@ -8,6 +8,19 @@ import pytest
 helpers = runpy.run_path(str(Path(__file__).parents[1] / 'integration' / 'load_state.py'))
 
 
+def test_image_identity_requires_matching_application_not_only_a_tag():
+    source = {'src/chronos/core/main.py': 'current', 'config/ubuntu.yaml': 'profile',
+              'src/chronos/dashboard/src/main.rs': 'separate',
+              'tests/integration/run_load.py': 'harness'}
+    image = {'src/chronos/core/main.py': 'current', 'config/ubuntu.yaml': 'profile'}
+    assert helpers['verify_image_sources'](source, image)['application_files'] == 2
+    for invalid in ({**image, 'src/chronos/core/main.py': 'stale'},
+                    {'config/ubuntu.yaml': 'profile'},
+                    {**image, 'src/unexpected.py': 'extra'}):
+        with pytest.raises(ValueError, match='does not match'):
+            helpers['verify_image_sources'](source, invalid)
+
+
 def test_load_contract_requires_pause_retention_and_removed_ownership(isolated_redis):
     client = isolated_redis
     client.hset('chronos:run:synthetic', mapping={

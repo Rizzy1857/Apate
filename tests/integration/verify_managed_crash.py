@@ -12,8 +12,7 @@ import uuid
 
 import paramiko
 import redis
-
-from verify_managed_desktop import execute, prompt
+from verify_managed_desktop import execute, managed_redis_password, prompt
 
 
 def main():
@@ -23,7 +22,7 @@ def main():
     args = parser.parse_args()
     if args.resume_run and not args.token:
         parser.error('--resume-run requires --token')
-    control = redis.Redis(port=16379, decode_responses=True, socket_timeout=3)
+    control = redis.Redis(password=managed_redis_password(), port=16379, decode_responses=True, socket_timeout=3)
     assert not list(control.scan_iter('session_pid:*')), 'Close other SSH sessions first'
     public = subprocess.check_output([
         'docker', 'exec', 'mirage-gui-core', 'python3', '-c',

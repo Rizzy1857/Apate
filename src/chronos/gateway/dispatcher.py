@@ -24,6 +24,7 @@ class SessionEnvironment:
         self.username = username
         self.profile = UbuntuProfile()
         self.started = time.monotonic()
+        self.last_status = 0
         self.world_state = None
         self.env = {
             "HOME": f"/home/{username}",
@@ -41,11 +42,15 @@ class SessionEnvironment:
     def expand_vars(self, arg: str) -> str:
         def replace(match):
             var = match.group(1)
+            if var == "0":
+                return "bash"
+            if var == "?":
+                return str(self.last_status)
             return self.env.get(var, "")
 
         segments = getattr(arg, "segments", ((str(arg), True),))
         return "".join(
-            re.sub(r"\$([a-zA-Z_][a-zA-Z0-9_]*)", replace, text)
+            re.sub(r"\$([a-zA-Z_][a-zA-Z0-9_]*|[0?])", replace, text)
             if expand else text
             for text, expand in segments
         )
@@ -703,6 +708,7 @@ class ASTDispatcher:
 
             returncode, stdout, stderr, stages = self._execute_pipeline(pipeline)
             last_returncode = returncode
+            self.env.last_status = returncode
             pipeline_results.append({
                 "pipeline_index": pipeline_index,
                 "preceding_operator": operator,

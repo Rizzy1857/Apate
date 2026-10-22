@@ -2,6 +2,18 @@
 import json
 
 
+def verify_image_sources(source_hashes, image_files):
+    expected = {name: digest for name, digest in source_hashes.items()
+                if name.startswith(('src/', 'config/'))
+                and not name.startswith(('src/chronos/dashboard/', 'src/chronos/layer0/'))
+                and not name.endswith(('.pyc', '.pyo'))}
+    differing = sorted(name for name in expected.keys() | image_files.keys()
+                       if expected.get(name) != image_files.get(name))
+    if differing:
+        raise ValueError('Image does not match checkout application files: ' + ', '.join(differing))
+    return {'matched': True, 'application_files': len(expected)}
+
+
 def cleanup_pending(client):
     return any(next(client.scan_iter(match=pattern), None) is not None for pattern in (
         'session_pid:*', 'session:*:fs:next_inode', 'session:*:run_id',

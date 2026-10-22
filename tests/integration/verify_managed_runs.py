@@ -14,8 +14,7 @@ import uuid
 
 import paramiko
 import redis
-
-from verify_managed_desktop import execute, prompt
+from verify_managed_desktop import execute, managed_redis_password, prompt
 
 
 def main():
@@ -23,7 +22,7 @@ def main():
     parser.add_argument("phase", choices=("seed", "resume", "fresh"))
     parser.add_argument("--record", type=Path, default=Path(".local-deploy/run-verification.json"))
     args = parser.parse_args()
-    r = redis.Redis(port=16379, decode_responses=True, socket_timeout=3)
+    r = redis.Redis(password=managed_redis_password(), port=16379, decode_responses=True, socket_timeout=3)
     previous = set(r.scan_iter("session:*:context"))
     public = subprocess.check_output(["docker", "exec", "mirage-gui-core", "python3", "-c",
         "import paramiko; print(paramiko.RSAKey(filename='/var/lib/chronos/ssh_host_rsa_key').get_base64())"], text=True).strip()

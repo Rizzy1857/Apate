@@ -21,10 +21,13 @@ TOP_LEVEL = (
     ".dockerignore",
     ".gitignore",
     "Dockerfile",
+    "Dockerfile.redis",
+    "Dockerfile.postgres",
     "Makefile",
     "README.md",
     "LICENSE",
     "docker-compose.yml",
+    "compose.azure-staging.yml",
     "requirements.txt",
 )
 EXCLUDED_PARTS = {"__pycache__", ".pytest_cache", "target"}

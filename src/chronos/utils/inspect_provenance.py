@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import redis
 import json
@@ -6,7 +7,7 @@ import datetime
 from typing import Optional, Dict
 
 def inspect_provenance(path: str):
-    r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    r = redis.Redis(password=os.environ.get("REDIS_PASSWORD") or None, host=os.environ.get("REDIS_HOST", "localhost"), port=int(os.environ.get("REDIS_PORT", "6379")), db=0, decode_responses=True)
     
     # 1. Resolve path to inode via the State Hypervisor tree.
     # The honeypot root is an inode 1, but resolving paths requires walking the tree.

@@ -6,7 +6,10 @@ Version 1.0 planning baseline; status reviewed 2026-10-12. Maintainer: project o
 
 The October 16 integrated Research extension is tracked by the
 [requirements audit](INTEGRATED_ACCEPTANCE_AUDIT_2026-10-16.md) and
-[current release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md). The October 11
+[October 16 release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md). Current private-staging
+acceptance is in the [October 19 release index](RELEASE_EVIDENCE_INDEX_2026-10-19.md),
+with [October 22 success/failure checks](WORKING_REVIEW_2026-10-22.md) and the
+[step-by-step operator guide](HOW_TO.md). The October 11
 gate verdict above remains historical; it does not certify later changes.
 
 1. [Research MVP specification](RESEARCH_MVP.md): product boundary and requirements.

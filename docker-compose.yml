@@ -3,8 +3,13 @@ services:
   redis-store:
     image: redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
     container_name: chronos_redis
-    command: >
-      redis-server --appendonly yes --appendfsync everysec --maxmemory 2gb --maxmemory-policy noeviction
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+    command:
+      - sh
+      - -ec
+      - 'exec redis-server --appendonly yes --appendfsync everysec --maxmemory 2gb --maxmemory-policy noeviction --requirepass "$$REDIS_PASSWORD"'
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -80,6 +85,7 @@ services:
       - apparmor=unconfined
       - no-new-privileges:true
     environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD}
       - REDIS_HOST=redis-store
       - POSTGRES_HOST=db-store
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
@@ -111,6 +117,7 @@ services:
       dockerfile: Dockerfile
     container_name: chronos_world
     environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD}
       - REDIS_HOST=redis-store
       - POSTGRES_HOST=db-store
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
@@ -144,6 +151,7 @@ services:
       - CHRONOS_PG_HOST=db-store
       - CHRONOS_PG_PORT=5432
       - CHRONOS_PG_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD}
       - CHRONOS_REDIS_HOST=redis-store
     command: ["python3", "-m", "chronos.core.dashboard_metrics_exporter"]
     ports:

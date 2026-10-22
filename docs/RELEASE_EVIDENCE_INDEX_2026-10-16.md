@@ -1,7 +1,51 @@
-# Integrated desktop candidate evidence — October 16, 2026
+# Integrated desktop candidate evidence — October 16–17, 2026
+
+Historical checkpoint: the [October 19 verdict](RELEASE_EVIDENCE_INDEX_2026-10-19.md)
+supersedes the pending acceptance status below for the newer ARM64 private-staging
+candidate. Earlier failures and image-specific results remain unchanged.
 
 Status: verified source candidate; final integrated-product acceptance pending.
 This index is intentionally outside the source archive to avoid self-reference.
+
+October 17 update: the one-hour retry passed for the frozen October 16 image:
+7,061 reconciled commands, 16 retained paused runs, p95 141 ms and 42.3 MiB
+memory growth. The failed earlier attempt remains retained. Eight source files
+already differed at run start, so this does not certify the current hardened
+checkout. See the [capacity reconciliation](PERSISTENT_CAPACITY_2026-10-16.md).
+
+Current Redis/SSH hardening has passed 270 Python regressions (seven skips),
+13 Rust tests (one opt-in ignored), base/managed Compose validation and an
+authenticated eight-client short load with 638 exactly reconciled commands.
+The load harness now refuses source/image mismatches before admitting clients.
+All 91 OS packages and 26 Python distributions match the earlier fresh image's
+inventory; this is a package-list comparison, not a fresh scan of the new image.
+The core-only residual security disclosures below remain applicable boundaries.
+The reconciled image needs its own completed long run before full certification.
+
+## October 17 reconciled candidate
+
+The reviewed current source and hardened test harness are frozen in
+`evidence/release_candidate_20261017_reconciled`, based on `cf99f53` plus the
+complete archived working-tree changes. All 197 extracted file hashes verified;
+the extracted Python suite passed 270 tests with seven explicit skips. Current
+Rust tests passed 13, with one opt-in real-core test ignored.
+
+- Source archive SHA-256:
+  `c4cfbafca523ed21677324de4d7d2588c53eea6a27716ec2ab2a0e8acf7d4927`.
+- Manifest SHA-256:
+  `f5861cbb26160c80d3979cf37a92eb724ea894e6b76bb01dac7b756e8806296d`.
+- Image: `mirage-reconciled:20261017`, identity
+  `sha256:cd3a4527e26caed741016cc86b5f2fc356b275e678280a050bb5f889839740b0`.
+
+Its authenticated one-hour workload ran from the immutable extracted
+candidate, not the mutable checkout, and finished **FAIL** on October 17.
+macOS recorded clamshell sleep at 12:28:44 IST for 152 seconds and maintenance
+sleep at 12:31:27 for 142 seconds; the latter aligns with the final sample gap
+and attribution expiry. This is not a capacity pass. Evidence is retained in
+`evidence/reconciled_auth_soak_20261017`, including the exact image inventory,
+source-match proof, explicit Redis-auth rejection/acceptance check and ongoing
+resource samples. No current-image full-duration pass is claimed. The
+earlier 7,061-command hour remains a pass for its older image only.
 
 ## Latest handoff candidate
 

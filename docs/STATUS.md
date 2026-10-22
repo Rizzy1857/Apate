@@ -1,22 +1,31 @@
 # Mirage current status
 
+October 22 follow-up: see the [working/failure-path review](WORKING_REVIEW_2026-10-22.md)
+for fresh regression and disposable-container checks, and the [operator guide](HOW_TO.md)
+for step-by-step use. Historical release results below remain dated evidence.
+
 ## Active iteration — integrated product
 
-The integrated desktop iteration is implemented but not yet release-certified.
+The integrated Research candidate has completed its three predeployment gates
+for private ARM64 staging on October 19; it is not approved for public exposure.
 Native startup/shutdown, live state, persistent-run resume/fresh, core-crash
 recovery and private/redacted GUI exports have passed local checks. Current
-regressions: 264 Python passes (7 explicit skips), 12 Rust passes plus a separately
-passed opt-in export integration test. Local model smoke trials still show
+regressions: 272 Python passes (7 explicit skips), 13 Rust passes (one opt-in
+integration test ignored). Earlier native export checks are separate evidence.
+Local model smoke trials still show
 failures; deterministic mode remains the default, with no fine-tuning claim.
-The extended persistent-run soak failed after confirmed host lid-closure sleep
-outlasted attribution leases. A fresh uninterrupted hour is required for final
-acceptance; no completed extended-soak claim is made for this iteration.
+The fresh authenticated hour passed with 7,042 reconciled commands, 16 finalized
+sessions and retained paused namespaces. Earlier sleep failures remain retained.
+The standalone private staging configuration also passed actual startup and SSH
+checks. Core scan findings remain disclosed and accepted by the operator only
+for private authorized testing on a disposable VM. Actual Azure host checks,
+registry publication, backups and operational setup follow provisioning.
 See [integrated-product progress](INTEGRATED_PRODUCT_PROGRESS.md) for implemented
 work and remaining acceptance checks. The release status below describes the
 October 11 frozen MVP; it does not certify these subsequent runtime changes.
 
 Current acceptance and exact candidate identities are maintained in the
-[October 16 release index](RELEASE_EVIDENCE_INDEX_2026-10-16.md).
+[October 19 release index](RELEASE_EVIDENCE_INDEX_2026-10-19.md).
 
 ## Historical October 11 release
 
