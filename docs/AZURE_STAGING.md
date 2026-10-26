@@ -1,5 +1,11 @@
 # Azure private staging and release gates
 
+October 23 refresh: use the [current candidate index](RELEASE_EVIDENCE_INDEX_2026-10-23.md)
+and [updated scan review](DEPLOYMENT_SECURITY_REVIEW_2026-10-23.md) for the rebuilt
+image identities. The older passing hour below does not certify those new images;
+their own hour failed after laptop suspension and must pass an uninterrupted
+rerun before final handoff.
+
 Mirage Research has completed its predeployment gates for private authorized ARM64 testing, not unrestricted public attacker access. On October 19 the checkout passed 272 Python tests with seven skips, 13 Rust tests with one opt-in integration test ignored, Linux integration, an authenticated 3,600-second soak and actual standalone staging startup. The operator accepted documented residual core risks for a disposable private VM only. See the [gate verdict](RELEASE_EVIDENCE_INDEX_2026-10-19.md) and [security review](DEPLOYMENT_SECURITY_REVIEW_2026-10-19.md). Repeat host-dependent smoke checks after provisioning.
 
 ## Hosting and isolation
@@ -38,7 +44,7 @@ Keep port 2222 loopback-only. Reach it through an authenticated administrator SS
 - Verify image/source identity, Redis rejects unauthenticated commands, and PostgreSQL requires credentials. Confirm no database, monitoring or model endpoint is reachable from outside the VM.
 - Run Linux/FUSE isolation, SSH forwarding/exec denial, overflow handling, persona persistence, fresh-run isolation, audit reconciliation, restart/recovery and export integrity checks on the actual architecture. Seven skipped Python checks are not deployment passes.
 - The pinned local ARM64 candidate passed the authenticated persistent eight-client 3,600-second workload. Repeat it for a rebuilt image or materially different runtime configuration, recording source identity, sample gaps, memory, command reconciliation and retained-run state. Keep Docker running and the host awake; do not increase ownership TTL to hide sleep failures. See `tests/integration/run_load.py` and `docs/PERSISTENT_CAPACITY_2026-10-16.md` for workload identity and earlier results.
-- Test backup and restoration of PostgreSQL, Redis and the audit spool together in a disposable stack. Redis AOF every-second syncing is not zero-loss durability. Establish evidence retention, free-disk alerts, incident stop procedures and an Azure budget alert before leaving it running. Budget alerts are not a spending cap.
+- The [October 23 local operational drill](OPERATIONAL_READINESS_2026-10-23.md) passed cold restoration of PostgreSQL, Redis and the audit spool, plus bounded storage faults. Follow [OPERATIONS.md](OPERATIONS.md) and repeat with the actual Azure storage/backup destination. Redis AOF every-second syncing is not zero-loss durability. Establish evidence retention, free-disk alerts, incident stop procedures and an Azure budget alert before leaving it running. Budget alerts are not a spending cap.
 - Freeze the final changed source and image again after fixes. Record results against that exact identity. Public exposure requires a separate threat/risk review and explicit authorization; this staging configuration intentionally does not enable it.
 
 Stop with the same Compose prefix and `stop`; use `down` only when ready to remove this stack's containers. Never add `-v` unless intentionally deleting the research data. Preserve/export evidence before VM deletion. Home deployment and model training remain separate workstreams, not requirements silently satisfied by this stack.

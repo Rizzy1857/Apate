@@ -54,6 +54,11 @@ Keep the host awake (on macOS, prefix the Python command with `caffeinate -i`). 
 
 Add tests around externally observable contracts and failure boundaries. Avoid tests that merely duplicate implementation. Keep disruptive tests on explicitly disposable targets.
 
+On macOS keep the lid open throughout a sustained run. `caffeinate -i` prevents
+idle sleep but did not prevent clamshell sleep in the October 23 failure. A
+suspended host can outlast the 120-second attribution lease; preserve the failed
+run and retry on an awake host rather than raising the lease to hide suspension.
+
 ## Disposable integration and failure checks
 
 These image names are local candidate tags, not downloadable registry references. Build/retrieve your reviewed images first, verify identities, and substitute the exact tags/digests. Do not reuse an old image after changing application source; the load harness checks its source inventory.
@@ -86,3 +91,11 @@ APATE_LOAD_IMAGE=mirage-gate:20261019 \
 Repeat with `APATE_LOAD_FAULT=redis` and then `core`, using distinct output paths. PostgreSQL pauses about 30 seconds; Redis stops and core receives SIGKILL, followed by restart. The latter two select a fail-closed/restart scenario rather than the duration-based capacity test. A fault must actually trigger and recover to pass. Inspect `result.json`, client/core logs, source identity and reconciliation; exit code alone is not capacity evidence.
 
 Do not blindly enable `--legacy-infrastructure` or run `verify_managed_*` against an operator stack: those checks can interrupt services and mutate data. Live-model evaluation requires explicit opt-in, cached models and recorded identities. A GUI visual walkthrough, real Azure host validation, full backup/restore, disk exhaustion and extended soak remain distinct checks—not implied by unit passes.
+
+The disposable cold backup/restore and bounded storage-fault harness is documented in
+[OPERATIONS.md](../docs/OPERATIONS.md). It creates fresh source/restore volumes and
+checks retained persona/files/cwd, audit replay, host key and export hashes. It also
+exercises real ENOSPC on a dedicated tmpfs and Redis no-eviction write rejection.
+Its output contains credentials and physical backups: keep it private and ignored.
+See the [dated operational results](../docs/OPERATIONAL_READINESS_2026-10-23.md)
+for the measured scope and remaining host/cloud cases.

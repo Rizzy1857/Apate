@@ -176,11 +176,15 @@ SESSION_ID='REPLACE_WITH_SESSION_UUID'
 docker compose -f docker-compose.yml exec -e POSTGRES_PORT=5432 core-engine \
   python3 -m chronos.watcher.export_report --session-id "$SESSION_ID" \
   --output /tmp/export-unique-raw --mode raw
-docker compose -f docker-compose.yml cp core-engine:/tmp/export-unique-raw ./export-unique-raw
+umask 077
+mkdir ./export-unique-raw
+set -o pipefail
+docker compose -f docker-compose.yml exec -T core-engine \
+  tar -cpf - -C /tmp/export-unique-raw . | tar -xpf - -C ./export-unique-raw
 chmod -R go-rwx ./export-unique-raw
 ```
 
-Copy before stopping: `/tmp` is ephemeral and capacity-limited. Repeat to different paths with `--mode redacted` if needed. For staging replace the Compose prefix with `docker compose --env-file .env.azure -p mirage-staging -f compose.azure-staging.yml`. Do not expose the database publicly for exports. Session-attached provenance overrides environment labels; do not relabel old evidence as new source.
+Copy before stopping: `/tmp` is ephemeral and capacity-limited. Use the exec archive stream above: `docker compose cp` could not retrieve these tmpfs exports on the tested runtime. Repeat to different paths with `--mode redacted` if needed. For staging replace the Compose prefix with `docker compose --env-file .env.azure -p mirage-staging -f compose.azure-staging.yml`. Do not expose the database publicly for exports. Session-attached provenance overrides environment labels; do not relabel old evidence as new source.
 
 To attach the console to an existing manual stack without managing services, set its original `POSTGRES_PASSWORD`, `POSTGRES_HOST=127.0.0.1`, `POSTGRES_PORT=5433` and an authenticated `REDIS_URL` for port 6379 (URL-encode password special characters), then:
 
@@ -198,7 +202,7 @@ Troubleshooting and release validation belong in [VERIFICATION_PLAN.md](VERIFICA
 
 ### Backup and recovery boundary
 
-Before backing up, stop admission, disconnect participants, wait for audit delivery, export important sessions, and stop writers. Inventory the exact project volumes. Preserve PostgreSQL, Redis, audit spool, credentials, profile/config and source/image identities together. PostgreSQL alone omits pending events and filesystem state. Restore into a separate disposable project and verify authentication, marker files, persona, audit reconciliation and exports before trusting the backup. A full backup/restore drill is **not a completed gate**; do not delete original volumes or the VM based on this checklist. Redis AOF every-second syncing is not zero-loss durability.
+Before backing up, stop admission, disconnect participants, wait for audit delivery, export important sessions, and stop writers. Preserve PostgreSQL, Redis, audit spool, credentials, profile/config and source/image identities together. PostgreSQL alone omits pending events and filesystem state. The [October 23 local drill](OPERATIONAL_READINESS_2026-10-23.md) passed cold restoration, resume, audit replay, export integrity and bounded storage faults. Follow [OPERATIONS.md](OPERATIONS.md) and repeat restoration with the actual deployment's storage before retiring original volumes. Redis AOF every-second syncing is not zero-loss durability.
 
 ### Troubleshooting
 

@@ -1,5 +1,11 @@
 # Mirage (Chronos Framework)
 
+> October 23 security refresh: the candidate images were rebuilt to fix newly
+> reported trust-store and OS findings. Scans, Linux checks and operational
+> recovery pass; the rebuilt image's one-hour run failed after laptop sleep and
+> requires an uninterrupted rerun before final handoff.
+> See the [current candidate index](docs/RELEASE_EVIDENCE_INDEX_2026-10-23.md).
+
 > October 19: the ARM64 candidate passed Linux integration, the authenticated
 > one-hour soak and standalone staging startup. The vulnerability review is
 > complete with residual core risks accepted for **private testing only**.
@@ -136,6 +142,7 @@ The Python suite requires dependencies and a runnable `redis-server`. See the [v
 - [Future research roadmap](docs/RESEARCH_FUTURE.md)
 - [Current Status](docs/STATUS.md)
 - [Step-by-step operator guide](docs/HOW_TO.md)
+- [Backup, restore and incident operations](docs/OPERATIONS.md)
 - [Current success/failure coverage](docs/WORKING_REVIEW_2026-10-22.md)
 - [Test Suite Guide](tests/README.md)
 

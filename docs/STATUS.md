@@ -1,5 +1,18 @@
 # Mirage current status
 
+October 23 release refresh: current scans found and remediated a critical certifi
+trust-store finding and available OS security updates. The rebuilt staging images
+have no critical/Python findings; the core retains the previously reviewed 44
+HIGH package matches. See the [updated security review](DEPLOYMENT_SECURITY_REVIEW_2026-10-23.md)
+and [candidate handoff](RELEASE_EVIDENCE_INDEX_2026-10-23.md). The rebuilt candidate's
+one-hour revalidation failed after laptop clamshell sleep expired session leases;
+an uninterrupted rerun is required. Earlier passing hours remain historical.
+
+October 23: the [operational readiness review](OPERATIONAL_READINESS_2026-10-23.md)
+records a passing local cold backup/restore drill, actual bounded ENOSPC/Redis
+capacity recovery and the native desktop walkthrough. Use [OPERATIONS.md](OPERATIONS.md)
+for the procedures; actual Azure acceptance and off-host backup remain deployment work.
+
 October 22 follow-up: see the [working/failure-path review](WORKING_REVIEW_2026-10-22.md)
 for fresh regression and disposable-container checks, and the [operator guide](HOW_TO.md)
 for step-by-step use. Historical release results below remain dated evidence.
