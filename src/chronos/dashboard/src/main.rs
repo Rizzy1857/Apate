@@ -3,6 +3,7 @@ mod backend;
 mod lifecycle;
 mod local_config;
 mod managed_export;
+mod timeline;
 
 use app::ChronosDashboard;
 use eframe::egui;

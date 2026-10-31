@@ -66,6 +66,7 @@ pub struct ChronosDashboard {
     selected_session: Option<SessionDetail>,
     selected_session_id: Option<String>,
     detail_loading: bool,
+    timeline: crate::timeline::TimelineView,
     export_destination: String,
     export_busy: bool,
     export_status: String,
@@ -84,6 +85,13 @@ impl ChronosDashboard {
         // Apply dark theme
         let mut style = (*_cc.egui_ctx.style_of(egui::Theme::Dark)).clone();
         style.visuals = egui::Visuals::dark();
+        style.spacing.item_spacing = egui::vec2(10.0, 8.0);
+        style.spacing.button_padding = egui::vec2(12.0, 7.0);
+        style.visuals.panel_fill = egui::Color32::from_rgb(16, 22, 32);
+        style.visuals.faint_bg_color = egui::Color32::from_rgb(23, 32, 45);
+        style.visuals.selection.bg_fill = egui::Color32::from_rgb(30, 79, 107);
+        style.visuals.hyperlink_color = egui::Color32::from_rgb(100, 205, 230);
+        style.visuals.override_text_color = Some(egui::Color32::from_rgb(220, 229, 239));
         _cc.egui_ctx.set_style_of(egui::Theme::Dark, style);
         _cc.egui_ctx.set_theme(egui::Theme::Dark);
 
@@ -132,6 +140,7 @@ impl ChronosDashboard {
             selected_session: None,
             selected_session_id: None,
             detail_loading: false,
+            timeline: crate::timeline::TimelineView::default(),
             export_destination: String::new(),
             export_busy: false,
             export_status: String::new(),
@@ -252,6 +261,11 @@ impl ChronosDashboard {
                     };
                 }
                 BackendMessage::SessionDetailResult(detail) => {
+                    if detail.as_ref().as_ref().is_some_and(|value| {
+                        Some(&value.session_id) != self.selected_session_id.as_ref()
+                    }) {
+                        continue;
+                    }
                     self.selected_session = *detail;
                     self.detail_loading = false;
                 }
@@ -285,7 +299,8 @@ impl ChronosDashboard {
         egui::Panel::top("top_bar").show(ui, |ui| {
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.heading(egui::RichText::new("⎔ Chronos Overseer").strong());
+                ui.heading(egui::RichText::new("CHRONOS").strong());
+                ui.label(egui::RichText::new("Security operations").weak());
                 ui.separator();
 
                 Self::status_pill(ui, "Redis", self.redis_connected);
@@ -303,14 +318,14 @@ impl ChronosDashboard {
             ui.add_space(2.0);
 
             // Tab bar
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 let tabs = [
-                    (Tab::LiveOps, "⚡ Live Ops"),
-                    (Tab::Sessions, "📋 Sessions"),
-                    (Tab::SessionDetail, "🔍 Detail"),
-                    (Tab::ThreatAnalytics, "📊 Analytics"),
-                    (Tab::AIProvenance, "🤖 AI Provenance"),
-                    (Tab::Configuration, "⚙ Config"),
+                    (Tab::LiveOps, "Live operations"),
+                    (Tab::Sessions, "Sessions"),
+                    (Tab::SessionDetail, "Attacker timeline"),
+                    (Tab::ThreatAnalytics, "Analytics"),
+                    (Tab::AIProvenance, "AI provenance"),
+                    (Tab::Configuration, "Configuration"),
                 ];
                 for (tab, label) in tabs {
                     let selected = self.active_tab == tab;
@@ -770,6 +785,7 @@ impl ChronosDashboard {
                     });
 
                     if open_detail || row.response().clicked() {
+                        self.timeline = crate::timeline::TimelineView::default();
                         self.selected_session_id = Some(sid.clone());
                         self.detail_loading = self
                             .tx_req
@@ -785,13 +801,24 @@ impl ChronosDashboard {
     // ── View 3: Session Detail ──────────────────────────────────────────
 
     fn render_session_detail(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             if ui.button("← Back to Sessions").clicked() {
                 self.active_tab = Tab::Sessions;
                 self.selected_session = None;
                 self.selected_session_id = None;
             }
-            ui.heading("Session Detail");
+            ui.heading("Session investigation");
+            if let Some(id) = &self.selected_session_id {
+                if ui
+                    .add_enabled(!self.detail_loading, egui::Button::new("Reload session"))
+                    .clicked()
+                {
+                    self.detail_loading = self
+                        .tx_req
+                        .try_send(BackendRequest::FetchSessionDetail(id.clone()))
+                        .is_ok();
+                }
+            }
         });
         ui.separator();
 
@@ -807,7 +834,11 @@ impl ChronosDashboard {
             None => {
                 ui.centered_and_justified(|ui| {
                     ui.label(
-                        egui::RichText::new("Select a session from the Sessions tab.")
+                        egui::RichText::new(if self.selected_session_id.is_some() {
+                            "Session could not be loaded. Reload the session to try again."
+                        } else {
+                            "Select a session from the Sessions tab to inspect its attacker actions."
+                        })
                             .color(egui::Color32::GRAY)
                             .size(14.0),
                     );
@@ -816,197 +847,83 @@ impl ChronosDashboard {
             }
         };
 
-        ui.horizontal(|ui| {
-            ui.label("New export folder:");
-            ui.text_edit_singleline(&mut self.export_destination);
-            if ui
-                .add_enabled(
-                    !self.export_busy && !self.export_destination.trim().is_empty(),
-                    egui::Button::new("Export private raw"),
-                )
-                .clicked()
-            {
-                self.export_busy = self
-                    .tx_req
-                    .try_send(BackendRequest::ExportSession {
-                        session_id: detail.session_id.clone(),
-                        destination: self.export_destination.clone(),
-                        mode: ExportMode::Raw,
-                    })
-                    .is_ok();
-                self.export_status = if self.export_busy {
-                    "Exporting database snapshot…".into()
-                } else {
-                    "Export backend is unavailable.".into()
-                };
-            }
-            if ui
-                .add_enabled(
-                    !self.export_busy && !self.export_destination.trim().is_empty(),
-                    egui::Button::new("Export redacted copy"),
-                )
-                .clicked()
-            {
-                self.export_busy = self
-                    .tx_req
-                    .try_send(BackendRequest::ExportSession {
-                        session_id: detail.session_id.clone(),
-                        destination: self.export_destination.clone(),
-                        mode: ExportMode::Redacted,
-                    })
-                    .is_ok();
-                self.export_status = if self.export_busy {
-                    "Exporting allowlist-redacted database snapshot…".into()
-                } else {
-                    "Export backend is unavailable.".into()
-                };
-            }
-        });
-        ui.label(&self.export_status);
-
-        // Header card
-        egui::Frame::group(ui.style()).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Session:").strong());
-                ui.label(&detail.session_id);
-                ui.separator();
-                ui.label(egui::RichText::new("Duration:").strong());
-                let dur = detail.duration_seconds.unwrap_or(0);
-                ui.label(format!("{}m {}s", dur / 60, dur % 60));
+        egui::Frame::group(ui.style()).inner_margin(12.0).show(ui, |ui| {
+            ui.label(egui::RichText::new("SESSION").weak());
+            ui.add(egui::Label::new(egui::RichText::new(&detail.session_id).monospace()).wrap());
+            ui.horizontal_wrapped(|ui| {
+                ui.label(format!("Duration: {}", detail.duration_seconds
+                    .map(|dur| format!("{}m {}s", dur / 60, dur % 60)).unwrap_or_else(|| "Unknown".into())));
                 ui.separator();
                 let status = detail.detection_status.as_deref().unwrap_or("unknown");
-                let color = if status == "detected" {
-                    egui::Color32::from_rgb(231, 76, 60)
-                } else {
-                    egui::Color32::from_rgb(46, 204, 113)
+                let color = match status {
+                    "detected" => egui::Color32::from_rgb(245, 185, 95),
+                    "undetected" => egui::Color32::from_rgb(100, 205, 230),
+                    _ => egui::Color32::GRAY,
                 };
-                ui.label(
-                    egui::RichText::new(status.to_uppercase())
-                        .color(color)
-                        .strong(),
-                );
+                ui.colored_label(color, status.to_uppercase());
                 ui.separator();
-                ui.label("Rule-based flag; not a probability or evidence of honeypot discovery.");
+                ui.label(format!("{} recorded actions", detail.commands.len()));
             });
+            ui.small("Detection is a rule-based flag, not a probability or evidence of honeypot discovery.");
         });
-
         ui.add_space(8.0);
 
-        // Two-column layout: commands on left, tree + skill on right
-        let available = ui.available_size();
-        ui.horizontal(|ui| {
-            // Left: Command Timeline
-            ui.vertical(|ui| {
-                ui.set_width(available.x * 0.6);
-                ui.heading(egui::RichText::new("Command Timeline").size(14.0));
-                ui.separator();
-
-                egui::ScrollArea::vertical()
-                    .id_salt("session_command_timeline")
-                    .max_height(available.y - 100.0)
-                    .show(ui, |ui| {
-                        for cmd in &detail.commands {
-                            let risk = cmd.risk_score.unwrap_or(0);
-                            let bg = if risk > 50 {
-                                egui::Color32::from_rgba_premultiplied(231, 76, 60, 30)
-                            } else if risk > 0 {
-                                egui::Color32::from_rgba_premultiplied(241, 196, 15, 20)
-                            } else {
-                                egui::Color32::TRANSPARENT
-                            };
-
-                            egui::Frame::new()
-                                .fill(bg)
-                                .inner_margin(4.0)
-                                .show(ui, |ui| {
-                                    ui.horizontal(|ui| {
-                                        // Timestamp
-                                        let ts = cmd.timestamp.as_deref().unwrap_or("");
-                                        let short_ts = ts.get(11..19).unwrap_or(ts);
-                                        ui.label(
-                                            egui::RichText::new(short_ts)
-                                                .color(egui::Color32::GRAY)
-                                                .size(10.0)
-                                                .monospace(),
-                                        );
-
-                                        // Risk badge
-                                        let risk_color = if risk > 50 {
-                                            egui::Color32::from_rgb(231, 76, 60)
-                                        } else if risk > 0 {
-                                            egui::Color32::from_rgb(241, 196, 15)
-                                        } else {
-                                            egui::Color32::from_rgb(46, 204, 113)
-                                        };
-                                        ui.label(
-                                            egui::RichText::new(format!("R:{}", risk))
-                                                .color(risk_color)
-                                                .size(10.0),
-                                        );
-
-                                        // Command
-                                        ui.label(
-                                            egui::RichText::new(
-                                                cmd.command.as_deref().unwrap_or("-"),
-                                            )
-                                            .monospace()
-                                            .size(11.0),
-                                        );
-                                    });
-
-                                    // Techniques
-                                    ui.horizontal(|ui| {
-                                        ui.label(format!(
-                                            "Outcome: {}",
-                                            cmd.outcome
-                                                .as_deref()
-                                                .unwrap_or("unknown (legacy record)")
-                                        ));
-                                        if let Some(status) = cmd.exit_status {
-                                            ui.label(format!("exit {}", status));
-                                        }
-                                        if let Some(seconds) = cmd.server_elapsed_seconds {
-                                            ui.label(format!("server {:.3}s", seconds));
-                                        }
-                                        if let Some(bytes) = cmd.response_bytes {
-                                            ui.label(format!("{} response bytes", bytes));
-                                        }
-                                        if let (Some(claimed), Some(effective)) =
-                                            (&cmd.claimed_username, &cmd.effective_username)
-                                        {
-                                            ui.label(format!(
-                                                "login {} → profile {}",
-                                                claimed, effective
-                                            ));
-                                        }
-                                    });
-                                    if let Some(techniques) = &cmd.techniques {
-                                        if !techniques.is_empty() {
-                                            ui.horizontal(|ui| {
-                                                ui.add_space(60.0);
-                                                for t in techniques {
-                                                    ui.label(
-                                                        egui::RichText::new(format!("⚑ {}", t))
-                                                            .color(egui::Color32::from_rgb(
-                                                                155, 89, 182,
-                                                            ))
-                                                            .size(9.0),
-                                                    );
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                        }
-                    });
+        self.timeline.show(ui, detail);
+        ui.add_space(12.0);
+        egui::CollapsingHeader::new("Export session evidence").show(ui, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.label("New export folder:");
+                ui.text_edit_singleline(&mut self.export_destination);
+                if ui
+                    .add_enabled(
+                        !self.export_busy && !self.export_destination.trim().is_empty(),
+                        egui::Button::new("Export private raw"),
+                    )
+                    .clicked()
+                {
+                    self.export_busy = self
+                        .tx_req
+                        .try_send(BackendRequest::ExportSession {
+                            session_id: detail.session_id.clone(),
+                            destination: self.export_destination.clone(),
+                            mode: ExportMode::Raw,
+                        })
+                        .is_ok();
+                    self.export_status = if self.export_busy {
+                        "Exporting database snapshot…".into()
+                    } else {
+                        "Export backend is unavailable.".into()
+                    };
+                }
+                if ui
+                    .add_enabled(
+                        !self.export_busy && !self.export_destination.trim().is_empty(),
+                        egui::Button::new("Export redacted copy"),
+                    )
+                    .clicked()
+                {
+                    self.export_busy = self
+                        .tx_req
+                        .try_send(BackendRequest::ExportSession {
+                            session_id: detail.session_id.clone(),
+                            destination: self.export_destination.clone(),
+                            mode: ExportMode::Redacted,
+                        })
+                        .is_ok();
+                    self.export_status = if self.export_busy {
+                        "Exporting allowlist-redacted database snapshot…".into()
+                    } else {
+                        "Export backend is unavailable.".into()
+                    };
+                }
             });
+            ui.label(&self.export_status);
+        });
 
-            ui.separator();
-
-            // Right: Traversal Tree + evidence-linked pattern card
-            ui.vertical(|ui| {
-                ui.set_width(available.x * 0.35);
-
+        ui.add_space(12.0);
+        egui::CollapsingHeader::new("Session evidence · patterns and visited files")
+            .id_salt(("session_evidence", &detail.session_id))
+            .show(ui, |ui| {
                 // The database field retains its legacy name, but schema v2 is
                 // explicitly an observation summary, not an expertise estimate.
                 if let Some(patterns) = &detail.pattern_assessment {
@@ -1097,7 +1014,6 @@ impl ChronosDashboard {
                             ui.label(egui::RichText::new(f).monospace().size(10.0));
                         }
                     });
-            });
         });
     }
 
@@ -1624,7 +1540,14 @@ impl eframe::App for ChronosDashboard {
         egui::CentralPanel::default().show(ui, |ui| match self.active_tab {
             Tab::LiveOps => self.render_live_ops(ui),
             Tab::Sessions => self.render_sessions(ui),
-            Tab::SessionDetail => self.render_session_detail(ui),
+            Tab::SessionDetail => {
+                egui::ScrollArea::vertical()
+                    .id_salt(("session_investigation", &self.selected_session_id))
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        self.render_session_detail(ui);
+                    });
+            }
             Tab::ThreatAnalytics => self.render_threat_analytics(ui),
             Tab::AIProvenance => self.render_ai_provenance(ui),
             Tab::Configuration => self.render_configuration(ui),
